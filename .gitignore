@@ -1,0 +1,126 @@
+# =========================
+# .NET / Avalonia
+# =========================
+
+bin/
+obj/
+[Bb]uild/
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+[Aa][Rr][Mm]/
+[Aa][Rr][Mm]64/
+
+# Publish output
+publish/
+Published/
+*.publishsettings
+
+# NuGet
+*.nupkg
+*.snupkg
+.nuget/
+packages/
+project.assets.json
+project.nuget.cache
+*.nuget.g.props
+*.nuget.g.targets
+
+# Logs
+*.log
+logs/
+
+# =========================
+# Visual Studio
+# =========================
+
+.vs/
+*.user
+*.rsuser
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Visual Studio Code
+.vscode/
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+# Rider / JetBrains
+.idea/
+*.sln.iml
+
+# =========================
+# Avalonia / XAML generated cache
+# =========================
+
+*.g.cs
+*.g.i.cs
+*.Designer.cs
+*.generated.cs
+
+# =========================
+# OS files
+# =========================
+
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# =========================
+# Test / coverage
+# =========================
+
+TestResults/
+coverage/
+coverage.*
+*.coverage
+*.coveragexml
+
+# =========================
+# Local app settings / secrets
+# =========================
+
+appsettings.Development.json
+appsettings.Local.json
+settings.local.json
+*.local.json
+
+# Caso futuramente salve IP do display, tokens ou configs locais
+SmartDisplayPcAgent.settings.json
+
+# =========================
+# Installer / build artifacts
+# =========================
+
+*.msi
+*.exe
+*.zip
+*.7z
+*.rar
+
+# Mas se você tiver um executável fonte/asset intencional,
+# remova a regra acima ou force com:
+# !Assets/some-file.exe
+
+# =========================
+# Arduino / ESP8266 optional
+# =========================
+
+*.bin
+*.elf
+*.map
+*.hex
+*.uf2
+*.eep
+*.lst
+*.sym
+
+# Arduino temporary/build folders
+.build/
+build/
+.cache/
+.vsarduino/

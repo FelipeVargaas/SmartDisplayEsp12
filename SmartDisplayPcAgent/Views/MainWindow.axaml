@@ -1,0 +1,62 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:SmartDisplayPcAgent.ViewModels"
+        x:Class="SmartDisplayPcAgent.Views.MainWindow"
+        x:DataType="vm:MainWindowViewModel"
+        Width="420"
+        Height="320"
+        Title="Smart Display PC Agent">
+
+    <Window.DataContext>
+        <vm:MainWindowViewModel/>
+    </Window.DataContext>
+
+    <Grid RowDefinitions="Auto,*,Auto"
+          Margin="24"
+          RowSpacing="20">
+
+        <TextBlock Grid.Row="0"
+                   Text="Smart Display PC Agent"
+                   FontSize="24"
+                   FontWeight="Bold"
+                   HorizontalAlignment="Center"/>
+
+        <StackPanel Grid.Row="1"
+                    Spacing="16"
+                    VerticalAlignment="Center">
+
+            <TextBlock Text="{Binding CpuUsage, StringFormat='CPU  {0:0}%'}"
+                       FontSize="28"
+                       FontWeight="SemiBold"/>
+
+            <ProgressBar Minimum="0"
+                         Maximum="100"
+                         Value="{Binding CpuUsage}"
+                         Height="14"/>
+
+            <TextBlock Text="{Binding RamUsage, StringFormat='RAM  {0:0}%'}"
+                       FontSize="28"
+                       FontWeight="SemiBold"/>
+
+            <ProgressBar Minimum="0"
+                         Maximum="100"
+                         Value="{Binding RamUsage}"
+                         Height="14"/>
+
+            <TextBlock Text="{Binding GpuUsage, StringFormat='GPU  {0:0}%'}"
+                       FontSize="28"
+                       FontWeight="SemiBold"/>
+
+            <ProgressBar Minimum="0"
+                         Maximum="100"
+                         Value="{Binding GpuUsage}"
+                         Height="14"/>
+
+        </StackPanel>
+
+        <TextBlock Grid.Row="2"
+                   Text="{Binding StatusText}"
+                   HorizontalAlignment="Center"
+                   Opacity="0.7"/>
+    </Grid>
+</Window>

@@ -3,8 +3,8 @@
         xmlns:vm="using:SmartDisplayPcAgent.ViewModels"
         x:Class="SmartDisplayPcAgent.Views.MainWindow"
         x:DataType="vm:MainWindowViewModel"
-        Width="420"
-        Height="320"
+        Width="460"
+        Height="520"
         Title="Smart Display PC Agent">
 
     <Window.DataContext>
@@ -13,7 +13,7 @@
 
     <Grid RowDefinitions="Auto,*,Auto"
           Margin="24"
-          RowSpacing="20">
+          RowSpacing="18">
 
         <TextBlock Grid.Row="0"
                    Text="Smart Display PC Agent"
@@ -22,7 +22,7 @@
                    HorizontalAlignment="Center"/>
 
         <StackPanel Grid.Row="1"
-                    Spacing="16"
+                    Spacing="14"
                     VerticalAlignment="Center">
 
             <TextBlock Text="{Binding CpuUsage, StringFormat='CPU  {0:0}%'}"
@@ -51,6 +51,28 @@
                          Maximum="100"
                          Value="{Binding GpuUsage}"
                          Height="14"/>
+
+            <Border Height="1"
+                    Background="#333333"
+                    Margin="0,8,0,4"/>
+
+            <TextBlock Text="Display ESP8266"
+                       FontSize="18"
+                       FontWeight="SemiBold"/>
+
+            <TextBox Watermark="IP do display"
+                     Text="{Binding DisplayIp, Mode=TwoWay}"/>
+
+            <CheckBox Content="Enviar dados para o display"
+                      IsChecked="{Binding SendToDisplayEnabled}"/>
+
+            <Button Content="Enviar teste agora"
+                    Command="{Binding SendTestCommand}"
+                    HorizontalAlignment="Stretch"/>
+
+            <TextBlock Text="{Binding DisplayStatusText}"
+                       TextWrapping="Wrap"
+                       Opacity="0.75"/>
 
         </StackPanel>
 

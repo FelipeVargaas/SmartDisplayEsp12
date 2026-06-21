@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("SmartDisplayPcAgent")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+3969407d13e9ccba19bc4b9cc00c5bde8cdba642")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+52437605414c2673b7fbcba10bef7a540db69a30")]
 [assembly: System.Reflection.AssemblyProductAttribute("SmartDisplayPcAgent")]
 [assembly: System.Reflection.AssemblyTitleAttribute("SmartDisplayPcAgent")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

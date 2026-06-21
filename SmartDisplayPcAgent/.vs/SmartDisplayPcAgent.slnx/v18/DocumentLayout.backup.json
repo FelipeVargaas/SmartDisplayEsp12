@@ -13,6 +13,10 @@
     {
       "AbsoluteMoniker": "D:0:0:{92368E77-0740-AEC4-1858-495163A88B7E}|SmartDisplayPcAgent.csproj|c:\\gitprojects\\smartdisplaypcagent\\smartdisplayesp12\\smartdisplaypcagent\\viewmodels\\mainwindowviewmodel.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{92368E77-0740-AEC4-1858-495163A88B7E}|SmartDisplayPcAgent.csproj|solutionrelative:viewmodels\\mainwindowviewmodel.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{92368E77-0740-AEC4-1858-495163A88B7E}|SmartDisplayPcAgent.csproj|c:\\gitprojects\\smartdisplaypcagent\\smartdisplayesp12\\smartdisplaypcagent\\clients\\displayhttpclient.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{92368E77-0740-AEC4-1858-495163A88B7E}|SmartDisplayPcAgent.csproj|solutionrelative:clients\\displayhttpclient.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     }
   ],
   "DocumentGroupContainers": [
@@ -22,8 +26,20 @@
       "DocumentGroups": [
         {
           "DockedWidth": 200,
-          "SelectedChildIndex": 0,
+          "SelectedChildIndex": 1,
           "Children": [
+            {
+              "$type": "Document",
+              "DocumentIndex": 3,
+              "Title": "DisplayHttpClient.cs",
+              "DocumentMoniker": "C:\\gitProjects\\SmartDisplayPcAgent\\SmartDisplayEsp12\\SmartDisplayPcAgent\\Clients\\DisplayHttpClient.cs",
+              "RelativeDocumentMoniker": "Clients\\DisplayHttpClient.cs",
+              "ToolTip": "C:\\gitProjects\\SmartDisplayPcAgent\\SmartDisplayEsp12\\SmartDisplayPcAgent\\Clients\\DisplayHttpClient.cs",
+              "RelativeToolTip": "Clients\\DisplayHttpClient.cs",
+              "ViewState": "AgIAACwAAAAAAAAAAAAowE4AAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-06-20T20:12:33.886Z"
+            },
             {
               "$type": "Document",
               "DocumentIndex": 0,
@@ -32,7 +48,7 @@
               "RelativeDocumentMoniker": "Services\\PcMetricsService.cs",
               "ToolTip": "C:\\gitProjects\\SmartDisplayPcAgent\\SmartDisplayEsp12\\SmartDisplayPcAgent\\Services\\PcMetricsService.cs",
               "RelativeToolTip": "Services\\PcMetricsService.cs",
-              "ViewState": "AgIAAIMAAAAAAAAAAAAQwI0AAABFAAAAAAAAAA==",
+              "ViewState": "AgIAAG4AAAAAAAAAAAAQwH0AAAAuAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2026-06-20T18:58:41.724Z",
               "EditorCaption": ""
@@ -56,7 +72,7 @@
               "RelativeDocumentMoniker": "ViewModels\\MainWindowViewModel.cs",
               "ToolTip": "C:\\gitProjects\\SmartDisplayPcAgent\\SmartDisplayEsp12\\SmartDisplayPcAgent\\ViewModels\\MainWindowViewModel.cs",
               "RelativeToolTip": "ViewModels\\MainWindowViewModel.cs",
-              "ViewState": "AgIAACoAAAAAAAAAAAAowDMAAAAgAAAAAAAAAA==",
+              "ViewState": "AgIAAGIAAAAAAAAAAAAowIQAAAABAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2026-06-20T18:56:46.324Z"
             }

@@ -4,6 +4,7 @@
 #include <time.h>
 
 #include "app_state.h"
+#include "boot_guard.h"
 #include "config.h"
 #include "display_ui.h"
 #include "metrics.h"
@@ -16,18 +17,30 @@ void appSetup()
   Serial.begin(115200);
   delay(300);
   randomSeed(ESP.getCycleCount());
+  appState.safeMode = bootGuardBegin();
   displayUiInit();
-  displayUiInitSprites();
+  if (!appState.safeMode) displayUiInitSprites();
   displayUiDrawBootScreen();
   if (!wifiConnect()) wifiStartApMode();
   webServerSetup();
   if (!appState.isApMode)
   {
     configTime(GMT_OFFSET_SEC, DAYLIGHT_OFFSET_SEC, "pool.ntp.org", "time.nist.gov");
-    displayUiDrawDashboardBase();
-    weatherUpdate();
-    appState.lastWeatherUpdate = millis();
-    displayUiUpdateHeaderIfNeeded();
+    String ipAddress = WiFi.localIP().toString();
+    if (appState.safeMode)
+    {
+      displayUiDrawSafeModeScreen(ipAddress);
+      Serial.println("Modo seguro ativo: dashboard desativado, OTA disponivel.");
+    }
+    else
+    {
+      displayUiDrawStartupInfo(ipAddress);
+      delay(900);
+      displayUiDrawDashboardBase();
+      weatherUpdate();
+      appState.lastWeatherUpdate = millis();
+      displayUiUpdateHeaderIfNeeded();
+    }
   }
   Serial.println(); Serial.println("=====================================");
   Serial.println("PC Monitor + Sprite + OTA iniciado"); Serial.println("=====================================");
@@ -50,11 +63,14 @@ void appSetup()
 void appLoop()
 {
   webServerHandleClient();
+  bootGuardUpdate();
+  if (appState.safeMode) return;
   if (appState.isApMode) return;
   unsigned long now = millis();
   if (!metricsHasRecentPcMetrics() && USE_FAKE_METRICS_WHEN_PC_OFFLINE) metricsUpdateFakeTargets();
   metricsAnimateFakeValues();
   metricsUpdateDisplayIfNeeded();
+  displayUiUpdateTopLabelIfNeeded();
   if (now - appState.lastClockCheck >= CLOCK_CHECK_INTERVAL_MS) { appState.lastClockCheck = now; displayUiUpdateHeaderIfNeeded(); }
   if (now - appState.lastFooterUpdate >= FOOTER_UPDATE_INTERVAL_MS) { appState.lastFooterUpdate = now; displayUiDrawFooter(); }
   if (now - appState.lastWeatherUpdate >= WEATHER_UPDATE_INTERVAL_MS)

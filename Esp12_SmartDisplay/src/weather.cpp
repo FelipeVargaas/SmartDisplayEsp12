@@ -44,7 +44,8 @@ bool weatherUpdate()
   StaticJsonDocument<1024> doc;
   if (deserializeJson(doc, payload)) return false;
   appState.weatherTemp = doc["current"]["temperature_2m"] | 0.0f;
-  appState.weatherText = weatherCodeToText(doc["current"]["weather_code"] | -1);
+  appState.weatherCode = doc["current"]["weather_code"] | -1;
+  appState.weatherText = weatherCodeToText(appState.weatherCode);
   appState.hasWeather = true;
   return true;
 }

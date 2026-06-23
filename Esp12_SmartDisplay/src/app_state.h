@@ -10,6 +10,7 @@ struct AppState
   bool metricSpriteReady;
   String scannedNetworks;
   bool isApMode;
+  bool safeMode;
 
   int cpuCurrent;
   int ramCurrent;
@@ -24,7 +25,9 @@ struct AppState
 
   String lastTimeDrawn;
   String lastWeatherDrawn;
+  String lastTopLabelDrawn;
   float weatherTemp;
+  int weatherCode;
   bool hasWeather;
   String weatherText;
 
@@ -35,6 +38,10 @@ struct AppState
   unsigned long lastClockCheck;
   unsigned long lastWeatherUpdate;
   unsigned long lastFooterUpdate;
+  unsigned long lastFooterStatusUpdate;
+  unsigned long lastTopLabelUpdate;
+  uint8_t topLabelIndex;
+  uint8_t footerStatusIndex;
 
   AppState();
 };

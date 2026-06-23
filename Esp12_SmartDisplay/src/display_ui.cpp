@@ -3,10 +3,13 @@
 #include <math.h>
 #include <time.h>
 #include <TFT_eSPI.h>
+#include <ESP8266WiFi.h>
 
 #include "app_state.h"
 #include "config.h"
+#include "display_assets.h"
 #include "metrics.h"
+#include "theme.h"
 
 static void displayCentered(const String& text, int y, int size, uint16_t color)
 {
@@ -27,7 +30,7 @@ void displayUiInit()
   appState.tft.init();
   appState.tft.setRotation(0);
   appState.tft.invertDisplay(DISPLAY_INVERT);
-  appState.tft.fillScreen(TFT_BLACK);
+  appState.tft.fillScreen(CLEAN_TFT_THEME.background);
 }
 
 void displayUiInitSprites()
@@ -39,8 +42,17 @@ void displayUiInitSprites()
 void displayUiDrawBootScreen()
 {
   appState.tft.fillScreen(TFT_BLACK);
-  displayCentered("Ola Vargas", 68, 3, TFT_ORANGE);
-  displayCentered("Conectando...", 125, 2, TFT_WHITE);
+  displayCentered("SMART DISPLAY", 56, 2, TFT_CYAN);
+  displayCentered("FW SAFE-TEST", 92, 1, TFT_LIGHTGREY);
+  displayCentered("Iniciando Wi-Fi...", 126, 1, TFT_WHITE);
+  displayCentered("OTA: /update", 182, 1, TFT_ORANGE);
+}
+
+void displayUiDrawStartupInfo(const String& ipAddress)
+{
+  appState.tft.fillRect(0, 100, DISPLAY_WIDTH, 54, TFT_BLACK);
+  displayCentered("REDE CONECTADA", 104, 1, TFT_GREEN);
+  displayCentered("IP: " + ipAddress, 126, 2, TFT_WHITE);
 }
 
 void displayUiDrawConnectingNetwork(const String& ssid)
@@ -78,6 +90,17 @@ void displayUiDrawConnectionFailedScreen()
   delay(1500);
 }
 
+void displayUiDrawSafeModeScreen(const String& ipAddress)
+{
+  appState.tft.fillScreen(TFT_BLACK);
+  displayCentered("MODO SEGURO", 54, 2, TFT_ORANGE);
+  displayCentered("Inicializacao instavel", 93, 1, TFT_LIGHTGREY);
+  appState.tft.drawLine(18, 116, 222, 116, TFT_DARKGREY);
+  displayCentered("IP: " + ipAddress, 139, 2, TFT_WHITE);
+  displayCentered("OTA: /update", 178, 2, TFT_GREEN);
+  displayCentered("Dashboard desativado", 214, 1, TFT_LIGHTGREY);
+}
+
 static String getTimeText()
 {
   time_t now = time(nullptr);
@@ -88,61 +111,107 @@ static String getTimeText()
   return String(buffer);
 }
 
-static void drawDegreeTempSprite(TFT_eSprite& spr, int x, int y, int temp, uint16_t color)
+static void drawWeatherIcon34(TFT_eSprite& spr, int x, int y, int code)
 {
-  spr.setTextSize(2); spr.setTextColor(color, TFT_BLACK);
-  String value = String(temp);
-  spr.setCursor(x, y); spr.print(value);
-  int numberWidth = spr.textWidth(value);
-  spr.drawCircle(x + numberWidth + 5, y + 4, 2, color);
-  spr.setCursor(x + numberWidth + 11, y); spr.print("C");
+  const uint16_t cloud = 0xBDF7;
+  const uint16_t cloudShade = 0x8410;
+  const uint16_t sun = 0xFDC0;
+  const uint16_t rain = 0x4DDF;
+
+  if (code == 0)
+  {
+    spr.fillCircle(x + 17, y + 17, 8, sun);
+    spr.drawCircle(x + 17, y + 17, 9, sun);
+    spr.drawLine(x + 17, y + 2, x + 17, y + 6, sun);
+    spr.drawLine(x + 17, y + 28, x + 17, y + 32, sun);
+    spr.drawLine(x + 2, y + 17, x + 6, y + 17, sun);
+    spr.drawLine(x + 28, y + 17, x + 32, y + 17, sun);
+    spr.drawLine(x + 6, y + 6, x + 9, y + 9, sun);
+    spr.drawLine(x + 25, y + 25, x + 28, y + 28, sun);
+    spr.drawLine(x + 6, y + 28, x + 9, y + 25, sun);
+    spr.drawLine(x + 25, y + 9, x + 28, y + 6, sun);
+    return;
+  }
+
+  spr.fillCircle(x + 11, y + 18, 7, cloudShade);
+  spr.fillCircle(x + 20, y + 14, 10, cloud);
+  spr.fillCircle(x + 27, y + 19, 7, cloud);
+  spr.fillRoundRect(x + 5, y + 19, 26, 10, 5, cloud);
+
+  if (code == 45 || code == 48)
+  {
+    spr.drawFastHLine(x + 4, y + 28, 28, cloud);
+    spr.drawFastHLine(x + 7, y + 32, 23, cloudShade);
+  }
+  else if (code >= 95)
+  {
+    spr.fillTriangle(x + 19, y + 24, x + 12, y + 33, x + 19, y + 30, sun);
+    spr.fillTriangle(x + 19, y + 30, x + 26, y + 23, x + 20, y + 25, sun);
+  }
+  else if ((code >= 51 && code <= 67) || (code >= 80 && code <= 82))
+  {
+    spr.drawLine(x + 10, y + 29, x + 8, y + 33, rain);
+    spr.drawLine(x + 19, y + 29, x + 17, y + 33, rain);
+    spr.drawLine(x + 28, y + 29, x + 26, y + 33, rain);
+  }
 }
 
-static void drawCloudIconSprite(TFT_eSprite& spr, int x, int y, uint16_t color)
+static void drawMonoIcon16(int x, int y, const uint8_t* icon, uint16_t color)
 {
-  spr.drawCircle(x + 8, y + 9, 7, color); spr.drawCircle(x + 17, y + 7, 9, color);
-  spr.drawCircle(x + 27, y + 11, 7, color); spr.drawLine(x + 7, y + 16, x + 28, y + 16, color);
+  for (int row = 0; row < 16; ++row)
+  {
+    uint16_t bits = (uint16_t(pgm_read_byte(icon + row * 2)) << 8) | pgm_read_byte(icon + row * 2 + 1);
+    for (int column = 0; column < 16; ++column)
+      if (bits & (uint16_t(0x8000) >> column)) appState.tft.drawPixel(x + column, y + row, color);
+  }
+}
+
+static String formatPercent2Digits(int value)
+{
+  if (value < 0) value = 0;
+  if (value > 100) value = 100;
+  char buffer[5];
+  snprintf(buffer, sizeof(buffer), "%02d%%", value);
+  return String(buffer);
 }
 
 static void drawHeader()
 {
   TFT_eSprite header(&appState.tft);
   header.setColorDepth(8);
-  if (header.createSprite(DISPLAY_WIDTH, HEADER_H) == nullptr)
+  if (header.createSprite(DISPLAY_WIDTH, TOP_LABEL_Y) == nullptr)
   {
-    appState.tft.fillRect(0, 0, DISPLAY_WIDTH, HEADER_H, TFT_BLACK);
-    displayCentered(getTimeText(), 18, 5, TFT_WHITE);
-    appState.tft.drawLine(12, 96, 228, 96, TFT_DARKGREY);
+    appState.tft.fillRect(0, 0, DISPLAY_WIDTH, TOP_LABEL_Y, CLEAN_TFT_THEME.background);
+    appState.tft.setTextFont(4);
+    appState.tft.setTextSize(2);
+    appState.tft.setTextColor(CLEAN_TFT_THEME.primaryText, CLEAN_TFT_THEME.background);
+    appState.tft.setCursor(6, 3);
+    appState.tft.print(getTimeText());
     return;
   }
-  header.fillSprite(TFT_BLACK);
+  header.fillSprite(CLEAN_TFT_THEME.background);
   String timeText = getTimeText();
-  header.setTextSize(5); header.setTextColor(TFT_WHITE, TFT_BLACK);
-  header.setCursor((DISPLAY_WIDTH - header.textWidth(timeText)) / 2, 10); header.print(timeText);
+  header.setTextFont(4);
+  header.setTextSize(2);
+  header.setTextColor(CLEAN_TFT_THEME.primaryText, CLEAN_TFT_THEME.background);
+  header.setCursor(6, 3); header.print(timeText);
   if (appState.hasWeather)
   {
-    drawDegreeTempSprite(header, 36, 66, (int)round(appState.weatherTemp), TFT_ORANGE);
-    drawCloudIconSprite(header, 91, 67, TFT_WHITE);
-    header.setTextSize(2); header.setTextColor(TFT_WHITE, TFT_BLACK);
-    header.setCursor(132, 66); header.print(appState.weatherText);
+    header.setTextFont(4); header.setTextSize(1); header.setTextColor(CLEAN_TFT_THEME.primaryText, CLEAN_TFT_THEME.background);
+    String temperature = String((int)round(appState.weatherTemp));
+    drawWeatherIcon34(header, 155, 12, appState.weatherCode);
+    header.setCursor(195, 9); header.print(temperature);
+    int width = header.textWidth(temperature);
+    header.drawCircle(197 + width, 11, 2, CLEAN_TFT_THEME.primaryText);
   }
   else
   {
-    header.setTextSize(2); header.setTextColor(TFT_DARKGREY, TFT_BLACK);
-    String text = "--C  Clima";
-    header.setCursor((DISPLAY_WIDTH - header.textWidth(text)) / 2, 66); header.print(text);
+    header.setTextFont(4); header.setTextSize(1); header.setTextColor(CLEAN_TFT_THEME.secondaryText, CLEAN_TFT_THEME.background);
+    header.setCursor(195, 9); header.print("--");
   }
-  header.drawLine(12, 96, 228, 96, TFT_DARKGREY);
   header.pushSprite(0, 0); header.deleteSprite();
   appState.lastTimeDrawn = timeText;
-  appState.lastWeatherDrawn = appState.hasWeather ? String(appState.weatherTemp, 1) + appState.weatherText : "none";
-}
-
-static uint16_t colorByValue(int value, uint16_t normalColor)
-{
-  if (value >= 90) return TFT_RED;
-  if (value >= 75) return TFT_ORANGE;
-  return normalColor;
+  appState.lastWeatherDrawn = appState.hasWeather ? String(appState.weatherCode) + String(appState.weatherTemp, 1) + appState.weatherText : "none";
 }
 
 static void drawProgressBarOnSprite(TFT_eSprite& spr, int x, int y, int w, int h, int value, uint16_t color)
@@ -150,53 +219,126 @@ static void drawProgressBarOnSprite(TFT_eSprite& spr, int x, int y, int w, int h
   if (value < 0) value = 0;
   if (value > 100) value = 100;
   int fillWidth = (w * value) / 100;
-  spr.fillRoundRect(x, y, w, h, 4, TFT_DARKGREY);
-  if (fillWidth > 0) spr.fillRoundRect(x, y, fillWidth, h, 4, color);
+  spr.fillRoundRect(x, y, w, h, h / 2, CLEAN_TFT_THEME.barTrack);
+  if (fillWidth > 0) spr.fillRoundRect(x, y, fillWidth, h, h / 2, color);
+}
+
+static uint16_t getMetricBarColor(int value)
+{
+  static const uint16_t warningOrange = 0xB2C5;
+  static const uint16_t criticalRed = 0xB800;
+  if (value > 90) return criticalRed;
+  if (value > 80) return warningOrange;
+  return CLEAN_TFT_THEME.cpu;
 }
 
 void displayUiDrawMetricRow(int y, const String& label, int value, uint16_t baseColor)
 {
-  uint16_t barColor = colorByValue(value, baseColor);
+  (void)baseColor;
+  uint16_t barColor = getMetricBarColor(value);
   if (appState.metricSpriteReady)
   {
-    appState.metricSprite.fillSprite(TFT_BLACK);
-    appState.metricSprite.setTextSize(2); appState.metricSprite.setTextColor(TFT_WHITE, TFT_BLACK);
-    appState.metricSprite.setCursor(0, 4); appState.metricSprite.print(label);
-    String percentText = String(value) + "%";
-    appState.metricSprite.setCursor(METRIC_W - appState.metricSprite.textWidth(percentText), 4); appState.metricSprite.print(percentText);
-    drawProgressBarOnSprite(appState.metricSprite, 64, 13, 112, 10, value, barColor);
+    appState.metricSprite.fillSprite(CLEAN_TFT_THEME.background);
+    appState.metricSprite.setTextFont(4); appState.metricSprite.setTextSize(1); appState.metricSprite.setTextColor(CLEAN_TFT_THEME.primaryText, CLEAN_TFT_THEME.background);
+    appState.metricSprite.setCursor(0, 0); appState.metricSprite.print(label);
+    String percentText = formatPercent2Digits(value);
+    appState.metricSprite.setTextColor(CLEAN_TFT_THEME.primaryText, CLEAN_TFT_THEME.background);
+    int percentWidth = appState.metricSprite.textWidth(percentText);
+    appState.metricSprite.setCursor(METRIC_PERCENT_X + METRIC_PERCENT_W - percentWidth, 0); appState.metricSprite.print(percentText);
+    drawProgressBarOnSprite(appState.metricSprite, METRIC_BAR_X, 3, METRIC_BAR_W, 16, value, barColor);
     appState.metricSprite.pushSprite(METRIC_X, y);
     return;
   }
-  appState.tft.fillRect(METRIC_X, y, METRIC_W, METRIC_H, TFT_BLACK);
-  appState.tft.setTextSize(2); appState.tft.setTextColor(TFT_WHITE, TFT_BLACK);
-  appState.tft.setCursor(METRIC_X, y + 4); appState.tft.print(label);
-  String percentText = String(value) + "%";
-  appState.tft.setCursor(DISPLAY_WIDTH - appState.tft.textWidth(percentText) - 12, y + 4); appState.tft.print(percentText);
-  int fillWidth = (112 * value) / 100;
-  appState.tft.fillRoundRect(METRIC_X + 64, y + 13, 112, 10, 4, TFT_DARKGREY);
-  appState.tft.fillRoundRect(METRIC_X + 64, y + 13, fillWidth, 10, 4, barColor);
+  appState.tft.fillRect(METRIC_X, y, METRIC_W, METRIC_H, CLEAN_TFT_THEME.background);
+  appState.tft.setTextFont(4); appState.tft.setTextSize(1); appState.tft.setTextColor(CLEAN_TFT_THEME.primaryText, CLEAN_TFT_THEME.background);
+  appState.tft.setCursor(METRIC_X, y); appState.tft.print(label);
+  String percentText = formatPercent2Digits(value);
+  appState.tft.setTextColor(CLEAN_TFT_THEME.primaryText, CLEAN_TFT_THEME.background);
+  int percentWidth = appState.tft.textWidth(percentText);
+  appState.tft.setCursor(METRIC_X + METRIC_PERCENT_X + METRIC_PERCENT_W - percentWidth, y); appState.tft.print(percentText);
+  int fillWidth = (METRIC_BAR_W * value) / 100;
+  appState.tft.fillRoundRect(METRIC_X + METRIC_BAR_X, y + 3, METRIC_BAR_W, 16, 8, CLEAN_TFT_THEME.barTrack);
+  if (fillWidth > 0) appState.tft.fillRoundRect(METRIC_X + METRIC_BAR_X, y + 3, fillWidth, 16, 8, barColor);
 }
 
 void displayUiDrawFooter()
 {
-  appState.tft.fillRect(0, 218, DISPLAY_WIDTH, 22, TFT_BLACK);
-  appState.tft.drawLine(12, 220, 228, 220, TFT_DARKGREY);
-  appState.tft.setTextSize(1); appState.tft.setTextColor(TFT_LIGHTGREY, TFT_BLACK);
-  appState.tft.setCursor(12, 228); appState.tft.print(metricsHasRecentPcMetrics() ? "PC ONLINE" : "PC WAIT");
-  String wifiText = appState.isApMode ? "SETUP" : "WiFi OK";
-  appState.tft.setCursor(DISPLAY_WIDTH - appState.tft.textWidth(wifiText) - 12, 228); appState.tft.print(wifiText);
+  appState.tft.fillRect(0, FOOTER_Y, DISPLAY_WIDTH, DISPLAY_HEIGHT - FOOTER_Y, CLEAN_TFT_THEME.background);
+  if (appState.isApMode)
+  {
+    appState.tft.setTextFont(2); appState.tft.setTextSize(1);
+    appState.tft.setTextColor(CLEAN_TFT_THEME.offline, CLEAN_TFT_THEME.background);
+    appState.tft.setCursor(12, 214); appState.tft.print("SETUP WI-FI");
+    return;
+  }
+
+  unsigned long now = millis();
+  if (appState.lastFooterStatusUpdate == 0) appState.lastFooterStatusUpdate = now;
+  else if (now - appState.lastFooterStatusUpdate >= TOP_LABEL_INTERVAL_MS)
+  {
+    appState.lastFooterStatusUpdate = now;
+    appState.footerStatusIndex++;
+  }
+
+  bool pcOnline = metricsHasRecentPcMetrics();
+  String status;
+  String detail;
+  uint16_t statusColor;
+  switch (appState.footerStatusIndex % 3)
+  {
+    case 0:
+      status = pcOnline ? "PC ONLINE" : "PC WAIT";
+      detail = pcOnline ? WiFi.localIP().toString() : "SEM DADOS";
+      statusColor = pcOnline ? CLEAN_TFT_THEME.online : CLEAN_TFT_THEME.offline;
+      break;
+    case 1:
+      status = "WIFI OK";
+      detail = String(WiFi.RSSI()) + " dBm";
+      statusColor = CLEAN_TFT_THEME.online;
+      break;
+    default:
+      status = "OTA READY";
+      detail = "/update";
+      statusColor = CLEAN_TFT_THEME.cpu;
+      break;
+  }
+
+  appState.tft.setTextFont(2); appState.tft.setTextSize(1);
+  int statusWidth = appState.tft.textWidth(status);
+  int detailWidth = appState.tft.textWidth(detail);
+  bool useSmallDetail = statusWidth + detailWidth + 12 > DISPLAY_WIDTH - 24;
+  if (useSmallDetail)
+  {
+    appState.tft.setTextFont(1); appState.tft.setTextSize(1);
+    detailWidth = appState.tft.textWidth(detail);
+  }
+  int totalWidth = statusWidth + detailWidth + 12;
+  int startX = (DISPLAY_WIDTH - totalWidth) / 2;
+  if (startX < 12) startX = 12;
+
+  appState.tft.setTextFont(2); appState.tft.setTextSize(1);
+  appState.tft.setTextColor(statusColor, CLEAN_TFT_THEME.background);
+  appState.tft.setCursor(startX, 214); appState.tft.print(status);
+  appState.tft.fillCircle(startX + statusWidth + 6, 223, 1, CLEAN_TFT_THEME.secondaryText);
+  if (useSmallDetail)
+  {
+    appState.tft.setTextFont(1); appState.tft.setTextSize(1);
+  }
+  appState.tft.setTextColor(CLEAN_TFT_THEME.secondaryText, CLEAN_TFT_THEME.background);
+  appState.tft.setCursor(startX + statusWidth + 12, useSmallDetail ? 219 : 214); appState.tft.print(detail);
 }
 
 void displayUiDrawDashboardBase()
 {
-  appState.tft.fillScreen(TFT_BLACK);
+  appState.tft.fillScreen(CLEAN_TFT_THEME.background);
   appState.lastTimeDrawn = ""; appState.lastWeatherDrawn = "";
   appState.lastCpuDrawn = -1; appState.lastRamDrawn = -1; appState.lastGpuDrawn = -1;
   drawHeader();
-  displayUiDrawMetricRow(CPU_Y, "CPU", appState.cpuCurrent, TFT_BLUE);
-  displayUiDrawMetricRow(RAM_Y, "RAM", appState.ramCurrent, TFT_GREEN);
-  displayUiDrawMetricRow(GPU_Y, "GPU", appState.gpuCurrent, TFT_CYAN);
+  appState.lastTopLabelDrawn = "";
+  displayUiUpdateTopLabelIfNeeded();
+  displayUiDrawMetricRow(CPU_Y, "CPU", appState.cpuCurrent, CLEAN_TFT_THEME.cpu);
+  displayUiDrawMetricRow(RAM_Y, "RAM", appState.ramCurrent, CLEAN_TFT_THEME.ram);
+  displayUiDrawMetricRow(GPU_Y, "GPU", appState.gpuCurrent, CLEAN_TFT_THEME.gpu);
   appState.lastCpuDrawn = appState.cpuCurrent; appState.lastRamDrawn = appState.ramCurrent; appState.lastGpuDrawn = appState.gpuCurrent;
   displayUiDrawFooter();
 }
@@ -204,6 +346,56 @@ void displayUiDrawDashboardBase()
 void displayUiUpdateHeaderIfNeeded()
 {
   String timeText = getTimeText();
-  String weatherState = appState.hasWeather ? String(appState.weatherTemp, 1) + appState.weatherText : "none";
+  String weatherState = appState.hasWeather ? String(appState.weatherCode) + String(appState.weatherTemp, 1) + appState.weatherText : "none";
   if (timeText != appState.lastTimeDrawn || weatherState != appState.lastWeatherDrawn) drawHeader();
+}
+
+static String getDateLabel()
+{
+  time_t now = time(nullptr);
+  if (now < 100000) return "";
+  struct tm* timeInfo = localtime(&now);
+  static const char* const weekdays[] = {"DOM", "SEG", "TER", "QUA", "QUI", "SEX", "SAB"};
+  static const char* const months[] = {"JAN", "FEV", "MAR", "ABR", "MAI", "JUN", "JUL", "AGO", "SET", "OUT", "NOV", "DEZ"};
+  return String(weekdays[timeInfo->tm_wday]) + ", " + String(timeInfo->tm_mday) + " " + months[timeInfo->tm_mon];
+}
+
+void displayUiUpdateTopLabelIfNeeded()
+{
+  unsigned long now = millis();
+  if (appState.lastTopLabelUpdate != 0 && now - appState.lastTopLabelUpdate < TOP_LABEL_INTERVAL_MS) return;
+  appState.lastTopLabelUpdate = now;
+
+  const uint8_t statusCount = 3;
+  uint8_t statusIndex = appState.topLabelIndex % statusCount;
+  const uint8_t* icon = STATUS_PIN_16;
+  uint16_t iconColor = CLEAN_TFT_THEME.secondaryText;
+  String label;
+  if (statusIndex == 0)
+  {
+    label = "Rio de Janeiro";
+  }
+  else if (statusIndex == 1)
+  {
+    icon = STATUS_CALENDAR_16;
+    label = getDateLabel();
+    if (label.length() == 0) label = "DATA INDISPONIVEL";
+  }
+  else
+  {
+    icon = STATUS_WEATHER_16;
+    iconColor = CLEAN_TFT_THEME.secondaryText;
+    label = appState.hasWeather ? appState.weatherText + " " + String((int)round(appState.weatherTemp)) + "C" : "CLIMA INDISPONIVEL";
+  }
+  appState.topLabelIndex++;
+
+  appState.tft.setTextFont(1); appState.tft.setTextSize(2);
+  appState.tft.fillRect(0, TOP_LABEL_Y, DISPLAY_WIDTH, TOP_LABEL_H, CLEAN_TFT_THEME.background);
+  drawMonoIcon16(12, TOP_LABEL_Y + 4, icon, iconColor);
+  appState.tft.setTextColor(CLEAN_TFT_THEME.secondaryText, CLEAN_TFT_THEME.background);
+  appState.tft.setCursor(36, TOP_LABEL_Y + 4);
+  appState.tft.print(label);
+  for (uint8_t dot = 0; dot < statusCount; ++dot)
+    appState.tft.fillCircle(210 + dot * 9, TOP_LABEL_Y + 12, 2, dot == statusIndex ? CLEAN_TFT_THEME.cpu : CLEAN_TFT_THEME.divider);
+  appState.lastTopLabelDrawn = String(statusIndex) + label;
 }

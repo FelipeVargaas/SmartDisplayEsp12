@@ -5,6 +5,7 @@
 #include "app_state.h"
 #include "config.h"
 #include "display_ui.h"
+#include "theme.h"
 
 bool metricsHasRecentPcMetrics()
 {
@@ -59,7 +60,7 @@ void metricsAnimateFakeValues()
 
 void metricsUpdateDisplayIfNeeded()
 {
-  if (appState.cpuCurrent != appState.lastCpuDrawn) { displayUiDrawMetricRow(CPU_Y, "CPU", appState.cpuCurrent, TFT_BLUE); appState.lastCpuDrawn = appState.cpuCurrent; }
-  if (appState.ramCurrent != appState.lastRamDrawn) { displayUiDrawMetricRow(RAM_Y, "RAM", appState.ramCurrent, TFT_GREEN); appState.lastRamDrawn = appState.ramCurrent; }
-  if (appState.gpuCurrent != appState.lastGpuDrawn) { displayUiDrawMetricRow(GPU_Y, "GPU", appState.gpuCurrent, TFT_CYAN); appState.lastGpuDrawn = appState.gpuCurrent; }
+  if (appState.cpuCurrent != appState.lastCpuDrawn) { displayUiDrawMetricRow(CPU_Y, "CPU", appState.cpuCurrent, CLEAN_TFT_THEME.cpu); appState.lastCpuDrawn = appState.cpuCurrent; }
+  if (appState.ramCurrent != appState.lastRamDrawn) { displayUiDrawMetricRow(RAM_Y, "RAM", appState.ramCurrent, CLEAN_TFT_THEME.ram); appState.lastRamDrawn = appState.ramCurrent; }
+  if (appState.gpuCurrent != appState.lastGpuDrawn) { displayUiDrawMetricRow(GPU_Y, "GPU", appState.gpuCurrent, CLEAN_TFT_THEME.gpu); appState.lastGpuDrawn = appState.gpuCurrent; }
 }

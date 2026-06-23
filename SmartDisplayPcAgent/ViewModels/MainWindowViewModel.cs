@@ -1,12 +1,14 @@
-﻿using System;
-using System.Threading;
-using System.Threading.Tasks;
-using Avalonia.Threading;
+﻿using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using SmartDisplayPcAgent.Clients;
 using SmartDisplayPcAgent.Models;
 using SmartDisplayPcAgent.Services;
+using System;
+using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
+using System.Linq;
 
 namespace SmartDisplayPcAgent.ViewModels;
 
@@ -37,6 +39,18 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
     [ObservableProperty]
     private string displayStatusText = "Envio para display desativado";
 
+    [ObservableProperty]
+    private double diskUsage;
+
+    [ObservableProperty]
+    private string diskLabel = "---";
+
+    [ObservableProperty]
+    private string diskDisplayText = "---  0%";
+
+    [ObservableProperty]
+    private string disksText = "Nenhum disco detectado";
+
     public MainWindowViewModel()
     {
         _ = Task.Run(() => StartMetricsLoopAsync(_cts.Token));
@@ -53,6 +67,11 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
                 double cpu = Math.Round(snapshot.CpuUsage);
                 double ram = Math.Round(snapshot.RamUsage);
                 double gpu = Math.Round(snapshot.GpuUsage);
+
+                double disk = Math.Round(snapshot.DiskUsage);
+                string diskLabel = snapshot.DiskLabel;
+                string diskDisplayText = $"{diskLabel}  {disk:0}%";
+                string disksText = BuildDisksText(snapshot.Disks);
 
                 string displayStatus = DisplayStatusText;
 
@@ -79,6 +98,10 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
                     GpuUsage = gpu;
                     StatusText = "Coletando dados locais";
                     DisplayStatusText = displayStatus;
+                    DiskUsage = disk;
+                    DiskLabel = diskLabel;
+                    DiskDisplayText = diskDisplayText;
+                    DisksText = disksText;
                 });
             }
             catch (Exception ex)
@@ -108,7 +131,9 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
         var snapshot = new PcMetricsSnapshot(
             CpuUsage,
             RamUsage,
-            GpuUsage);
+            GpuUsage,
+            DiskUsage,
+            DiskLabel);
 
         using var timeoutCts = new CancellationTokenSource(TimeSpan.FromSeconds(2));
 
@@ -129,5 +154,22 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
 
         _metricsService.Dispose();
         _displayHttpClient.Dispose();
+    }
+    private static string BuildDisksText(IReadOnlyList<DiskMetricsSnapshot>? disks)
+    {
+        if (disks is null || disks.Count == 0)
+            return "Nenhum disco detectado";
+
+        return string.Join(
+            Environment.NewLine,
+            disks
+                .OrderByDescending(d => d.IsSystemDisk)
+                .ThenBy(d => d.Label)
+                .Select(d =>
+                    $"{d.Label}  {d.DriveLetter}  " +
+                    $"Ativ {d.ActiveUsage:0}%  " +
+                    $"Usado {d.UsedSpace:0}%  " +
+                    $"R {d.ReadMbPerSecond:0.0} MB/s  " +
+                    $"W {d.WriteMbPerSecond:0.0} MB/s"));
     }
 }

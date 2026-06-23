@@ -29,7 +29,9 @@ public sealed class DisplayHttpClient : IDisposable
         {
             cpu = ToPercentInt(snapshot.CpuUsage),
             ram = ToPercentInt(snapshot.RamUsage),
-            gpu = ToPercentInt(snapshot.GpuUsage)
+            gpu = ToPercentInt(snapshot.GpuUsage),
+            disk = ToPercentInt(snapshot.DiskUsage),
+            diskLabel = NormalizeDiskLabel(snapshot.DiskLabel)
         };
 
         string json = JsonSerializer.Serialize(payload);
@@ -70,6 +72,19 @@ public sealed class DisplayHttpClient : IDisposable
             return 0;
 
         return Math.Clamp((int)Math.Round(value), 0, 100);
+    }
+
+    private static string NormalizeDiskLabel(string label)
+    {
+        if (string.IsNullOrWhiteSpace(label))
+            return "---";
+
+        string value = label.Trim().ToUpperInvariant();
+
+        if (value.Length > 3)
+            value = value[..3];
+
+        return value;
     }
 
     public void Dispose()

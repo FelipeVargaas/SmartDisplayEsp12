@@ -3,8 +3,8 @@
         xmlns:vm="using:SmartDisplayPcAgent.ViewModels"
         x:Class="SmartDisplayPcAgent.Views.MainWindow"
         x:DataType="vm:MainWindowViewModel"
-        Width="460"
-        Height="520"
+        Width="500"
+        Height="680"
         Title="Smart Display PC Agent">
 
     <Window.DataContext>
@@ -51,6 +51,31 @@
                          Maximum="100"
                          Value="{Binding GpuUsage}"
                          Height="14"/>
+
+            <TextBlock Text="{Binding DiskDisplayText}"
+                        FontSize="28"
+                        FontWeight="SemiBold"/>
+
+            <ProgressBar Minimum="0"
+                            Maximum="100"
+                            Value="{Binding DiskUsage}"
+                            Height="14"/>
+
+            <TextBlock Text="Discos detectados"
+                        FontSize="16"
+                        FontWeight="SemiBold"
+                        Margin="0,8,0,0"/>
+
+            <Border BorderBrush="#333333"
+                    BorderThickness="1"
+                    CornerRadius="6"
+                    Padding="8"
+                    Background="#151515">
+
+                <TextBlock Text="{Binding DisksText}"
+                            FontSize="12"
+                            TextWrapping="Wrap"/>
+            </Border>
 
             <Border Height="1"
                     Background="#333333"

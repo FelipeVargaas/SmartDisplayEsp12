@@ -332,14 +332,16 @@ void displayUiDrawDashboardBase()
 {
   appState.tft.fillScreen(CLEAN_TFT_THEME.background);
   appState.lastTimeDrawn = ""; appState.lastWeatherDrawn = "";
-  appState.lastCpuDrawn = -1; appState.lastRamDrawn = -1; appState.lastGpuDrawn = -1;
+  appState.lastCpuDrawn = -1; appState.lastRamDrawn = -1; appState.lastGpuDrawn = -1; appState.lastDiskDrawn = -1; appState.lastDiskLabelDrawn = "";
   drawHeader();
   appState.lastTopLabelDrawn = "";
   displayUiUpdateTopLabelIfNeeded();
   displayUiDrawMetricRow(CPU_Y, "CPU", appState.cpuCurrent, CLEAN_TFT_THEME.cpu);
   displayUiDrawMetricRow(RAM_Y, "RAM", appState.ramCurrent, CLEAN_TFT_THEME.ram);
-  displayUiDrawMetricRow(GPU_Y, "GPU", appState.gpuCurrent, CLEAN_TFT_THEME.gpu);
+  displayUiDrawMetricRow(GPU_Y, appState.diskLabel, appState.diskCurrent, CLEAN_TFT_THEME.cpu);
+  displayUiDrawMetricRow(DISK_Y, "GPU", appState.gpuCurrent, CLEAN_TFT_THEME.gpu);
   appState.lastCpuDrawn = appState.cpuCurrent; appState.lastRamDrawn = appState.ramCurrent; appState.lastGpuDrawn = appState.gpuCurrent;
+  appState.lastDiskDrawn = appState.diskCurrent; appState.lastDiskLabelDrawn = appState.diskLabel;
   displayUiDrawFooter();
 }
 

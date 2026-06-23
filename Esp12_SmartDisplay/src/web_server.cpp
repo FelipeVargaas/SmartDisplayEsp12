@@ -67,7 +67,7 @@ static void handleMetrics()
   if (server.method() != HTTP_POST) { server.send(405, "application/json", "{\"ok\":false,\"error\":\"method_not_allowed\"}"); return; }
   String body = server.arg("plain");
   if (body.length() == 0) { server.send(400, "application/json", "{\"ok\":false,\"error\":\"empty_body\"}"); return; }
-  StaticJsonDocument<192> doc;
+  StaticJsonDocument<256> doc;
   if (deserializeJson(doc, body)) { server.send(400, "application/json", "{\"ok\":false,\"error\":\"invalid_json\"}"); return; }
   if (!doc.containsKey("cpu") || !doc.containsKey("ram") || !doc.containsKey("gpu")) { server.send(400, "application/json", "{\"ok\":false,\"error\":\"missing_fields\"}"); return; }
   int cpu = metricsClampPercentInt(doc["cpu"] | 0);
@@ -75,6 +75,22 @@ static void handleMetrics()
   int gpu = metricsClampPercentInt(doc["gpu"] | 0);
   appState.cpuTarget = cpu; appState.ramTarget = ram; appState.gpuTarget = gpu;
   appState.cpuCurrent = cpu; appState.ramCurrent = ram; appState.gpuCurrent = gpu;
+  if (doc.containsKey("disk"))
+  {
+    appState.diskCurrent = metricsClampPercentInt(doc["disk"] | DISK_MOCK_USAGE);
+    appState.lastDiskDrawn = -1;
+  }
+  if (doc.containsKey("diskLabel"))
+  {
+    String diskLabel = doc["diskLabel"].as<String>();
+    diskLabel.trim();
+    if (diskLabel.length() > 0)
+    {
+      if (diskLabel.length() > 4) diskLabel = diskLabel.substring(0, 4);
+      appState.diskLabel = diskLabel;
+      appState.lastDiskLabelDrawn = "";
+    }
+  }
   appState.lastCpuDrawn = -1; appState.lastRamDrawn = -1; appState.lastGpuDrawn = -1;
   appState.lastPcMetricsReceived = millis();
   server.send(200, "application/json", "{\"ok\":true}");
@@ -92,6 +108,8 @@ static void handleStatus()
   json += "\"cpu\":"; json += String(appState.cpuCurrent); json += ",";
   json += "\"ram\":"; json += String(appState.ramCurrent); json += ",";
   json += "\"gpu\":"; json += String(appState.gpuCurrent); json += ",";
+  json += "\"disk\":"; json += String(appState.diskCurrent); json += ",";
+  json += "\"diskLabel\":\""; json += appState.diskLabel; json += "\",";
   json += "\"pcOnline\":"; json += metricsHasRecentPcMetrics() ? "true" : "false"; json += ",";
   json += "\"lastPcMetricsAgeMs\":"; json += appState.lastPcMetricsReceived == 0 ? "null" : String(millis() - appState.lastPcMetricsReceived); json += ",";
   json += "\"temperature\":"; json += appState.hasWeather ? String(appState.weatherTemp, 1) : "null"; json += ",";

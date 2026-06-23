@@ -15,6 +15,8 @@ struct AppState
   int cpuCurrent;
   int ramCurrent;
   int gpuCurrent;
+  int diskCurrent;
+  String diskLabel;
   int cpuTarget;
   int ramTarget;
   int gpuTarget;
@@ -22,6 +24,8 @@ struct AppState
   int lastCpuDrawn;
   int lastRamDrawn;
   int lastGpuDrawn;
+  int lastDiskDrawn;
+  String lastDiskLabelDrawn;
 
   String lastTimeDrawn;
   String lastWeatherDrawn;

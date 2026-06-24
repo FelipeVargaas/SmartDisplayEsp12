@@ -65,7 +65,8 @@ static void handleMetrics()
   if (server.method() != HTTP_POST) { server.send(405, "application/json", "{\"ok\":false,\"error\":\"method_not_allowed\"}"); return; }
   String body = server.arg("plain");
   if (body.length() == 0) { server.send(400, "application/json", "{\"ok\":false,\"error\":\"empty_body\"}"); return; }
-  StaticJsonDocument<256> doc;
+  // O payload Gamer HUD acrescenta strings e campos opcionais ao payload legado.
+  StaticJsonDocument<512> doc;
   if (deserializeJson(doc, body)) { server.send(400, "application/json", "{\"ok\":false,\"error\":\"invalid_json\"}"); return; }
   if (!doc.containsKey("cpu") || !doc.containsKey("ram") || !doc.containsKey("gpu")) { server.send(400, "application/json", "{\"ok\":false,\"error\":\"missing_fields\"}"); return; }
   int cpu = metricsClampPercentInt(doc["cpu"] | 0);
@@ -89,6 +90,16 @@ static void handleMetrics()
       appState.lastDiskLabelDrawn = "";
     }
   }
+  // Campos opcionais, ja normalizados pelo futuro PC Agent, para o Gamer HUD.
+  // A rota /metrics e o contrato do PC Monitor permanecem os mesmos.
+  if (doc.containsKey("game")) { appState.gamerGame = doc["game"].as<String>(); appState.gamerGame.trim(); }
+  if (doc.containsKey("source")) { appState.gamerSource = doc["source"].as<String>(); appState.gamerSource.trim(); }
+  if (doc.containsKey("fps")) appState.gamerFps = doc["fps"].isNull() ? -1 : doc["fps"].as<int>();
+  if (doc.containsKey("frametime")) appState.gamerFrametime = doc["frametime"].isNull() ? -1.0f : doc["frametime"].as<float>();
+  if (doc.containsKey("gpuTemp")) appState.gamerGpuTemp = doc["gpuTemp"].isNull() ? -1 : doc["gpuTemp"].as<int>();
+  if (doc.containsKey("cpuTemp")) appState.gamerCpuTemp = doc["cpuTemp"].isNull() ? -1 : doc["cpuTemp"].as<int>();
+  if (doc.containsKey("vram")) appState.gamerVram = doc["vram"].isNull() ? -1.0f : doc["vram"].as<float>();
+  appState.gamerDataVersion++;
   appState.lastCpuDrawn = -1; appState.lastRamDrawn = -1; appState.lastGpuDrawn = -1;
   appState.lastPcMetricsReceived = millis();
   server.send(200, "application/json", "{\"ok\":true}");

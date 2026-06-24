@@ -6,6 +6,7 @@ void themePcMonitorDrawBase();
 void themePcMonitorUpdateIfNeeded();
 void themeWorkDeskDrawBase();
 void themeGamerDrawBase();
+void themeGamerUpdateIfNeeded();
 void themeMinimalClockDrawBase();
 void themeMinimalClockUpdateIfNeeded();
 void themeAnimationDrawBase();
@@ -28,6 +29,7 @@ void themeUpdateIfNeeded()
   switch (themeManagerGetActive())
   {
     case THEME_MINIMAL_CLOCK: themeMinimalClockUpdateIfNeeded(); break;
+    case THEME_GAMER: themeGamerUpdateIfNeeded(); break;
     case THEME_PC_MONITOR: themePcMonitorUpdateIfNeeded(); break;
     default: break;
   }

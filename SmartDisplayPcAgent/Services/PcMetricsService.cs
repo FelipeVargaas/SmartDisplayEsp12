@@ -35,6 +35,7 @@ public sealed class PcMetricsService : IDisposable
         double cpu = GetCpuUsagePercent();
         double ram = GetRamUsagePercent();
         double gpu = GetGpuUsagePercent();
+        double? gpuTemperature = GetGpuTemperatureCelsius();
 
         RefreshDiskCountersIfNeeded();
 
@@ -47,7 +48,8 @@ public sealed class PcMetricsService : IDisposable
             gpu,
             selectedDisk?.ActiveUsage ?? 0,
             selectedDisk?.Label ?? "---",
-            disks);
+            disks,
+            gpuTemperature);
     }
 
     private double GetCpuUsagePercent()
@@ -116,10 +118,7 @@ public sealed class PcMetricsService : IDisposable
         try
         {
             var gpuHardware = _computer.Hardware
-                .Where(h =>
-                    h.HardwareType == HardwareType.GpuAmd ||
-                    h.HardwareType == HardwareType.GpuNvidia ||
-                    h.HardwareType == HardwareType.GpuIntel)
+                .Where(IsGpuHardware)
                 .ToList();
 
             if (gpuHardware.Count == 0)
@@ -171,6 +170,86 @@ public sealed class PcMetricsService : IDisposable
         catch
         {
             return 0;
+        }
+    }
+
+    private double? GetGpuTemperatureCelsius()
+    {
+        if (!_hardwareMonitorAvailable || _computer is null)
+            return null;
+
+        try
+        {
+            var gpuHardware = _computer.Hardware
+                .Where(IsGpuHardware)
+                .ToList();
+
+            if (gpuHardware.Count == 0)
+                return null;
+
+            var preferredValues = new List<(int Priority, double Value)>();
+            var fallbackValues = new List<double>();
+
+            foreach (var hardware in gpuHardware)
+            {
+                UpdateHardwareRecursive(hardware);
+
+                foreach (var sensor in GetSensorsRecursive(hardware))
+                {
+                    if (sensor.SensorType != SensorType.Temperature)
+                        continue;
+
+                    if (!sensor.Value.HasValue)
+                        continue;
+
+                    double value = sensor.Value.Value;
+
+                    if (!IsValidTemperature(value))
+                        continue;
+
+                    string name = sensor.Name;
+
+                    if (name.Equals("GPU Core", StringComparison.OrdinalIgnoreCase) ||
+                        name.Equals("GPU Temperature", StringComparison.OrdinalIgnoreCase))
+                    {
+                        preferredValues.Add((0, value));
+                        continue;
+                    }
+
+                    if (name.Contains("Hot Spot", StringComparison.OrdinalIgnoreCase) ||
+                        name.Contains("Hotspot", StringComparison.OrdinalIgnoreCase))
+                    {
+                        preferredValues.Add((1, value));
+                        continue;
+                    }
+
+                    if (name.Contains("GPU", StringComparison.OrdinalIgnoreCase) ||
+                        name.Contains("Core", StringComparison.OrdinalIgnoreCase))
+                    {
+                        preferredValues.Add((2, value));
+                        continue;
+                    }
+
+                    fallbackValues.Add(value);
+                }
+            }
+
+            if (preferredValues.Count > 0)
+            {
+                return preferredValues
+                    .OrderBy(v => v.Priority)
+                    .Select(v => Math.Round(v.Value, 1))
+                    .First();
+            }
+
+            if (fallbackValues.Count > 0)
+                return Math.Round(fallbackValues.Average(), 1);
+
+            return null;
+        }
+        catch
+        {
+            return null;
         }
     }
 
@@ -342,6 +421,22 @@ public sealed class PcMetricsService : IDisposable
             return 0;
 
         return bytes / 1024.0 / 1024.0;
+    }
+
+    private static bool IsGpuHardware(IHardware hardware)
+    {
+        return hardware.HardwareType == HardwareType.GpuAmd ||
+               hardware.HardwareType == HardwareType.GpuNvidia ||
+               hardware.HardwareType == HardwareType.GpuIntel;
+    }
+
+    private static bool IsValidTemperature(double value)
+    {
+        if (double.IsNaN(value) || double.IsInfinity(value))
+            return false;
+
+        // Leituras reais de GPU ficam bem abaixo disso; acima costuma ser sensor inválido.
+        return value >= 0 && value <= 130;
     }
 
     private static void UpdateHardwareRecursive(IHardware hardware)

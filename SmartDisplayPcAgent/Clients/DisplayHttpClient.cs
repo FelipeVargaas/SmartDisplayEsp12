@@ -31,7 +31,15 @@ public sealed class DisplayHttpClient : IDisposable
             ram = ToPercentInt(snapshot.RamUsage),
             gpu = ToPercentInt(snapshot.GpuUsage),
             disk = ToPercentInt(snapshot.DiskUsage),
-            diskLabel = NormalizeDiskLabel(snapshot.DiskLabel)
+            diskLabel = NormalizeDiskLabel(snapshot.DiskLabel),
+
+            // Campos preparados para o tema Gamer.
+            // RTSS/MSI ainda não alimenta estes campos; por enquanto eles seguem nulos/vazios.
+            gpuTemp = ToNullableInt(snapshot.GpuTemperature),
+            game = NormalizeGameName(snapshot.Game),
+            fps = snapshot.Fps,
+            frametime = NormalizeFrametime(snapshot.Frametime),
+            source = NormalizeSource(snapshot.Source)
         };
 
         string json = JsonSerializer.Serialize(payload);
@@ -74,6 +82,28 @@ public sealed class DisplayHttpClient : IDisposable
         return Math.Clamp((int)Math.Round(value), 0, 100);
     }
 
+    private static int? ToNullableInt(double? value)
+    {
+        if (!value.HasValue)
+            return null;
+
+        if (double.IsNaN(value.Value) || double.IsInfinity(value.Value))
+            return null;
+
+        return (int)Math.Round(value.Value);
+    }
+
+    private static double? NormalizeFrametime(double? value)
+    {
+        if (!value.HasValue)
+            return null;
+
+        if (double.IsNaN(value.Value) || double.IsInfinity(value.Value) || value.Value < 0)
+            return null;
+
+        return Math.Round(value.Value, 1);
+    }
+
     private static string NormalizeDiskLabel(string label)
     {
         if (string.IsNullOrWhiteSpace(label))
@@ -85,6 +115,26 @@ public sealed class DisplayHttpClient : IDisposable
             value = value[..3];
 
         return value;
+    }
+
+    private static string NormalizeGameName(string? game)
+    {
+        if (string.IsNullOrWhiteSpace(game))
+            return string.Empty;
+
+        string value = game.Trim();
+
+        return value.Length <= 48
+            ? value
+            : value[..48];
+    }
+
+    private static string? NormalizeSource(string? source)
+    {
+        if (string.IsNullOrWhiteSpace(source))
+            return null;
+
+        return source.Trim();
     }
 
     public void Dispose()

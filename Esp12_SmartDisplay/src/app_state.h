@@ -27,6 +27,21 @@ struct AppState
   int lastDiskDrawn;
   String lastDiskLabelDrawn;
 
+  // Dados normalizados para o tema Gamer HUD. Fontes customizadas podem ser
+  // introduzidas futuramente apenas na camada de renderizacao do tema.
+  String gamerGame;
+  String gamerSource;
+  int gamerFps;
+  float gamerFrametime;
+  int gamerGpuTemp;
+  int gamerCpuTemp;
+  float gamerVram;
+  uint32_t gamerDataVersion;
+  uint32_t gamerDrawnVersion;
+  unsigned long gamerLastStatusUpdate;
+  bool gamerShowSource;
+  bool gamerLastPcOnline;
+
   String lastTimeDrawn;
   String lastWeatherDrawn;
   String lastTopLabelDrawn;

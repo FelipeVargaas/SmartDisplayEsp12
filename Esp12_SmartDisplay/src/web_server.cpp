@@ -7,6 +7,8 @@
 #include "config.h"
 #include "metrics.h"
 #include "ota_update.h"
+#include "theme_manager.h"
+#include "theme_render.h"
 #include "web_pages.h"
 #include "wifi_manager.h"
 
@@ -30,6 +32,7 @@ static void handleRoot()
   page.replace("%IP%", WiFi.localIP().toString());
   page.replace("%SSID%", WiFi.SSID());
   page.replace("%RSSI%", String(WiFi.RSSI()));
+  page.replace("%THEME%", themeManagerGetKey(themeManagerGetActive()));
   server.send(200, "text/html", page);
 }
 
@@ -91,12 +94,41 @@ static void handleMetrics()
   server.send(200, "application/json", "{\"ok\":true}");
 }
 
+static void handleTheme()
+{
+  if (server.method() != HTTP_POST) { server.send(405, "application/json", "{\"ok\":false,\"error\":\"method_not_allowed\"}"); return; }
+  String body = server.arg("plain");
+  StaticJsonDocument<96> doc;
+  if (body.length() == 0 || deserializeJson(doc, body)) { server.send(400, "application/json", "{\"ok\":false,\"error\":\"invalid_json\"}"); return; }
+
+  ThemeId theme;
+  String themeKey = doc["theme"] | "";
+  if (!themeManagerThemeFromKey(themeKey, theme)) { server.send(400, "application/json", "{\"ok\":false,\"error\":\"invalid_theme\"}"); return; }
+  if (!themeManagerSetActive(theme)) { server.send(500, "application/json", "{\"ok\":false,\"error\":\"theme_save_failed\"}"); return; }
+
+  themeForceFullRedraw();
+  String json = "{\"ok\":true,\"theme\":\"";
+  json += themeManagerGetKey(themeManagerGetActive());
+  json += "\"}";
+  server.send(200, "application/json", json);
+}
+
+static void handleConfig()
+{
+  String json = "{\"ok\":true,\"theme\":\"";
+  json += themeManagerGetKey(themeManagerGetActive());
+  json += "\",\"pcOnline\":";
+  json += metricsHasRecentPcMetrics() ? "true" : "false";
+  json += "}";
+  server.send(200, "application/json", json);
+}
+
 static void handleStatus()
 {
   String ip = appState.isApMode ? WiFi.softAPIP().toString() : WiFi.localIP().toString();
   String ssid = appState.isApMode ? String(AP_SSID) : WiFi.SSID();
   String json = "{";
-  json += "\"name\":\"PC Monitor\",";
+  json += "\"name\":\"TinyDash\",";
   json += "\"mode\":\""; json += appState.isApMode ? "AP" : "STA"; json += "\",";
   json += "\"ip\":\""; json += ip; json += "\",";
   json += "\"ssid\":\""; json += ssid; json += "\",";
@@ -122,6 +154,8 @@ void webServerSetup()
   server.on("/reset-wifi", HTTP_GET, handleResetWifi);
   server.on("/status", HTTP_GET, handleStatus);
   server.on("/metrics", HTTP_POST, handleMetrics);
+  server.on("/theme", HTTP_POST, handleTheme);
+  server.on("/config", HTTP_GET, handleConfig);
   otaUpdateSetup();
   server.begin();
 }

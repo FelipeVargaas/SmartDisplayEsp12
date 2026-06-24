@@ -20,11 +20,14 @@ const long GMT_OFFSET_SEC = -3 * 3600;
 const int DAYLIGHT_OFFSET_SEC = 0;
 const unsigned long WEATHER_UPDATE_INTERVAL_MS = 10UL * 60UL * 1000UL;
 
-#define EEPROM_SIZE 96
+#define EEPROM_SIZE 128
 #define SSID_ADDR 0
 #define PASS_ADDR 32
 #define MAX_SSID 32
 #define MAX_PASS 64
+#define THEME_STORAGE_ADDR 96
+#define THEME_STORAGE_MAGIC_ADDR 97
+#define THEME_STORAGE_MAGIC 0xA7
 
 const unsigned long PC_METRICS_TIMEOUT_MS = 5000;
 const bool USE_FAKE_METRICS_WHEN_PC_OFFLINE = false;

@@ -3,6 +3,18 @@
   "WorkspaceRootPath": "C:\\gitProjects\\SmartDisplayPcAgent\\SmartDisplayEsp12\\SmartDisplayPcAgent\\",
   "Documents": [
     {
+      "AbsoluteMoniker": "D:0:0:{92368E77-0740-AEC4-1858-495163A88B7E}|SmartDisplayPcAgent.csproj|c:\\gitprojects\\smartdisplaypcagent\\smartdisplayesp12\\smartdisplaypcagent\\clients\\displayhttpclient.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{92368E77-0740-AEC4-1858-495163A88B7E}|SmartDisplayPcAgent.csproj|solutionrelative:clients\\displayhttpclient.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{92368E77-0740-AEC4-1858-495163A88B7E}|SmartDisplayPcAgent.csproj|c:\\gitprojects\\smartdisplaypcagent\\smartdisplayesp12\\smartdisplaypcagent\\models\\diskmetricssnapshot.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{92368E77-0740-AEC4-1858-495163A88B7E}|SmartDisplayPcAgent.csproj|solutionrelative:models\\diskmetricssnapshot.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{92368E77-0740-AEC4-1858-495163A88B7E}|SmartDisplayPcAgent.csproj|c:\\gitprojects\\smartdisplaypcagent\\smartdisplayesp12\\smartdisplaypcagent\\models\\pcmetricssnapshot.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{92368E77-0740-AEC4-1858-495163A88B7E}|SmartDisplayPcAgent.csproj|solutionrelative:models\\pcmetricssnapshot.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
       "AbsoluteMoniker": "D:0:0:{92368E77-0740-AEC4-1858-495163A88B7E}|SmartDisplayPcAgent.csproj|c:\\gitprojects\\smartdisplaypcagent\\smartdisplayesp12\\smartdisplaypcagent\\views\\mainwindow.axaml||{6D5344A2-2FCD-49DE-A09D-6A14FD1B1224}",
       "RelativeMoniker": "D:0:0:{92368E77-0740-AEC4-1858-495163A88B7E}|SmartDisplayPcAgent.csproj|solutionrelative:views\\mainwindow.axaml||{6D5344A2-2FCD-49DE-A09D-6A14FD1B1224}"
     },
@@ -13,18 +25,6 @@
     {
       "AbsoluteMoniker": "D:0:0:{92368E77-0740-AEC4-1858-495163A88B7E}|SmartDisplayPcAgent.csproj|c:\\gitprojects\\smartdisplaypcagent\\smartdisplayesp12\\smartdisplaypcagent\\services\\pcmetricsservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{92368E77-0740-AEC4-1858-495163A88B7E}|SmartDisplayPcAgent.csproj|solutionrelative:services\\pcmetricsservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{92368E77-0740-AEC4-1858-495163A88B7E}|SmartDisplayPcAgent.csproj|c:\\gitprojects\\smartdisplaypcagent\\smartdisplayesp12\\smartdisplaypcagent\\models\\pcmetricssnapshot.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{92368E77-0740-AEC4-1858-495163A88B7E}|SmartDisplayPcAgent.csproj|solutionrelative:models\\pcmetricssnapshot.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{92368E77-0740-AEC4-1858-495163A88B7E}|SmartDisplayPcAgent.csproj|c:\\gitprojects\\smartdisplaypcagent\\smartdisplayesp12\\smartdisplaypcagent\\models\\diskmetricssnapshot.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{92368E77-0740-AEC4-1858-495163A88B7E}|SmartDisplayPcAgent.csproj|solutionrelative:models\\diskmetricssnapshot.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{92368E77-0740-AEC4-1858-495163A88B7E}|SmartDisplayPcAgent.csproj|c:\\gitprojects\\smartdisplaypcagent\\smartdisplayesp12\\smartdisplaypcagent\\clients\\displayhttpclient.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{92368E77-0740-AEC4-1858-495163A88B7E}|SmartDisplayPcAgent.csproj|solutionrelative:clients\\displayhttpclient.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     }
   ],
   "DocumentGroupContainers": [
@@ -38,12 +38,12 @@
           "Children": [
             {
               "$type": "Document",
-              "DocumentIndex": 4,
+              "DocumentIndex": 1,
               "Title": "DiskMetricsSnapshot.cs",
               "DocumentMoniker": "C:\\gitProjects\\SmartDisplayPcAgent\\SmartDisplayEsp12\\SmartDisplayPcAgent\\Models\\DiskMetricsSnapshot.cs",
               "RelativeDocumentMoniker": "Models\\DiskMetricsSnapshot.cs",
-              "ToolTip": "C:\\gitProjects\\SmartDisplayPcAgent\\SmartDisplayEsp12\\SmartDisplayPcAgent\\Models\\DiskMetricsSnapshot.cs",
-              "RelativeToolTip": "Models\\DiskMetricsSnapshot.cs",
+              "ToolTip": "C:\\gitProjects\\SmartDisplayPcAgent\\SmartDisplayEsp12\\SmartDisplayPcAgent\\Models\\DiskMetricsSnapshot.cs*",
+              "RelativeToolTip": "Models\\DiskMetricsSnapshot.cs*",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAAAoAAAACAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2026-06-23T19:36:33.887Z",
@@ -51,12 +51,12 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 3,
+              "DocumentIndex": 2,
               "Title": "PcMetricsSnapshot.cs",
               "DocumentMoniker": "C:\\gitProjects\\SmartDisplayPcAgent\\SmartDisplayEsp12\\SmartDisplayPcAgent\\Models\\PcMetricsSnapshot.cs",
               "RelativeDocumentMoniker": "Models\\PcMetricsSnapshot.cs",
-              "ToolTip": "C:\\gitProjects\\SmartDisplayPcAgent\\SmartDisplayEsp12\\SmartDisplayPcAgent\\Models\\PcMetricsSnapshot.cs",
-              "RelativeToolTip": "Models\\PcMetricsSnapshot.cs",
+              "ToolTip": "C:\\gitProjects\\SmartDisplayPcAgent\\SmartDisplayEsp12\\SmartDisplayPcAgent\\Models\\PcMetricsSnapshot.cs*",
+              "RelativeToolTip": "Models\\PcMetricsSnapshot.cs*",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAAAsAAAACAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2026-06-23T19:33:17.235Z",
@@ -64,25 +64,12 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 2,
-              "Title": "PcMetricsService.cs",
-              "DocumentMoniker": "C:\\gitProjects\\SmartDisplayPcAgent\\SmartDisplayEsp12\\SmartDisplayPcAgent\\Services\\PcMetricsService.cs",
-              "RelativeDocumentMoniker": "Services\\PcMetricsService.cs",
-              "ToolTip": "C:\\gitProjects\\SmartDisplayPcAgent\\SmartDisplayEsp12\\SmartDisplayPcAgent\\Services\\PcMetricsService.cs*",
-              "RelativeToolTip": "Services\\PcMetricsService.cs*",
-              "ViewState": "AgIAALUBAAAAAAAAAAAmwMUBAAAAAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-06-20T18:58:41.724Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 1,
+              "DocumentIndex": 4,
               "Title": "MainWindowViewModel.cs",
               "DocumentMoniker": "C:\\gitProjects\\SmartDisplayPcAgent\\SmartDisplayEsp12\\SmartDisplayPcAgent\\ViewModels\\MainWindowViewModel.cs",
               "RelativeDocumentMoniker": "ViewModels\\MainWindowViewModel.cs",
-              "ToolTip": "C:\\gitProjects\\SmartDisplayPcAgent\\SmartDisplayEsp12\\SmartDisplayPcAgent\\ViewModels\\MainWindowViewModel.cs*",
-              "RelativeToolTip": "ViewModels\\MainWindowViewModel.cs*",
+              "ToolTip": "C:\\gitProjects\\SmartDisplayPcAgent\\SmartDisplayEsp12\\SmartDisplayPcAgent\\ViewModels\\MainWindowViewModel.cs",
+              "RelativeToolTip": "ViewModels\\MainWindowViewModel.cs",
               "ViewState": "AgIAAG0AAAAAAAAAAAAYwIcAAAAXAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2026-06-20T18:56:46.324Z",
@@ -90,27 +77,40 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 0,
+              "DocumentIndex": 3,
               "Title": "MainWindow.axaml",
               "DocumentMoniker": "C:\\gitProjects\\SmartDisplayPcAgent\\SmartDisplayEsp12\\SmartDisplayPcAgent\\Views\\MainWindow.axaml",
               "RelativeDocumentMoniker": "Views\\MainWindow.axaml",
-              "ToolTip": "C:\\gitProjects\\SmartDisplayPcAgent\\SmartDisplayEsp12\\SmartDisplayPcAgent\\Views\\MainWindow.axaml*",
-              "RelativeToolTip": "Views\\MainWindow.axaml*",
+              "ToolTip": "C:\\gitProjects\\SmartDisplayPcAgent\\SmartDisplayEsp12\\SmartDisplayPcAgent\\Views\\MainWindow.axaml",
+              "RelativeToolTip": "Views\\MainWindow.axaml",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003549|",
               "WhenOpened": "2026-06-23T19:28:34.016Z",
               "EditorCaption": ""
             },
             {
               "$type": "Document",
-              "DocumentIndex": 5,
+              "DocumentIndex": 0,
               "Title": "DisplayHttpClient.cs",
               "DocumentMoniker": "C:\\gitProjects\\SmartDisplayPcAgent\\SmartDisplayEsp12\\SmartDisplayPcAgent\\Clients\\DisplayHttpClient.cs",
               "RelativeDocumentMoniker": "Clients\\DisplayHttpClient.cs",
               "ToolTip": "C:\\gitProjects\\SmartDisplayPcAgent\\SmartDisplayEsp12\\SmartDisplayPcAgent\\Clients\\DisplayHttpClient.cs",
               "RelativeToolTip": "Clients\\DisplayHttpClient.cs",
-              "ViewState": "AgIAABEAAAAAAAAAAAAQwB8AAAAwAAAAAAAAAA==",
+              "ViewState": "AgIAAEQAAAAAAAAAAAA8wFoAAAAFAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2026-06-20T20:12:33.886Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 5,
+              "Title": "PcMetricsService.cs",
+              "DocumentMoniker": "C:\\gitProjects\\SmartDisplayPcAgent\\SmartDisplayEsp12\\SmartDisplayPcAgent\\Services\\PcMetricsService.cs",
+              "RelativeDocumentMoniker": "Services\\PcMetricsService.cs",
+              "ToolTip": "C:\\gitProjects\\SmartDisplayPcAgent\\SmartDisplayEsp12\\SmartDisplayPcAgent\\Services\\PcMetricsService.cs",
+              "RelativeToolTip": "Services\\PcMetricsService.cs",
+              "ViewState": "AgIAALUBAAAAAAAAAAAmwMUBAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-06-20T18:58:41.724Z",
               "EditorCaption": ""
             }
           ]

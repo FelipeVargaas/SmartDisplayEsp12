@@ -8,6 +8,8 @@
 #include "config.h"
 #include "display_ui.h"
 #include "metrics.h"
+#include "theme_manager.h"
+#include "theme_render.h"
 #include "weather.h"
 #include "web_server.h"
 #include "wifi_manager.h"
@@ -21,6 +23,7 @@ void appSetup()
   displayUiInit();
   if (!appState.safeMode) displayUiInitSprites();
   displayUiDrawBootScreen();
+  themeManagerLoad();
   if (!wifiConnect()) wifiStartApMode();
   webServerSetup();
   if (!appState.isApMode)
@@ -36,10 +39,10 @@ void appSetup()
     {
       displayUiDrawStartupInfo(ipAddress);
       delay(900);
-      displayUiDrawDashboardBase();
+      themeDrawBase();
       weatherUpdate();
       appState.lastWeatherUpdate = millis();
-      displayUiUpdateHeaderIfNeeded();
+      themeUpdateIfNeeded();
     }
   }
   Serial.println(); Serial.println("=====================================");
@@ -69,13 +72,10 @@ void appLoop()
   unsigned long now = millis();
   if (!metricsHasRecentPcMetrics() && USE_FAKE_METRICS_WHEN_PC_OFFLINE) metricsUpdateFakeTargets();
   metricsAnimateFakeValues();
-  metricsUpdateDisplayIfNeeded();
-  displayUiUpdateTopLabelIfNeeded();
-  if (now - appState.lastClockCheck >= CLOCK_CHECK_INTERVAL_MS) { appState.lastClockCheck = now; displayUiUpdateHeaderIfNeeded(); }
-  if (now - appState.lastFooterUpdate >= FOOTER_UPDATE_INTERVAL_MS) { appState.lastFooterUpdate = now; displayUiDrawFooter(); }
   if (now - appState.lastWeatherUpdate >= WEATHER_UPDATE_INTERVAL_MS)
   {
     appState.lastWeatherUpdate = now;
-    if (weatherUpdate()) displayUiUpdateHeaderIfNeeded();
+    if (weatherUpdate()) appState.lastClockCheck = 0;
   }
+  themeUpdateIfNeeded();
 }

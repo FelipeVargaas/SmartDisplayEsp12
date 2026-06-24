@@ -1,0 +1,283 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:SmartDisplayPcAgent.ViewModels"
+             x:Class="SmartDisplayPcAgent.Views.DashboardView"
+             x:DataType="vm:DashboardViewModel">
+
+    <Grid ColumnDefinitions="1.05*,1*"
+          RowDefinitions="1.15*,0.85*"
+          ColumnSpacing="16"
+          RowSpacing="16"
+          Margin="0,12,0,0">
+
+        <Border Grid.Row="0"
+                Grid.Column="0"
+                Classes="card">
+            <Grid RowDefinitions="Auto,*"
+                  RowSpacing="14">
+                <TextBlock Text="LOCAL METRICS"
+                           Classes="section-title"/>
+
+                <Grid Grid.Row="1"
+                      RowDefinitions="*,*,*,*"
+                      RowSpacing="10">
+                    <Grid Grid.Row="0"
+                          RowDefinitions="Auto,Auto"
+                          RowSpacing="7">
+                        <Grid ColumnDefinitions="*,Auto">
+                            <TextBlock Text="CPU" Classes="metric-title"/>
+                            <TextBlock Grid.Column="1" Text="{Binding CpuUsage, StringFormat='{}{0:0}%'}" Classes="metric-value"/>
+                        </Grid>
+                        <ProgressBar Grid.Row="1" Minimum="0" Maximum="100" Value="{Binding CpuUsage}"/>
+                    </Grid>
+
+                    <Grid Grid.Row="1"
+                          RowDefinitions="Auto,Auto"
+                          RowSpacing="7">
+                        <Grid ColumnDefinitions="*,Auto">
+                            <TextBlock Text="RAM" Classes="metric-title"/>
+                            <TextBlock Grid.Column="1" Text="{Binding RamUsage, StringFormat='{}{0:0}%'}" Classes="metric-value"/>
+                        </Grid>
+                        <ProgressBar Grid.Row="1" Minimum="0" Maximum="100" Value="{Binding RamUsage}"/>
+                    </Grid>
+
+                    <Grid Grid.Row="2"
+                          RowDefinitions="Auto,Auto"
+                          RowSpacing="7">
+                        <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="18">
+                            <TextBlock Text="GPU" Classes="metric-title"/>
+                            <TextBlock Grid.Column="1" Text="{Binding GpuUsage, StringFormat='{}{0:0}%'}" Classes="metric-value"/>
+                            <TextBlock Grid.Column="2" Text="{Binding GpuTemperatureDisplayCompactText}" Classes="accent" FontSize="18" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                        </Grid>
+                        <ProgressBar Grid.Row="1" Minimum="0" Maximum="100" Value="{Binding GpuUsage}"/>
+                    </Grid>
+
+                    <Grid Grid.Row="3"
+                          RowDefinitions="Auto,Auto"
+                          RowSpacing="7">
+                        <Grid ColumnDefinitions="*,Auto">
+                            <TextBlock Text="{Binding DiskLabel}" Classes="metric-title"/>
+                            <TextBlock Grid.Column="1" Text="{Binding DiskUsage, StringFormat='{}{0:0}%'}" Classes="metric-value"/>
+                        </Grid>
+                        <ProgressBar Grid.Row="1" Minimum="0" Maximum="100" Value="{Binding DiskUsage}"/>
+                    </Grid>
+                </Grid>
+            </Grid>
+        </Border>
+
+        <Border Grid.Row="0"
+                Grid.Column="1"
+                Classes="card">
+            <Grid RowDefinitions="Auto,*"
+                  RowSpacing="12">
+                <TextBlock Text="PC SUMMARY"
+                           Classes="section-title"/>
+
+                <Grid Grid.Row="1"
+                      RowDefinitions="*,*"
+                      ColumnDefinitions="*,*"
+                      RowSpacing="10"
+                      ColumnSpacing="10">
+
+                    <Border Grid.Row="0"
+                            Grid.Column="0"
+                            Background="#0D141C"
+                            BorderBrush="#1E2A36"
+                            BorderThickness="1"
+                            CornerRadius="8"
+                            Padding="10">
+                        <Grid RowDefinitions="Auto,*,Auto,Auto,Auto"
+                              RowSpacing="4">
+                            <TextBlock Text="CPU"
+                                       Classes="accent"
+                                       FontWeight="SemiBold"
+                                       FontSize="12"/>
+
+                            <TextBlock Grid.Row="1"
+                                       Text="{Binding CpuNameText}"
+                                       FontWeight="SemiBold"
+                                       FontSize="13"
+                                       TextWrapping="Wrap"
+                                       MaxLines="2"/>
+
+                            <Grid Grid.Row="2" ColumnDefinitions="*,Auto">
+                                <TextBlock Text="Cores" Classes="muted" FontSize="12"/>
+                                <TextBlock Grid.Column="1" Text="{Binding CpuCoresText}" FontSize="12"/>
+                            </Grid>
+
+                            <Grid Grid.Row="3" ColumnDefinitions="*,Auto">
+                                <TextBlock Text="Threads" Classes="muted" FontSize="12"/>
+                                <TextBlock Grid.Column="1" Text="{Binding CpuThreadsText}" FontSize="12"/>
+                            </Grid>
+
+                            <Grid Grid.Row="4" ColumnDefinitions="*,Auto">
+                                <TextBlock Text="Clock" Classes="muted" FontSize="12"/>
+                                <TextBlock Grid.Column="1" Text="{Binding CpuClockText}" FontSize="12"/>
+                            </Grid>
+                        </Grid>
+                    </Border>
+
+                    <Border Grid.Row="0"
+                            Grid.Column="1"
+                            Background="#0D141C"
+                            BorderBrush="#1E2A36"
+                            BorderThickness="1"
+                            CornerRadius="8"
+                            Padding="10">
+                        <Grid RowDefinitions="Auto,*,Auto,Auto,Auto"
+                              RowSpacing="4">
+                            <TextBlock Text="MEMORY"
+                                       Classes="accent"
+                                       FontWeight="SemiBold"
+                                       FontSize="12"/>
+
+                            <TextBlock Grid.Row="1"
+                                       Text="{Binding MemoryTotalText}"
+                                       FontWeight="SemiBold"
+                                       FontSize="13"
+                                       TextWrapping="Wrap"
+                                       MaxLines="2"/>
+
+                            <Grid Grid.Row="2" ColumnDefinitions="*,Auto">
+                                <TextBlock Text="Speed" Classes="muted" FontSize="12"/>
+                                <TextBlock Grid.Column="1" Text="{Binding MemorySpeedText}" FontSize="12"/>
+                            </Grid>
+
+                            <Grid Grid.Row="3" ColumnDefinitions="*,Auto">
+                                <TextBlock Text="Modules" Classes="muted" FontSize="12"/>
+                                <TextBlock Grid.Column="1" Text="{Binding MemoryModulesText}" FontSize="12"/>
+                            </Grid>
+
+                            <Grid Grid.Row="4" ColumnDefinitions="*,Auto">
+                                <TextBlock Text="Channel" Classes="muted" FontSize="12"/>
+                                <TextBlock Grid.Column="1" Text="{Binding MemoryChannelText}" FontSize="12"/>
+                            </Grid>
+                        </Grid>
+                    </Border>
+
+                    <Border Grid.Row="1"
+                            Grid.Column="0"
+                            Background="#0D141C"
+                            BorderBrush="#1E2A36"
+                            BorderThickness="1"
+                            CornerRadius="8"
+                            Padding="10">
+                        <Grid RowDefinitions="Auto,*,Auto,Auto,Auto"
+                              RowSpacing="4">
+                            <TextBlock Text="GPU"
+                                       Classes="accent"
+                                       FontWeight="SemiBold"
+                                       FontSize="12"/>
+
+                            <TextBlock Grid.Row="1"
+                                       Text="{Binding GpuNameText}"
+                                       FontWeight="SemiBold"
+                                       FontSize="13"
+                                       TextWrapping="Wrap"
+                                       MaxLines="2"/>
+
+                            <Grid Grid.Row="2" ColumnDefinitions="*,Auto">
+                                <TextBlock Text="VRAM" Classes="muted" FontSize="12"/>
+                                <TextBlock Grid.Column="1" Text="{Binding GpuVramText}" FontSize="12"/>
+                            </Grid>
+
+                            <Grid Grid.Row="3" ColumnDefinitions="*,Auto">
+                                <TextBlock Text="Clock" Classes="muted" FontSize="12"/>
+                                <TextBlock Grid.Column="1" Text="{Binding GpuClockText}" FontSize="12"/>
+                            </Grid>
+
+                            <Grid Grid.Row="4" ColumnDefinitions="*,Auto">
+                                <TextBlock Text="Temp" Classes="muted" FontSize="12"/>
+                                <TextBlock Grid.Column="1" Text="{Binding PcSummaryGpuTemperatureText}" FontSize="12"/>
+                            </Grid>
+                        </Grid>
+                    </Border>
+
+                    <Border Grid.Row="1"
+                            Grid.Column="1"
+                            Background="#0D141C"
+                            BorderBrush="#1E2A36"
+                            BorderThickness="1"
+                            CornerRadius="8"
+                            Padding="10">
+                        <Grid RowDefinitions="Auto,*,Auto,Auto,Auto"
+                              RowSpacing="4">
+                            <TextBlock Text="STORAGE"
+                                       Classes="accent"
+                                       FontWeight="SemiBold"
+                                       FontSize="12"/>
+
+                            <TextBlock Grid.Row="1"
+                                       Text="{Binding StorageNameText}"
+                                       FontWeight="SemiBold"
+                                       FontSize="13"
+                                       TextWrapping="Wrap"
+                                       MaxLines="2"/>
+
+                            <Grid Grid.Row="2" ColumnDefinitions="*,Auto">
+                                <TextBlock Text="Total" Classes="muted" FontSize="12"/>
+                                <TextBlock Grid.Column="1" Text="{Binding StorageTotalText}" FontSize="12"/>
+                            </Grid>
+
+                            <Grid Grid.Row="3" ColumnDefinitions="*,Auto">
+                                <TextBlock Text="Used" Classes="muted" FontSize="12"/>
+                                <TextBlock Grid.Column="1" Text="{Binding StorageUsedText}" FontSize="12"/>
+                            </Grid>
+
+                            <ProgressBar Grid.Row="4"
+                                         Minimum="0"
+                                         Maximum="100"
+                                         Height="6"
+                                         Value="{Binding StorageUsedPercent}"/>
+                        </Grid>
+                    </Border>
+                </Grid>
+            </Grid>
+        </Border>
+
+        <Border Grid.Row="1"
+                Grid.Column="0"
+                Classes="card">
+            <Grid RowDefinitions="Auto,*,Auto"
+                  RowSpacing="10">
+                <TextBlock Text="{Binding ThemePanelTitle}"
+                           Classes="section-title"/>
+
+                <TextBlock Grid.Row="1"
+                           Text="{Binding ThemePanelBodyText}"
+                           FontFamily="Consolas, Cascadia Mono"
+                           FontSize="13"
+                           TextWrapping="Wrap"/>
+
+                <TextBlock Grid.Row="2"
+                           Text="{Binding ThemePanelStatusText}"
+                           Classes="muted"
+                           FontSize="12"
+                           TextWrapping="Wrap"/>
+            </Grid>
+        </Border>
+
+        <Border Grid.Row="1"
+                Grid.Column="1"
+                Classes="card">
+            <Grid RowDefinitions="Auto,*,Auto"
+                  RowSpacing="12">
+                <TextBlock Text="DISKS"
+                           Classes="section-title"/>
+
+                <TextBlock Grid.Row="1"
+                           Text="{Binding DisksText}"
+                           Classes="muted"
+                           FontFamily="Consolas, Cascadia Mono"
+                           FontSize="12"
+                           TextWrapping="Wrap"/>
+
+                <TextBlock Grid.Row="2"
+                           Text="Telemetry controls moved to Device"
+                           Classes="muted"
+                           FontSize="12"
+                           HorizontalAlignment="Right"/>
+            </Grid>
+        </Border>
+    </Grid>
+</UserControl>

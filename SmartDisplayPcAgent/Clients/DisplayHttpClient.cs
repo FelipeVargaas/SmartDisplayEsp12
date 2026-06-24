@@ -12,7 +12,7 @@ public sealed class DisplayHttpClient : IDisposable
 {
     private readonly HttpClient _httpClient = new()
     {
-        Timeout = TimeSpan.FromMilliseconds(900)
+        Timeout = TimeSpan.FromMilliseconds(1800)
     };
 
     public async Task<bool> SendMetricsAsync(

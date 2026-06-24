@@ -14,6 +14,15 @@
 
 static ESP8266WebServer server(80);
 
+static String formatUptime()
+{
+  unsigned long totalSeconds = millis() / 1000UL;
+  unsigned long hours = totalSeconds / 3600UL;
+  unsigned long minutes = (totalSeconds % 3600UL) / 60UL;
+  unsigned long seconds = totalSeconds % 60UL;
+  return String(hours) + "h " + String(minutes) + "m " + String(seconds) + "s";
+}
+
 ESP8266WebServer& webServerGet()
 {
   return server;
@@ -33,6 +42,11 @@ static void handleRoot()
   page.replace("%SSID%", WiFi.SSID());
   page.replace("%RSSI%", String(WiFi.RSSI()));
   page.replace("%THEME%", themeManagerGetKey(themeManagerGetActive()));
+  page.replace("%UPTIME%", formatUptime());
+  page.replace("%RESET_REASON%", ESP.getResetReason());
+  page.replace("%HEAP%", String(ESP.getFreeHeap()));
+  page.replace("%HEAP_FRAGMENTATION%", String(ESP.getHeapFragmentation()) + "%");
+  page.replace("%MAX_FREE_BLOCK%", String(ESP.getMaxFreeBlockSize()));
   server.send(200, "text/html", page);
 }
 
@@ -143,6 +157,12 @@ static void handleStatus()
   json += "\"mode\":\""; json += appState.isApMode ? "AP" : "STA"; json += "\",";
   json += "\"ip\":\""; json += ip; json += "\",";
   json += "\"ssid\":\""; json += ssid; json += "\",";
+  json += "\"rssi\":";
+  json += appState.isApMode ? "null" : String(WiFi.RSSI());
+  json += ",";
+  json += "\"theme\":\""; json += themeManagerGetKey(themeManagerGetActive()); json += "\",";
+  json += "\"uptimeMs\":"; json += String(millis()); json += ",";
+  json += "\"resetReason\":\""; json += ESP.getResetReason(); json += "\",";
   json += "\"cpu\":"; json += String(appState.cpuCurrent); json += ",";
   json += "\"ram\":"; json += String(appState.ramCurrent); json += ",";
   json += "\"gpu\":"; json += String(appState.gpuCurrent); json += ",";
@@ -153,6 +173,8 @@ static void handleStatus()
   json += "\"temperature\":"; json += appState.hasWeather ? String(appState.weatherTemp, 1) : "null"; json += ",";
   json += "\"weather\":\""; json += appState.weatherText; json += "\",";
   json += "\"heap\":"; json += String(ESP.getFreeHeap()); json += ",";
+  json += "\"heapFragmentation\":"; json += String(ESP.getHeapFragmentation()); json += ",";
+  json += "\"maxFreeBlockSize\":"; json += String(ESP.getMaxFreeBlockSize()); json += ",";
   json += "\"flashSize\":"; json += String(ESP.getFlashChipRealSize()); json += "}";
   server.send(200, "application/json", json);
 }

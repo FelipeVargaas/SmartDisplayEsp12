@@ -27,5 +27,11 @@ build_property.EnableCodeStyleSeverity =
 [C:/gitProjects/SmartDisplayPcAgent/SmartDisplayEsp12/SmartDisplayPcAgent/App.axaml]
 build_metadata.AdditionalFiles.SourceItemGroup = AvaloniaXaml
 
+[C:/gitProjects/SmartDisplayPcAgent/SmartDisplayEsp12/SmartDisplayPcAgent/Views/DashboardView.axaml]
+build_metadata.AdditionalFiles.SourceItemGroup = AvaloniaXaml
+
+[C:/gitProjects/SmartDisplayPcAgent/SmartDisplayEsp12/SmartDisplayPcAgent/Views/DeviceView.axaml]
+build_metadata.AdditionalFiles.SourceItemGroup = AvaloniaXaml
+
 [C:/gitProjects/SmartDisplayPcAgent/SmartDisplayEsp12/SmartDisplayPcAgent/Views/MainWindow.axaml]
 build_metadata.AdditionalFiles.SourceItemGroup = AvaloniaXaml

@@ -22,6 +22,31 @@ static void displayCentered(const String& text, int y, int size, uint16_t color)
   appState.tft.print(text);
 }
 
+static void displayTinyDashBrand(int titleY)
+{
+  appState.tft.setTextFont(4);
+  displayCentered("TinyDash", titleY, 2, TFT_ORANGE);
+
+  const String byText = "by";
+  const String vendorText = "VargasTec";
+  appState.tft.setTextFont(1);
+  appState.tft.setTextSize(2);
+  int byWidth = appState.tft.textWidth(byText);
+  appState.tft.setTextFont(2);
+  appState.tft.setTextSize(1);
+  int vendorWidth = appState.tft.textWidth(vendorText);
+  int totalWidth = byWidth + 5 + vendorWidth;
+  int startX = (DISPLAY_WIDTH - totalWidth) / 2;
+  appState.tft.setTextFont(1);
+  appState.tft.setTextSize(2);
+  appState.tft.setTextColor(TFT_LIGHTGREY, TFT_BLACK);
+  appState.tft.setCursor(startX, titleY + 62); appState.tft.print(byText);
+  appState.tft.setTextFont(2);
+  appState.tft.setTextSize(1);
+  appState.tft.setTextColor(TFT_WHITE, TFT_BLACK);
+  appState.tft.setCursor(startX + byWidth + 5, titleY + 59); appState.tft.print(vendorText);
+}
+
 void displayUiInit()
 {
   pinMode(DISPLAY_BL_PIN, OUTPUT);
@@ -42,16 +67,18 @@ void displayUiInitSprites()
 void displayUiDrawBootScreen()
 {
   appState.tft.fillScreen(TFT_BLACK);
-  displayCentered("SMART DISPLAY", 56, 2, TFT_CYAN);
-  displayCentered("FW SAFE-TEST", 92, 1, TFT_LIGHTGREY);
-  displayCentered("Iniciando Wi-Fi...", 126, 1, TFT_WHITE);
-  displayCentered("OTA: /update", 182, 1, TFT_ORANGE);
+  displayTinyDashBrand(15);
+  appState.tft.setTextFont(2);
+  displayCentered("Iniciando Wi-Fi...", 112, 1, TFT_WHITE);
+  displayCentered("OTA: /update", 184, 1, TFT_ORANGE);
 }
 
 void displayUiDrawStartupInfo(const String& ipAddress)
 {
   appState.tft.fillRect(0, 100, DISPLAY_WIDTH, 54, TFT_BLACK);
+  appState.tft.setTextFont(2);
   displayCentered("REDE CONECTADA", 104, 1, TFT_GREEN);
+  appState.tft.setTextFont(1);
   displayCentered("IP: " + ipAddress, 126, 2, TFT_WHITE);
 }
 

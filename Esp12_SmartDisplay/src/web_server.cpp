@@ -30,11 +30,6 @@ static void handleRoot()
   page.replace("%IP%", WiFi.localIP().toString());
   page.replace("%SSID%", WiFi.SSID());
   page.replace("%RSSI%", String(WiFi.RSSI()));
-  page.replace("%CPU%", String(appState.cpuCurrent));
-  page.replace("%RAM%", String(appState.ramCurrent));
-  page.replace("%GPU%", String(appState.gpuCurrent));
-  page.replace("%TEMP%", appState.hasWeather ? String(appState.weatherTemp, 1) + " C" : "--");
-  page.replace("%HEAP%", String(ESP.getFreeHeap()));
   server.send(200, "text/html", page);
 }
 

@@ -4,8 +4,8 @@
         xmlns:views="using:SmartDisplayPcAgent.Views"
         x:Class="SmartDisplayPcAgent.Views.MainWindow"
         x:DataType="vm:MainWindowViewModel"
-        Width="1200"
-        Height="800"
+        Width="1100"
+        Height="750"
         MinWidth="900"
         MinHeight="620"
         Title="TinyDash Agent"
@@ -35,7 +35,7 @@
         </Style>
 
         <Style Selector="TextBlock.metric-value">
-            <Setter Property="Foreground" Value="#168BFF"/>
+            <Setter Property="Foreground" Value="#FF7A1A"/>
             <Setter Property="FontSize" Value="24"/>
             <Setter Property="FontWeight" Value="SemiBold"/>
         </Style>
@@ -58,7 +58,7 @@
 
         <Style Selector="ProgressBar">
             <Setter Property="Height" Value="8"/>
-            <Setter Property="Foreground" Value="#168BFF"/>
+            <Setter Property="Foreground" Value="#FF7A1A"/>
             <Setter Property="Background" Value="#1E2A36"/>
         </Style>
 
@@ -78,6 +78,7 @@
             <Setter Property="BorderBrush" Value="#304154"/>
             <Setter Property="CornerRadius" Value="6"/>
             <Setter Property="Padding" Value="10,6"/>
+            <Setter Property="Cursor" Value="Hand"/>
         </Style>
 
         <Style Selector="Button">
@@ -88,6 +89,13 @@
             <Setter Property="CornerRadius" Value="7"/>
             <Setter Property="Padding" Value="14,8"/>
             <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Cursor" Value="Hand"/>
+        </Style>
+
+        <Style Selector="Button:pointerover">
+            <Setter Property="Foreground" Value="#FF8A2A"/>
+            <Setter Property="BorderBrush" Value="#FF8A2A"/>
+            <Setter Property="Background" Value="#121C25"/>
         </Style>
 
         <Style Selector="Button.accent-button">
@@ -95,13 +103,33 @@
             <Setter Property="BorderBrush" Value="#D46F2A"/>
         </Style>
 
-        <Style Selector="TabControl">
-            <Setter Property="Background" Value="#070B10"/>
+        <Style Selector="Button.nav-tab">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderBrush" Value="Transparent"/>
+            <Setter Property="Foreground" Value="#8FA3B8"/>
+            <Setter Property="FontSize" Value="23"/>
+            <Setter Property="Padding" Value="10,6"/>
+            <Setter Property="CornerRadius" Value="4"/>
         </Style>
 
-        <Style Selector="TabItem">
-            <Setter Property="FontWeight" Value="SemiBold"/>
-            <Setter Property="Padding" Value="18,8"/>
+        <Style Selector="Button.nav-tab:pointerover">
+            <Setter Property="Foreground" Value="#FF8A2A"/>
+            <Setter Property="Background" Value="#0A1017"/>
+        </Style>
+
+        <Style Selector="Button.nav-tab.active">
+            <Setter Property="Foreground" Value="#F2F6FA"/>
+            <Setter Property="BorderBrush" Value="#FF7A1A"/>
+            <Setter Property="BorderThickness" Value="0,0,0,2"/>
+        </Style>
+
+        <Style Selector="CheckBox">
+            <Setter Property="Cursor" Value="Hand"/>
+        </Style>
+
+        <Style Selector="CheckBox:checked /template/ Border#NormalRectangle">
+            <Setter Property="Background" Value="#FF7A1A"/>
+            <Setter Property="BorderBrush" Value="#FF7A1A"/>
         </Style>
     </Window.Styles>
 
@@ -110,7 +138,7 @@
           RowSpacing="14">
 
         <Grid Grid.Row="0"
-              ColumnDefinitions="*,Auto"
+              ColumnDefinitions="*,Auto,*"
               ColumnSpacing="18">
             <StackPanel Grid.Column="0"
                         Orientation="Horizontal"
@@ -138,10 +166,27 @@
                 </StackPanel>
             </StackPanel>
 
-            <Border Grid.Column="1"
+            <StackPanel Grid.Column="1"
+                        Orientation="Horizontal"
+                        Spacing="18"
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center">
+                <Button Classes="nav-tab"
+                        Classes.active="{Binding IsDashboardSelected}"
+                        Content="Dashboard"
+                        Command="{Binding SelectDashboardCommand}"/>
+
+                <Button Classes="nav-tab"
+                        Classes.active="{Binding IsDeviceSelected}"
+                        Content="Device"
+                        Command="{Binding SelectDeviceCommand}"/>
+            </StackPanel>
+
+            <Border Grid.Column="2"
                     Classes="card"
                     Padding="16,10"
-                    MinWidth="260">
+                    MinWidth="260"
+                    HorizontalAlignment="Right">
                 <Grid ColumnDefinitions="Auto,*"
                       RowDefinitions="Auto,Auto"
                       ColumnSpacing="8">
@@ -169,15 +214,15 @@
             </Border>
         </Grid>
 
-        <TabControl Grid.Row="1">
-            <TabItem Header="Dashboard">
+        <Grid Grid.Row="1">
+            <Grid IsVisible="{Binding IsDashboardSelected}">
                 <views:DashboardView DataContext="{Binding Dashboard}"/>
-            </TabItem>
+            </Grid>
 
-            <TabItem Header="Device">
+            <Grid IsVisible="{Binding IsDeviceSelected}">
                 <views:DeviceView DataContext="{Binding Device}"/>
-            </TabItem>
-        </TabControl>
+            </Grid>
+        </Grid>
 
         <Grid Grid.Row="2"
               ColumnDefinitions="*,Auto,*"

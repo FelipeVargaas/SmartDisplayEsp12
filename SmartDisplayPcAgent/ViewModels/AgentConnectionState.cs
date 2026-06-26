@@ -8,14 +8,14 @@ public partial class AgentConnectionState : ObservableObject
     private string displayIp = "192.168.0.181";
 
     [ObservableProperty]
-    private bool sendToDisplayEnabled;
+    private bool sendToDisplayEnabled = true;
 
     [ObservableProperty]
-    private string displayStatusText = "Envio para display desativado";
+    private string displayStatusText = "Pronto para enviar telemetria";
 
     [ObservableProperty]
-    private string displayStatusShortText = "Paused";
+    private string displayStatusShortText = "Ready";
 
     [ObservableProperty]
-    private string lastPostText = "Disabled";
+    private string lastPostText = "Waiting";
 }

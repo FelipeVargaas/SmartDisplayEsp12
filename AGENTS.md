@@ -20,6 +20,59 @@ O objetivo principal é manter firmware e aplicativo desktop coerentes entre si.
 
 ---
 
+## Diretrizes atuais do TinyDash
+
+Estas diretrizes refletem decisões recentes do produto e devem orientar novas alterações.
+
+### Comunicação PC Agent <-> ESP
+
+- O PC Agent deve ser gentil com o ESP8266: evitar polling agressivo e evitar requisições concorrentes desnecessárias.
+- Requisições HTTP para o ESP devem ser coordenadas/serializadas quando houver risco de colisão entre `/metrics`, `/status`, `/theme`, OTA, clima ou outras rotas.
+- `/metrics` pode continuar frequente quando o envio de telemetria estiver ativo, pois é o canal de dados vivos do display.
+- `/status` deve ser usado para diagnóstico, refresh de estado e confirmação de tema/dispositivo. Não usar `/status` como polling agressivo.
+- Ao iniciar o PC Agent, é desejável obter um `/status` inicial cedo para preencher tema, IP e estado real do ESP sem deixar a UI com dados genéricos por muito tempo.
+- Quando um campo opcional precisa ser limpo no firmware, enviar limpeza explícita (`null` ou string vazia, conforme o contrato existente). Não omitir o campo se a omissão fizer o ESP preservar valor antigo.
+
+### Estado visual e dados vencidos
+
+- O firmware deve ser honesto visualmente: dado inexistente, vencido ou sem comunicação recente deve aparecer como `--`, não como mock ou último valor aparentemente real.
+- Não manter FPS, frametime, temperaturas ou métricas antigas na tela como se ainda fossem atuais depois que o PC Agent parar de enviar dados recentes.
+- Mocks visuais só devem existir quando explicitamente pedidos para demonstração/animação. Em temas operacionais, preferir `--`.
+- O estado `pcOnline`/métricas recentes deve governar se CPU, RAM, GPU, disco, FPS, frametime e temperaturas são mostrados como reais ou como `--`.
+
+### Clima
+
+- Clima continua sendo responsabilidade do firmware. Não mover a busca de clima para o PC Agent como atalho.
+- Requisição de clima deve acontecer apenas em temas que usam clima.
+- Ao entrar em tema que usa clima, tentar obter clima com cautela no início; depois de obter sucesso, usar intervalo longo.
+- Evitar que clima concorra de forma agressiva com `/metrics`, `/status`, OTA ou outras rotas sensíveis.
+
+### Tema Gamer
+
+- FPS e frametime só fazem sentido quando há jogo/RTSS válido.
+- Quando o jogo fecha ou o RTSS deixa de fornecer dados válidos, o PC Agent deve limpar `game`, `fps`, `frametime` e `source` no payload enviado ao ESP.
+- Sem jogo válido, o display deve mostrar `GAME HUD`, `RTSS OFF` e `--` para FPS/frametime.
+- Sem métricas recentes do PC, o Gamer HUD deve mostrar `--` para CPU, RAM, GPU, GPU temp, FPS e frametime.
+- O nome amigável do jogo é responsabilidade do PC Agent. O firmware recebe apenas o nome já normalizado no campo `game`.
+- Mapeamento de processo para nome amigável deve ser local ao PC Agent, em JSON local, sem mudar o protocolo do ESP.
+
+### UI do PC Agent
+
+- Manter visual escuro, limpo, compacto e operacional.
+- Controles clicáveis devem ter cursor de mão e feedback de hover claro, especialmente tabs, botões e checkboxes.
+- Botões destrutivos ou sensíveis, como reset de Wi-Fi salvo e firmware update OTA, devem ter confirmação antes da ação real.
+- A aba Device deve priorizar diagnóstico real do ESP: conexão, tema ativo, PC online, heap, reset, clima e status atualizado.
+- A aba Dashboard deve mostrar dados locais e estado de envio sem parecer uma landing page.
+- Configurações locais do PC Agent, como mapeamento de nomes de jogos, devem ficar no PC e não exigir mudança de firmware.
+
+### Build e execução local
+
+- No VS Code, o debug do PC Agent pode usar uma saída isolada como `.vscode/bin/pcagent` para evitar lock do `bin/Debug/net9.0` quando o Visual Studio ou uma execução anterior estiver usando a DLL.
+- Se o build falhar por arquivo em uso, investigar processo segurando `SmartDisplayPcAgent.dll` antes de alterar código de aplicação.
+- Não fazer upload/flash do firmware sem autorização explícita, mesmo quando o build do PlatformIO passar.
+
+---
+
 ## Visão geral do sistema
 
 ### Firmware
@@ -577,3 +630,4 @@ Prioridade prática:
 3. Instruções diretas do usuário.
 
 Em caso de conflito, perguntar antes de alterar algo crítico.
+

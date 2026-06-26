@@ -4,6 +4,7 @@
              x:Class="SmartDisplayPcAgent.Views.DashboardView"
              x:DataType="vm:DashboardViewModel">
 
+    <Grid>
     <Grid ColumnDefinitions="1.05*,1*"
           RowDefinitions="1.15*,0.85*"
           ColumnSpacing="16"
@@ -47,7 +48,7 @@
                         <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="18">
                             <TextBlock Text="GPU" Classes="metric-title"/>
                             <TextBlock Grid.Column="1" Text="{Binding GpuUsage, StringFormat='{}{0:0}%'}" Classes="metric-value"/>
-                            <TextBlock Grid.Column="2" Text="{Binding GpuTemperatureDisplayCompactText}" Classes="accent" FontSize="18" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                            <TextBlock Grid.Column="2" Text="{Binding GpuTemperatureDisplayCompactText}" Classes="muted" FontSize="16" FontWeight="SemiBold" VerticalAlignment="Center"/>
                         </Grid>
                         <ProgressBar Grid.Row="1" Minimum="0" Maximum="100" Value="{Binding GpuUsage}"/>
                     </Grid>
@@ -249,11 +250,20 @@
                            FontSize="13"
                            TextWrapping="Wrap"/>
 
-                <TextBlock Grid.Row="2"
-                           Text="{Binding ThemePanelStatusText}"
-                           Classes="muted"
-                           FontSize="12"
-                           TextWrapping="Wrap"/>
+                <Grid Grid.Row="2"
+                      ColumnDefinitions="*,Auto"
+                      ColumnSpacing="10">
+                    <TextBlock Grid.Column="0"
+                               Text="{Binding ThemePanelStatusText}"
+                               Classes="muted"
+                               FontSize="12"
+                               TextWrapping="Wrap"/>
+
+                    <Button Grid.Column="1"
+                            Classes="accent-button"
+                            Content="Game names"
+                            Command="{Binding OpenGameNamesCommand}"/>
+                </Grid>
             </Grid>
         </Border>
 
@@ -279,5 +289,68 @@
                            HorizontalAlignment="Right"/>
             </Grid>
         </Border>
+    </Grid>
+
+    <Border IsVisible="{Binding IsGameNamesDialogOpen}"
+            Background="#B0070B10">
+        <Border Classes="card"
+                Width="460"
+                Padding="20"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center">
+            <Grid RowDefinitions="Auto,Auto,Auto,Auto"
+                  RowSpacing="16">
+                <TextBlock Text="Game names"
+                           Classes="section-title"/>
+
+                <TextBlock Grid.Row="1"
+                           Text="Map the detected process to the friendly name sent to the TinyDash Gamer HUD."
+                           Classes="muted"
+                           TextWrapping="Wrap"/>
+
+                <Grid Grid.Row="2"
+                      RowDefinitions="Auto,Auto,Auto,Auto"
+                      RowSpacing="10">
+                    <Grid ColumnDefinitions="130,*">
+                        <TextBlock Text="Process" Classes="muted"/>
+                        <TextBlock Grid.Column="1" Text="{Binding GameAliasProcessText}" HorizontalAlignment="Right"/>
+                    </Grid>
+
+                    <Grid Grid.Row="1" ColumnDefinitions="130,*">
+                        <TextBlock Text="Display name" Classes="muted"/>
+                        <TextBox Grid.Column="1"
+                                 Text="{Binding GameAliasDisplayNameText, Mode=TwoWay}"
+                                 Watermark="Resident Evil Requiem"/>
+                    </Grid>
+
+                    <Grid Grid.Row="2" ColumnDefinitions="130,*">
+                        <TextBlock Text="Source" Classes="muted"/>
+                        <TextBlock Grid.Column="1" Text="{Binding GamerSourceText}" HorizontalAlignment="Right"/>
+                    </Grid>
+
+                    <Grid Grid.Row="3" ColumnDefinitions="130,*">
+                        <TextBlock Text="Status" Classes="muted"/>
+                        <TextBlock Grid.Column="1" Text="{Binding GameAliasStatusText}" HorizontalAlignment="Right"/>
+                    </Grid>
+                </Grid>
+
+                <StackPanel Grid.Row="3"
+                            Orientation="Horizontal"
+                            HorizontalAlignment="Right"
+                            Spacing="10">
+                    <Button Content="Close"
+                            Command="{Binding CloseGameNamesCommand}"/>
+
+                    <Button Classes="accent-button"
+                            Content="Delete"
+                            Command="{Binding DeleteGameAliasCommand}"/>
+
+                    <Button Classes="accent-button"
+                            Content="Save"
+                            Command="{Binding SaveGameAliasCommand}"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+    </Border>
     </Grid>
 </UserControl>

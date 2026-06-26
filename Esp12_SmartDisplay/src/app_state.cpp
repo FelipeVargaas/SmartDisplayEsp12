@@ -4,8 +4,8 @@
 
 AppState::AppState() :
   tft(), metricSprite(&tft), metricSpriteReady(false), isApMode(false), safeMode(false), lastRestartIntent("unknown"), lastResetCheckpoint("unknown"),
-  cpuCurrent(37), ramCurrent(68), gpuCurrent(22), diskCurrent(DISK_MOCK_USAGE), diskLabel("SSD"),
-  cpuTarget(37), ramTarget(68), gpuTarget(22), lastPcMetricsReceived(0),
+  cpuCurrent(-1), ramCurrent(-1), gpuCurrent(-1), diskCurrent(-1), diskLabel("SSD"),
+  cpuTarget(-1), ramTarget(-1), gpuTarget(-1), lastPcMetricsReceived(0),
   lastCpuDrawn(-1), lastRamDrawn(-1), lastGpuDrawn(-1), lastDiskDrawn(-1), lastDiskLabelDrawn(""),
   gamerGame(""), gamerSource(""), gamerFps(-1), gamerFrametime(-1.0f), gamerGpuTemp(-1), gamerCpuTemp(-1), gamerVram(-1.0f),
   gamerDataVersion(0), gamerDrawnVersion(UINT32_MAX), gamerLastStatusUpdate(0), gamerShowSource(true), gamerLastPcOnline(false),

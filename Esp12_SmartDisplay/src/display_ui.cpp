@@ -195,10 +195,11 @@ static void drawMonoIcon16(int x, int y, const uint8_t* icon, uint16_t color)
 
 static String formatPercent2Digits(int value)
 {
-  if (value < 0) value = 0;
+  if (value < 0) return "--";
   if (value > 100) value = 100;
-  char buffer[5];
-  snprintf(buffer, sizeof(buffer), "%02d%%", value);
+  uint8_t percent = static_cast<uint8_t>(value);
+  char buffer[6];
+  snprintf(buffer, sizeof(buffer), "%02u%%", percent);
   return String(buffer);
 }
 
@@ -283,7 +284,8 @@ void displayUiDrawMetricRow(int y, const String& label, int value, uint16_t base
   appState.tft.setTextColor(CLEAN_TFT_THEME.primaryText, CLEAN_TFT_THEME.background);
   int percentWidth = appState.tft.textWidth(percentText);
   appState.tft.setCursor(METRIC_X + METRIC_PERCENT_X + METRIC_PERCENT_W - percentWidth, y); appState.tft.print(percentText);
-  int fillWidth = (METRIC_BAR_W * value) / 100;
+  int barValue = constrain(value, 0, 100);
+  int fillWidth = (METRIC_BAR_W * barValue) / 100;
   appState.tft.fillRoundRect(METRIC_X + METRIC_BAR_X, y + 3, METRIC_BAR_W, 16, 8, CLEAN_TFT_THEME.barTrack);
   if (fillWidth > 0) appState.tft.fillRoundRect(METRIC_X + METRIC_BAR_X, y + 3, fillWidth, 16, 8, barColor);
 }
@@ -360,15 +362,20 @@ void displayUiDrawDashboardBase()
   appState.tft.fillScreen(CLEAN_TFT_THEME.background);
   appState.lastTimeDrawn = ""; appState.lastWeatherDrawn = "";
   appState.lastCpuDrawn = -1; appState.lastRamDrawn = -1; appState.lastGpuDrawn = -1; appState.lastDiskDrawn = -1; appState.lastDiskLabelDrawn = "";
+  bool pcOnline = metricsHasRecentPcMetrics();
   drawHeader();
   appState.lastTopLabelDrawn = "";
   displayUiUpdateTopLabelIfNeeded();
-  displayUiDrawMetricRow(CPU_Y, "CPU", appState.cpuCurrent, CLEAN_TFT_THEME.cpu);
-  displayUiDrawMetricRow(RAM_Y, "RAM", appState.ramCurrent, CLEAN_TFT_THEME.ram);
-  displayUiDrawMetricRow(GPU_Y, appState.diskLabel, appState.diskCurrent, CLEAN_TFT_THEME.cpu);
-  displayUiDrawMetricRow(DISK_Y, "GPU", appState.gpuCurrent, CLEAN_TFT_THEME.gpu);
-  appState.lastCpuDrawn = appState.cpuCurrent; appState.lastRamDrawn = appState.ramCurrent; appState.lastGpuDrawn = appState.gpuCurrent;
-  appState.lastDiskDrawn = appState.diskCurrent; appState.lastDiskLabelDrawn = appState.diskLabel;
+  int cpuValue = pcOnline ? appState.cpuCurrent : -1;
+  int ramValue = pcOnline ? appState.ramCurrent : -1;
+  int diskValue = pcOnline ? appState.diskCurrent : -1;
+  int gpuValue = pcOnline ? appState.gpuCurrent : -1;
+  displayUiDrawMetricRow(CPU_Y, "CPU", cpuValue, CLEAN_TFT_THEME.cpu);
+  displayUiDrawMetricRow(RAM_Y, "RAM", ramValue, CLEAN_TFT_THEME.ram);
+  displayUiDrawMetricRow(GPU_Y, appState.diskLabel, diskValue, CLEAN_TFT_THEME.cpu);
+  displayUiDrawMetricRow(DISK_Y, "GPU", gpuValue, CLEAN_TFT_THEME.gpu);
+  appState.lastCpuDrawn = cpuValue; appState.lastRamDrawn = ramValue; appState.lastGpuDrawn = gpuValue;
+  appState.lastDiskDrawn = diskValue; appState.lastDiskLabelDrawn = appState.diskLabel;
   displayUiDrawFooter();
 }
 

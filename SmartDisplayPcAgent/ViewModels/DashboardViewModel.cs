@@ -19,6 +19,7 @@ public partial class DashboardViewModel : ObservableObject, IDisposable
     private readonly DeviceControlClient _deviceControlClient = new();
     private readonly HardwareInfoService _hardwareInfoService = new();
     private readonly GamerTelemetryService _gamerTelemetryService = new();
+    private readonly GameAliasService _gameAliasService = new();
     private readonly CancellationTokenSource _cts = new();
 
     private DateTime _lastDeviceStatusRefresh = DateTime.MinValue;
@@ -30,6 +31,7 @@ public partial class DashboardViewModel : ObservableObject, IDisposable
         State = state;
         LoadHardwareSummary();
         UpdateThemePanel(_activeThemeKey);
+        _ = Task.Run(() => RefreshDeviceStatusForDashboardAsync(_cts.Token));
         _ = Task.Run(() => StartMetricsLoopAsync(_cts.Token));
     }
 
@@ -152,6 +154,64 @@ public partial class DashboardViewModel : ObservableObject, IDisposable
     [ObservableProperty]
     private string gamerStatusText = "RTSS OFF";
 
+    [ObservableProperty]
+    private bool isGameNamesDialogOpen;
+
+    [ObservableProperty]
+    private string gameAliasProcessText = "--";
+
+    [ObservableProperty]
+    private string gameAliasDisplayNameText = "";
+
+    [ObservableProperty]
+    private string gameAliasStatusText = "No game detected yet.";
+
+    private async Task RefreshDeviceStatusForDashboardAsync(CancellationToken cancellationToken)
+    {
+        if (_isDeviceStatusRefreshRunning)
+            return;
+
+        _lastDeviceStatusRefresh = DateTime.Now;
+        _isDeviceStatusRefreshRunning = true;
+
+        try
+        {
+            var deviceStatus = await _deviceControlClient.GetStatusAsync(State.DisplayIp, cancellationToken, waitForSlot: true);
+
+            if (deviceStatus is not null)
+            {
+                _activeThemeKey = NormalizeThemeKey(deviceStatus.Theme);
+                string themeText = FormatThemeName(_activeThemeKey);
+                string deviceHeader = $"{themeText} · {deviceStatus.Ip}";
+
+                Dispatcher.UIThread.Post(() =>
+                {
+                    ActiveThemeText = themeText;
+                    DeviceHeaderText = deviceHeader;
+                    EspHeaderStatusText = "ESP ONLINE";
+                    UpdateThemePanel(_activeThemeKey);
+                });
+            }
+            else
+            {
+                bool hasRecentEspSuccess = DisplayRequestCoordinator.HasRecentSuccess(TimeSpan.FromSeconds(45));
+                string espHeaderStatus = _deviceControlClient.LastRequestSkipped
+                    ? hasRecentEspSuccess ? "ESP ONLINE" : "ESP WAIT"
+                    : hasRecentEspSuccess ? "ESP INSTAVEL" : "ESP OFFLINE";
+
+                Dispatcher.UIThread.Post(() =>
+                {
+                    DeviceHeaderText = $"No response · {State.DisplayIp}";
+                    EspHeaderStatusText = espHeaderStatus;
+                });
+            }
+        }
+        finally
+        {
+            _isDeviceStatusRefreshRunning = false;
+        }
+    }
+
     private async Task StartMetricsLoopAsync(CancellationToken cancellationToken)
     {
         while (!cancellationToken.IsCancellationRequested)
@@ -160,16 +220,18 @@ public partial class DashboardViewModel : ObservableObject, IDisposable
             {
                 var snapshot = _metricsService.GetSnapshot();
                 var gamerTelemetry = _gamerTelemetryService.GetSnapshot();
+                string gamerProcessName = gamerTelemetry.Game;
+                string gamerDisplayName = _gameAliasService.Resolve(gamerProcessName);
 
                 snapshot = snapshot with
                 {
-                    Game = gamerTelemetry.Game,
+                    Game = gamerDisplayName,
                     Fps = gamerTelemetry.Fps,
                     Frametime = gamerTelemetry.Frametime,
                     Source = gamerTelemetry.Source
                 };
 
-                string gamerGameText = string.IsNullOrWhiteSpace(gamerTelemetry.Game) ? "--" : gamerTelemetry.Game;
+                string gamerGameText = string.IsNullOrWhiteSpace(gamerDisplayName) ? "--" : gamerDisplayName;
                 string gamerFpsText = gamerTelemetry.Fps.HasValue ? gamerTelemetry.Fps.Value.ToString() : "--";
                 string gamerFrametimeText = gamerTelemetry.Frametime.HasValue ? $"{gamerTelemetry.Frametime.Value:0.0} ms" : "--";
                 string gamerSourceText = string.IsNullOrWhiteSpace(gamerTelemetry.Source) ? "RTSS OFF" : gamerTelemetry.Source;
@@ -183,7 +245,7 @@ public partial class DashboardViewModel : ObservableObject, IDisposable
                     ? Math.Round(snapshot.GpuTemperature.Value)
                     : null;
 
-                string gpuTemperatureDisplayCompactText = FormatTemperatureCompact(snapshot.GpuTemperature);
+                string gpuTemperatureDisplayCompactText = FormatTemperatureAside(snapshot.GpuTemperature);
 
                 double disk = Math.Round(snapshot.DiskUsage);
                 string diskLabel = snapshot.DiskLabel;
@@ -284,6 +346,9 @@ public partial class DashboardViewModel : ObservableObject, IDisposable
                     GpuTemperatureDisplayCompactText = gpuTemperatureDisplayCompactText;
                     PcSummaryGpuTemperatureText = gpuTemperatureDisplayCompactText;
                     GamerGameText = gamerGameText;
+                    GameAliasProcessText = string.IsNullOrWhiteSpace(gamerProcessName) ? "--" : gamerProcessName;
+                    if (!IsGameNamesDialogOpen)
+                        GameAliasDisplayNameText = _gameAliasService.GetAlias(gamerProcessName);
                     GamerFpsText = gamerFpsText;
                     GamerFrametimeText = gamerFrametimeText;
                     GamerSourceText = gamerSourceText;
@@ -360,6 +425,59 @@ public partial class DashboardViewModel : ObservableObject, IDisposable
         State.DisplayStatusText = DisplayStatusText;
         State.DisplayStatusShortText = DisplayStatusShortText;
         State.LastPostText = LastPostText;
+    }
+
+    [RelayCommand]
+    private void OpenGameNames()
+    {
+        GameAliasDisplayNameText = _gameAliasService.GetAlias(GameAliasProcessText);
+        GameAliasStatusText = GameAliasProcessText == "--"
+            ? "No game detected yet."
+            : $"Editing alias for {GameAliasProcessText}";
+        IsGameNamesDialogOpen = true;
+    }
+
+    [RelayCommand]
+    private void CloseGameNames()
+    {
+        IsGameNamesDialogOpen = false;
+    }
+
+    [RelayCommand]
+    private void SaveGameAlias()
+    {
+        if (string.IsNullOrWhiteSpace(GameAliasProcessText) || GameAliasProcessText == "--")
+        {
+            GameAliasStatusText = "No detected process to save.";
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(GameAliasDisplayNameText))
+        {
+            GameAliasStatusText = "Enter a display name first.";
+            return;
+        }
+
+        _gameAliasService.SaveAlias(GameAliasProcessText, GameAliasDisplayNameText);
+        GamerGameText = _gameAliasService.Resolve(GameAliasProcessText);
+        GameAliasStatusText = $"Saved {GameAliasProcessText}.";
+        UpdateThemePanel(_activeThemeKey);
+    }
+
+    [RelayCommand]
+    private void DeleteGameAlias()
+    {
+        if (string.IsNullOrWhiteSpace(GameAliasProcessText) || GameAliasProcessText == "--")
+        {
+            GameAliasStatusText = "No detected process to remove.";
+            return;
+        }
+
+        _gameAliasService.DeleteAlias(GameAliasProcessText);
+        GameAliasDisplayNameText = string.Empty;
+        GamerGameText = GameAliasProcessText;
+        GameAliasStatusText = $"Removed alias for {GameAliasProcessText}.";
+        UpdateThemePanel(_activeThemeKey);
     }
 
     public void Dispose()
@@ -498,6 +616,13 @@ public partial class DashboardViewModel : ObservableObject, IDisposable
         return temperature.HasValue
             ? $"{temperature.Value:0}°C"
             : "--";
+    }
+
+    private static string FormatTemperatureAside(double? temperature)
+    {
+        return temperature.HasValue
+            ? $"| {temperature.Value:0}°C"
+            : string.Empty;
     }
 
     private static bool ShouldSendDiskMetrics(string? theme)

@@ -83,10 +83,10 @@ public sealed class DisplayHttpClient : IDisposable
             string? source = NormalizeSource(snapshot.Source);
 
             if (gpuTemp.HasValue) payload["gpuTemp"] = gpuTemp.Value;
-            if (!string.IsNullOrWhiteSpace(game)) payload["game"] = game;
-            if (snapshot.Fps.HasValue) payload["fps"] = snapshot.Fps.Value;
-            if (frametime.HasValue) payload["frametime"] = frametime.Value;
-            if (!string.IsNullOrWhiteSpace(source)) payload["source"] = source;
+            payload["game"] = game;
+            payload["fps"] = snapshot.Fps.HasValue ? snapshot.Fps.Value : null;
+            payload["frametime"] = frametime.HasValue ? frametime.Value : null;
+            payload["source"] = source;
         }
 
         string json = JsonSerializer.Serialize(payload);

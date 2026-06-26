@@ -6,6 +6,7 @@ using SmartDisplayPcAgent.Models;
 using SmartDisplayPcAgent.Services;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -120,6 +121,20 @@ public partial class DeviceViewModel : ObservableObject, IDisposable
 
     [ObservableProperty]
     private bool isApplyingTheme;
+
+    [ObservableProperty]
+    private bool isConfirmDialogOpen;
+
+    [ObservableProperty]
+    private string confirmDialogTitle = string.Empty;
+
+    [ObservableProperty]
+    private string confirmDialogMessage = string.Empty;
+
+    [ObservableProperty]
+    private string confirmDialogActionText = "Confirm";
+
+    private string pendingConfirmAction = string.Empty;
 
     partial void OnSelectedThemeChanged(ThemeOption? value)
     {
@@ -291,6 +306,70 @@ public partial class DeviceViewModel : ObservableObject, IDisposable
         State.LastPostText = sent ? "OK · now" : "Failed";
     }
 
+    [RelayCommand]
+    private async Task OpenServerAsync()
+    {
+        if (string.IsNullOrWhiteSpace(State.DisplayIp))
+        {
+            StatusMessage = "Configure target IP first.";
+            return;
+        }
+
+        using var timeoutCts = new CancellationTokenSource(TimeSpan.FromSeconds(3));
+        var status = await _deviceControlClient.GetStatusAsync(State.DisplayIp, timeoutCts.Token, waitForSlot: true);
+
+        if (status is null)
+        {
+            StatusMessage = string.IsNullOrWhiteSpace(_deviceControlClient.LastError)
+                ? $"Sem resposta de {State.DisplayIp}"
+                : _deviceControlClient.LastError;
+            return;
+        }
+
+        string url = NormalizeDeviceUrl(State.DisplayIp);
+        Process.Start(new ProcessStartInfo(url) { UseShellExecute = true });
+        StatusMessage = $"Abrindo {url}";
+    }
+
+    [RelayCommand]
+    private void RequestResetWifi()
+    {
+        pendingConfirmAction = "reset_wifi";
+        ConfirmDialogTitle = "Reset saved Wi-Fi?";
+        ConfirmDialogMessage = "This will ask the ESP to forget the saved Wi-Fi credentials. Keep this guarded so it cannot happen by accident.";
+        ConfirmDialogActionText = "Reset Wi-Fi";
+        IsConfirmDialogOpen = true;
+    }
+
+    [RelayCommand]
+    private void RequestFirmwareUpdate()
+    {
+        pendingConfirmAction = "firmware_update";
+        ConfirmDialogTitle = "Open firmware update?";
+        ConfirmDialogMessage = "Firmware update is an administrative action. This button is prepared for a later round and will not upload anything now.";
+        ConfirmDialogActionText = "Continue";
+        IsConfirmDialogOpen = true;
+    }
+
+    [RelayCommand]
+    private void CancelConfirmDialog()
+    {
+        pendingConfirmAction = string.Empty;
+        IsConfirmDialogOpen = false;
+    }
+
+    [RelayCommand]
+    private void ConfirmDialog()
+    {
+        if (pendingConfirmAction == "reset_wifi")
+            StatusMessage = "Reset Wi-Fi confirmado. A chamada real sera ligada em uma rodada futura.";
+        else if (pendingConfirmAction == "firmware_update")
+            StatusMessage = "Firmware Update OTA confirmado. Funcao real sera ligada em uma rodada futura.";
+
+        pendingConfirmAction = string.Empty;
+        IsConfirmDialogOpen = false;
+    }
+
     public void Dispose()
     {
         _cts.Cancel();
@@ -343,5 +422,18 @@ public partial class DeviceViewModel : ObservableObject, IDisposable
             return $"{value / 1024:0.0} KB";
 
         return $"{value:0} B";
+    }
+
+    private static string NormalizeDeviceUrl(string displayIp)
+    {
+        string value = displayIp.Trim();
+
+        if (!value.StartsWith("http://", StringComparison.OrdinalIgnoreCase) &&
+            !value.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
+        {
+            value = "http://" + value;
+        }
+
+        return value.TrimEnd('/') + "/";
     }
 }

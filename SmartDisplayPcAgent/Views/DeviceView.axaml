@@ -4,6 +4,7 @@
              x:Class="SmartDisplayPcAgent.Views.DeviceView"
              x:DataType="vm:DeviceViewModel">
 
+    <Grid>
     <Grid ColumnDefinitions="1*,1*"
           RowDefinitions="*,Auto"
           ColumnSpacing="16"
@@ -19,7 +20,7 @@
                            Classes="section-title"/>
 
                 <Grid Grid.Row="1"
-                      RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto"
+                      RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto"
                       RowSpacing="10">
                     <Grid ColumnDefinitions="120,*">
                         <TextBlock Text="Name" Classes="muted"/>
@@ -33,7 +34,11 @@
 
                     <Grid Grid.Row="2" ColumnDefinitions="120,*">
                         <TextBlock Text="Agent target" Classes="muted"/>
-                        <TextBox Grid.Column="1" Text="{Binding State.DisplayIp, Mode=TwoWay}" Height="34"/>
+                        <TextBox Grid.Column="1"
+                                 Text="{Binding State.DisplayIp, Mode=TwoWay}"
+                                 Width="170"
+                                 Height="34"
+                                 HorizontalAlignment="Right"/>
                     </Grid>
 
                     <Grid Grid.Row="3" ColumnDefinitions="120,*">
@@ -53,20 +58,45 @@
 
                     <Grid Grid.Row="6" ColumnDefinitions="120,*">
                         <TextBlock Text="Theme" Classes="muted"/>
-                        <TextBlock Grid.Column="1" Text="{Binding DeviceThemeText}" Foreground="#168BFF" HorizontalAlignment="Right"/>
+                        <TextBlock Grid.Column="1" Text="{Binding DeviceThemeText}" Foreground="#FF7A1A" HorizontalAlignment="Right"/>
                     </Grid>
 
                     <Grid Grid.Row="7" ColumnDefinitions="120,*">
                         <TextBlock Text="PC Online" Classes="muted"/>
                         <TextBlock Grid.Column="1" Text="{Binding PcOnlineText}" Classes="ok" HorizontalAlignment="Right"/>
                     </Grid>
+
+                    <Button Grid.Row="8"
+                            Classes="accent-button"
+                            Content="Refresh"
+                            Command="{Binding RefreshStatusCommand}"
+                            HorizontalAlignment="Right"
+                            Margin="0,6,0,0"/>
                 </Grid>
 
-                <Button Grid.Row="2"
-                        Classes="accent-button"
-                        Content="Refresh"
-                        Command="{Binding RefreshStatusCommand}"
-                        HorizontalAlignment="Right"/>
+                <Grid Grid.Row="2"
+                    ColumnDefinitions="0.8*,1.1*,1.2*"
+                    ColumnSpacing="10">
+
+                    <Button Grid.Column="0"
+                            Classes="accent-button"
+                            Content="Open server"
+                            Command="{Binding OpenServerCommand}"
+                            HorizontalAlignment="Stretch"/>
+
+                    <Button Grid.Column="1"
+                            Classes="accent-button"
+                            Content="Reset saved Wi-Fi"
+                            Command="{Binding RequestResetWifiCommand}"
+                            HorizontalAlignment="Stretch"/>
+
+                    <Button Grid.Column="2"
+                            Classes="accent-button"
+                            Content="Firmware Update OTA"
+                            Command="{Binding RequestFirmwareUpdateCommand}"
+                            HorizontalAlignment="Stretch"/>
+
+                </Grid>
             </Grid>
         </Border>
 
@@ -79,71 +109,73 @@
                            Classes="section-title"/>
 
                 <Grid Grid.Row="1"
-                      RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto"
-                      RowSpacing="10">
-                    <Grid ColumnDefinitions="120,*">
-                        <TextBlock Text="Uptime" Classes="muted"/>
-                        <TextBlock Grid.Column="1" Text="{Binding UptimeText}" HorizontalAlignment="Right"/>
+                      ColumnDefinitions="1*,1*"
+                      ColumnSpacing="26">
+                    <Grid Grid.Column="0"
+                          RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto"
+                          RowSpacing="10">
+                        <TextBlock Text="Runtime" Classes="muted" FontWeight="SemiBold"/>
+
+                        <Grid Grid.Row="1" ColumnDefinitions="96,*">
+                            <TextBlock Text="Uptime" Classes="muted"/>
+                            <TextBlock Grid.Column="1" Text="{Binding UptimeText}" HorizontalAlignment="Right"/>
+                        </Grid>
+
+                        <Grid Grid.Row="2" ColumnDefinitions="96,*">
+                            <TextBlock Text="Last reset" Classes="muted"/>
+                            <TextBlock Grid.Column="1" Text="{Binding ResetReasonText}" HorizontalAlignment="Right"/>
+                        </Grid>
+
+                        <Grid Grid.Row="3" ColumnDefinitions="96,*">
+                            <TextBlock Text="Checkpoint" Classes="muted"/>
+                            <TextBlock Grid.Column="1" Text="{Binding LastCheckpointText}" HorizontalAlignment="Right"/>
+                        </Grid>
+
+                        <Grid Grid.Row="4" ColumnDefinitions="96,*">
+                            <TextBlock Text="Last data" Classes="muted"/>
+                            <TextBlock Grid.Column="1" Text="{Binding LastMetricsText}" HorizontalAlignment="Right"/>
+                        </Grid>
+
+                        <Grid Grid.Row="5" ColumnDefinitions="96,*">
+                            <TextBlock Text="Marker" Classes="muted"/>
+                            <TextBlock Grid.Column="1" Text="{Binding RestartIntentText}" HorizontalAlignment="Right"/>
+                        </Grid>
                     </Grid>
 
-                    <Grid Grid.Row="1" ColumnDefinitions="120,*">
-                        <TextBlock Text="Last reset" Classes="muted"/>
-                        <TextBlock Grid.Column="1" Text="{Binding ResetReasonText}" HorizontalAlignment="Right"/>
-                    </Grid>
+                    <Grid Grid.Column="1"
+                          RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto"
+                          RowSpacing="10">
+                        <TextBlock Text="Health" Classes="muted" FontWeight="SemiBold"/>
 
-                    <Grid Grid.Row="2" ColumnDefinitions="120,*">
-                        <TextBlock Text="Reset detail" Classes="muted"/>
-                        <TextBlock Grid.Column="1" Text="{Binding ResetInfoText}" HorizontalAlignment="Right"/>
-                    </Grid>
+                        <Grid Grid.Row="1" ColumnDefinitions="96,*">
+                            <TextBlock Text="Heap" Classes="muted"/>
+                            <TextBlock Grid.Column="1" Text="{Binding HeapText}" HorizontalAlignment="Right"/>
+                        </Grid>
 
-                    <Grid Grid.Row="3" ColumnDefinitions="120,*">
-                        <TextBlock Text="Marker" Classes="muted"/>
-                        <TextBlock Grid.Column="1" Text="{Binding RestartIntentText}" HorizontalAlignment="Right"/>
-                    </Grid>
+                        <Grid Grid.Row="2" ColumnDefinitions="96,*">
+                            <TextBlock Text="Max block" Classes="muted"/>
+                            <TextBlock Grid.Column="1" Text="{Binding MaxFreeBlockText}" HorizontalAlignment="Right"/>
+                        </Grid>
 
-                    <Grid Grid.Row="4" ColumnDefinitions="120,*">
-                        <TextBlock Text="Checkpoint" Classes="muted"/>
-                        <TextBlock Grid.Column="1" Text="{Binding LastCheckpointText}" HorizontalAlignment="Right"/>
-                    </Grid>
+                        <Grid Grid.Row="3" ColumnDefinitions="96,*">
+                            <TextBlock Text="Weather" Classes="muted"/>
+                            <TextBlock Grid.Column="1" Text="{Binding WeatherText}" HorizontalAlignment="Right"/>
+                        </Grid>
 
-                    <Grid Grid.Row="5" ColumnDefinitions="120,*">
-                        <TextBlock Text="Heap" Classes="muted"/>
-                        <TextBlock Grid.Column="1" Text="{Binding HeapText}" HorizontalAlignment="Right"/>
-                    </Grid>
+                        <Grid Grid.Row="4" ColumnDefinitions="96,*">
+                            <TextBlock Text="Temp" Classes="muted"/>
+                            <TextBlock Grid.Column="1" Text="{Binding TemperatureText}" HorizontalAlignment="Right"/>
+                        </Grid>
 
-                    <Grid Grid.Row="6" ColumnDefinitions="120,*">
-                        <TextBlock Text="Frag" Classes="muted"/>
-                        <TextBlock Grid.Column="1" Text="{Binding HeapFragmentationText}" HorizontalAlignment="Right"/>
-                    </Grid>
+                        <Grid Grid.Row="5" ColumnDefinitions="96,*">
+                            <TextBlock Text="Advanced" Classes="muted"/>
+                            <TextBlock Grid.Column="1" Text="{Binding WeatherStatusText}" HorizontalAlignment="Right"/>
+                        </Grid>
 
-                    <Grid Grid.Row="7" ColumnDefinitions="120,*">
-                        <TextBlock Text="Max block" Classes="muted"/>
-                        <TextBlock Grid.Column="1" Text="{Binding MaxFreeBlockText}" HorizontalAlignment="Right"/>
-                    </Grid>
-
-                    <Grid Grid.Row="8" ColumnDefinitions="120,*">
-                        <TextBlock Text="Flash" Classes="muted"/>
-                        <TextBlock Grid.Column="1" Text="{Binding FlashText}" HorizontalAlignment="Right"/>
-                    </Grid>
-
-                    <Grid Grid.Row="9" ColumnDefinitions="120,*">
-                        <TextBlock Text="Weather" Classes="muted"/>
-                        <TextBlock Grid.Column="1" Text="{Binding WeatherText}" HorizontalAlignment="Right"/>
-                    </Grid>
-
-                    <Grid Grid.Row="10" ColumnDefinitions="120,*">
-                        <TextBlock Text="Temp" Classes="muted"/>
-                        <TextBlock Grid.Column="1" Text="{Binding TemperatureText}" HorizontalAlignment="Right"/>
-                    </Grid>
-
-                    <Grid Grid.Row="11" ColumnDefinitions="120,*">
-                        <TextBlock Text="Weather status" Classes="muted"/>
-                        <TextBlock Grid.Column="1" Text="{Binding WeatherStatusText}" HorizontalAlignment="Right"/>
-                    </Grid>
-
-                    <Grid Grid.Row="12" ColumnDefinitions="120,*">
-                        <TextBlock Text="Last data" Classes="muted"/>
-                        <TextBlock Grid.Column="1" Text="{Binding LastMetricsText}" HorizontalAlignment="Right"/>
+                        <Grid Grid.Row="6" ColumnDefinitions="96,*">
+                            <TextBlock Text="Memory" Classes="muted"/>
+                            <TextBlock Grid.Column="1" Text="{Binding HeapFragmentationText}" HorizontalAlignment="Right"/>
+                        </Grid>
                     </Grid>
                 </Grid>
 
@@ -181,7 +213,7 @@
                         <TextBlock Text="Active" Classes="muted"/>
                         <TextBlock Grid.Column="1"
                                    Text="{Binding DeviceThemeText}"
-                                   Foreground="#168BFF"
+                                   Foreground="#FF7A1A"
                                    FontSize="18"
                                    FontWeight="SemiBold"/>
                     </Grid>
@@ -255,5 +287,38 @@
                 </Grid>
             </Grid>
         </Border>
+    </Grid>
+
+    <Border IsVisible="{Binding IsConfirmDialogOpen}"
+            Background="#B0070B10">
+        <Border Classes="card"
+                Width="420"
+                Padding="20"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center">
+            <Grid RowDefinitions="Auto,Auto,Auto"
+                  RowSpacing="16">
+                <TextBlock Text="{Binding ConfirmDialogTitle}"
+                           Classes="section-title"/>
+
+                <TextBlock Grid.Row="1"
+                           Text="{Binding ConfirmDialogMessage}"
+                           Classes="muted"
+                           TextWrapping="Wrap"/>
+
+                <StackPanel Grid.Row="2"
+                            Orientation="Horizontal"
+                            HorizontalAlignment="Right"
+                            Spacing="10">
+                    <Button Content="Cancel"
+                            Command="{Binding CancelConfirmDialogCommand}"/>
+
+                    <Button Classes="accent-button"
+                            Content="{Binding ConfirmDialogActionText}"
+                            Command="{Binding ConfirmDialogCommand}"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+    </Border>
     </Grid>
 </UserControl>

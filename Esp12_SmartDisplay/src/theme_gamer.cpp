@@ -85,6 +85,21 @@ void gamerValueCard(int x, int y, const char* label, const char* value, uint16_t
   appState.tft.setCursor(gamerCenteredValueX(x, value), y + 21); appState.tft.print(value);
 }
 
+void gamerFrameCard(int x, int y, const char* value, const char* unit)
+{
+  appState.tft.fillRect(x + 2, y + 2, CARD_W - 4, CARD_H - 4, GAMER_CARD);
+  gamerLabel("FRAME", x + 9, y + 8, GAMER_TEXT);
+  appState.tft.setTextFont(2); appState.tft.setTextSize(2); appState.tft.setTextColor(GAMER_TEXT, GAMER_CARD);
+  int valueWidth = appState.tft.textWidth(value);
+  appState.tft.setTextSize(1);
+  int unitWidth = appState.tft.textWidth(unit);
+  int startX = x + (CARD_W - valueWidth - unitWidth - 4) / 2;
+  appState.tft.setTextSize(2);
+  appState.tft.setCursor(startX, y + 21); appState.tft.print(value);
+  appState.tft.setTextSize(1);
+  appState.tft.setCursor(startX + valueWidth + 4, y + 30); appState.tft.print(unit);
+}
+
 void gamerTemperatureCard(int x, int y, int temperature)
 {
   appState.tft.fillRect(x + 2, y + 2, CARD_W - 4, CARD_H - 4, GAMER_CARD);
@@ -136,7 +151,9 @@ void gamerDrawHeader()
   int startX = (DISPLAY_WIDTH - groupWidth) / 2;
   if (showSource) appState.tft.fillCircle(startX + 2, 13, 2, sourceOnline ? GAMER_GREEN : TFT_RED);
   appState.tft.setTextColor(showSource ? GAMER_TEXT : GAMER_MUTED, TFT_BLACK);
-  appState.tft.setCursor(startX + (showSource ? 9 : 0), 8); appState.tft.print(status);
+  int textX = startX + (showSource ? 9 : 0);
+  appState.tft.setCursor(textX, 8); appState.tft.print(status);
+  appState.tft.setCursor(textX + 1, 8); appState.tft.print(status);
 }
 
 void gamerDrawValues()
@@ -145,23 +162,21 @@ void gamerDrawValues()
   gamerDrawHeader();
   bool pcOnline = metricsHasRecentPcMetrics();
   char fpsText[16];
-  if (!pcOnline) snprintf(fpsText, sizeof(fpsText), "144");
-  else if (appState.gamerFps < 0) snprintf(fpsText, sizeof(fpsText), "--");
+  if (!pcOnline || appState.gamerFps < 0) snprintf(fpsText, sizeof(fpsText), "--");
   else snprintf(fpsText, sizeof(fpsText), "%d", appState.gamerFps);
   gamerValueCard(LEFT_X, ROW1_Y, "FPS", fpsText, GAMER_CYAN);
   yield();
-  char frameText[12];
-  if (!pcOnline) snprintf(frameText, sizeof(frameText), "6.9 ms");
-  else if (appState.gamerFrametime < 0) snprintf(frameText, sizeof(frameText), "-- ms");
-  else snprintf(frameText, sizeof(frameText), "%.1f ms", appState.gamerFrametime);
-  gamerValueCard(RIGHT_X, ROW1_Y, "FRAME", frameText, GAMER_TEXT);
+  char frameText[8];
+  if (!pcOnline || appState.gamerFrametime < 0) snprintf(frameText, sizeof(frameText), "--");
+  else snprintf(frameText, sizeof(frameText), "%.1f", appState.gamerFrametime);
+  gamerFrameCard(RIGHT_X, ROW1_Y, frameText, "ms");
   yield();
-  int gpu = appState.gamerDataVersion == 0 ? -1 : appState.gpuCurrent;
-  int cpu = appState.gamerDataVersion == 0 ? -1 : appState.cpuCurrent;
-  int ram = appState.gamerDataVersion == 0 ? -1 : appState.ramCurrent;
+  int gpu = pcOnline && appState.gamerDataVersion != 0 ? appState.gpuCurrent : -1;
+  int cpu = pcOnline && appState.gamerDataVersion != 0 ? appState.cpuCurrent : -1;
+  int ram = pcOnline && appState.gamerDataVersion != 0 ? appState.ramCurrent : -1;
   gamerUsageCard(LEFT_X, ROW2_Y, "GPU", gpu, GAMER_GREEN);
   yield();
-  gamerTemperatureCard(RIGHT_X, ROW2_Y, !pcOnline ? 68 : appState.gamerGpuTemp);
+  gamerTemperatureCard(RIGHT_X, ROW2_Y, pcOnline ? appState.gamerGpuTemp : -1);
   yield();
   gamerUsageCard(LEFT_X, ROW3_Y, "RAM", ram, GAMER_PURPLE);
   yield();

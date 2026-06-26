@@ -60,13 +60,18 @@ void metricsAnimateFakeValues()
 
 void metricsUpdateDisplayIfNeeded()
 {
-  if (appState.cpuCurrent != appState.lastCpuDrawn) { displayUiDrawMetricRow(CPU_Y, "CPU", appState.cpuCurrent, CLEAN_TFT_THEME.cpu); appState.lastCpuDrawn = appState.cpuCurrent; }
-  if (appState.ramCurrent != appState.lastRamDrawn) { displayUiDrawMetricRow(RAM_Y, "RAM", appState.ramCurrent, CLEAN_TFT_THEME.ram); appState.lastRamDrawn = appState.ramCurrent; }
-  if (appState.diskCurrent != appState.lastDiskDrawn || appState.diskLabel != appState.lastDiskLabelDrawn)
+  bool pcOnline = metricsHasRecentPcMetrics();
+  int cpuValue = pcOnline ? appState.cpuCurrent : -1;
+  int ramValue = pcOnline ? appState.ramCurrent : -1;
+  int diskValue = pcOnline ? appState.diskCurrent : -1;
+  int gpuValue = pcOnline ? appState.gpuCurrent : -1;
+  if (cpuValue != appState.lastCpuDrawn) { displayUiDrawMetricRow(CPU_Y, "CPU", cpuValue, CLEAN_TFT_THEME.cpu); appState.lastCpuDrawn = cpuValue; }
+  if (ramValue != appState.lastRamDrawn) { displayUiDrawMetricRow(RAM_Y, "RAM", ramValue, CLEAN_TFT_THEME.ram); appState.lastRamDrawn = ramValue; }
+  if (diskValue != appState.lastDiskDrawn || appState.diskLabel != appState.lastDiskLabelDrawn)
   {
-    displayUiDrawMetricRow(GPU_Y, appState.diskLabel, appState.diskCurrent, CLEAN_TFT_THEME.cpu);
-    appState.lastDiskDrawn = appState.diskCurrent;
+    displayUiDrawMetricRow(GPU_Y, appState.diskLabel, diskValue, CLEAN_TFT_THEME.cpu);
+    appState.lastDiskDrawn = diskValue;
     appState.lastDiskLabelDrawn = appState.diskLabel;
   }
-  if (appState.gpuCurrent != appState.lastGpuDrawn) { displayUiDrawMetricRow(DISK_Y, "GPU", appState.gpuCurrent, CLEAN_TFT_THEME.gpu); appState.lastGpuDrawn = appState.gpuCurrent; }
+  if (gpuValue != appState.lastGpuDrawn) { displayUiDrawMetricRow(DISK_Y, "GPU", gpuValue, CLEAN_TFT_THEME.gpu); appState.lastGpuDrawn = gpuValue; }
 }

@@ -147,21 +147,6 @@ public sealed class GamerTelemetryService
         if (validGameCandidates.Count > 0)
             return validGameCandidates[0].ToSnapshot();
 
-        var fallback = candidates
-            .Where(c => !IsIgnoredProcess(c.Game))
-            .OrderBy(c => c.Game, StringComparer.OrdinalIgnoreCase)
-            .FirstOrDefault();
-
-        if (fallback is not null)
-        {
-            return new GamerTelemetrySnapshot(
-                Game: fallback.Game,
-                Fps: null,
-                Frametime: null,
-                Source: null,
-                Status: "WAITING GAME");
-        }
-
         return new GamerTelemetrySnapshot(Status: "WAITING GAME");
     }
 

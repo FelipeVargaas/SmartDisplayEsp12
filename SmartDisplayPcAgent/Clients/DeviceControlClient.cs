@@ -99,6 +99,11 @@ public sealed class DeviceControlClient : IDisposable
                 MaxFreeBlockSize: GetNullableLong(root, "maxFreeBlockSize"),
                 FlashSize: GetNullableLong(root, "flashSize"));
         }
+        catch (TaskCanceledException)
+        {
+            LastError = "Status timeout after 2.5s";
+            return null;
+        }
         catch (Exception ex)
         {
             LastError = $"{ex.GetType().Name}: {ex.Message}";

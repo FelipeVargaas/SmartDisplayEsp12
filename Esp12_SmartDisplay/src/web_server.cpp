@@ -2,17 +2,28 @@
 
 #include <ArduinoJson.h>
 #include <ESP8266WiFi.h>
+#include <math.h>
+#include <string.h>
 
 #include "app_state.h"
 #include "config.h"
 #include "metrics.h"
 #include "ota_update.h"
+#include "reset_marker.h"
 #include "theme_manager.h"
 #include "theme_render.h"
 #include "web_pages.h"
 #include "wifi_manager.h"
 
 static ESP8266WebServer server(80);
+
+namespace
+{
+const int METRICS_MIN_FREE_HEAP = 12000;
+const int METRICS_MIN_MAX_BLOCK = 8000;
+const int STATUS_MIN_FREE_HEAP = 14000;
+const int STATUS_MIN_MAX_BLOCK = 9000;
+}
 
 static String formatUptime()
 {
@@ -23,6 +34,50 @@ static String formatUptime()
   return String(hours) + "h " + String(minutes) + "m " + String(seconds) + "s";
 }
 
+static int clampIntRange(int value, int minValue, int maxValue)
+{
+  if (value < minValue) return minValue;
+  if (value > maxValue) return maxValue;
+  return value;
+}
+
+static bool assignCompactText(String& target, const char* value, unsigned int maxLength)
+{
+  if (!value) value = "";
+  char buffer[49];
+  unsigned int limit = maxLength < sizeof(buffer) - 1 ? maxLength : sizeof(buffer) - 1;
+  unsigned int start = 0;
+  while (value[start] == ' ' || value[start] == '\t' || value[start] == '\r' || value[start] == '\n') start++;
+  unsigned int len = 0;
+  while (len < limit && value[start + len] != '\0') len++;
+  while (len > 0)
+  {
+    char c = value[start + len - 1];
+    if (c != ' ' && c != '\t' && c != '\r' && c != '\n') break;
+    len--;
+  }
+  memcpy(buffer, value + start, len);
+  buffer[len] = '\0';
+  if (target == buffer) return false;
+  target = buffer;
+  return true;
+}
+
+static float sanitizeFrametime(float value)
+{
+  if (isnan(value) || isinf(value) || value < 0.0f || value > 999.9f) return -1.0f;
+  return value;
+}
+
+static String jsonEscape(String value)
+{
+  value.replace("\\", "\\\\");
+  value.replace("\"", "\\\"");
+  value.replace("\r", " ");
+  value.replace("\n", " ");
+  return value;
+}
+
 ESP8266WebServer& webServerGet()
 {
   return server;
@@ -30,6 +85,7 @@ ESP8266WebServer& webServerGet()
 
 static void handleRoot()
 {
+  resetMarkerCheckpoint("route_root");
   if (appState.isApMode)
   {
     String page = FPSTR(WIFI_SETUP_HTML);
@@ -44,6 +100,9 @@ static void handleRoot()
   page.replace("%THEME%", themeManagerGetKey(themeManagerGetActive()));
   page.replace("%UPTIME%", formatUptime());
   page.replace("%RESET_REASON%", ESP.getResetReason());
+  page.replace("%RESET_INFO%", ESP.getResetInfo());
+  page.replace("%RESTART_INTENT%", appState.lastRestartIntent);
+  page.replace("%LAST_CHECKPOINT%", appState.lastResetCheckpoint);
   page.replace("%HEAP%", String(ESP.getFreeHeap()));
   page.replace("%HEAP_FRAGMENTATION%", String(ESP.getHeapFragmentation()) + "%");
   page.replace("%MAX_FREE_BLOCK%", String(ESP.getMaxFreeBlockSize()));
@@ -52,40 +111,57 @@ static void handleRoot()
 
 static void handleScan()
 {
+  resetMarkerCheckpoint("route_scan");
   wifiScanNetworks();
   handleRoot();
 }
 
 static void handleConnect()
 {
+  resetMarkerCheckpoint("route_connect");
   String ssid = server.arg("ssid");
   String pass = server.arg("pass");
   ssid.trim(); pass.trim();
   if (ssid.length() == 0) { server.send(400, "text/plain", "SSID vazio."); return; }
   wifiSaveCredentials(ssid, pass);
   server.send(200, "text/html", "<html><head><meta charset='UTF-8'><meta name='viewport' content='width=device-width,initial-scale=1'><style>body{font-family:Arial;background:#111;color:#eee;text-align:center;padding:40px}h2{color:#ff9800}</style></head><body><h2>Wi-Fi salvo.</h2><p>O display vai reiniciar e tentar conectar.</p></body></html>");
+  resetMarkerSet("wifi_connect");
   delay(1200); ESP.restart();
 }
 
 static void handleResetWifi()
 {
+  resetMarkerCheckpoint("route_reset_wifi");
   wifiClearCredentials();
   server.send(200, "text/html", "<html><head><meta charset='UTF-8'><meta name='viewport' content='width=device-width,initial-scale=1'><style>body{font-family:Arial;background:#111;color:#eee;text-align:center;padding:40px}h2{color:#ff9800}</style></head><body><h2>Wi-Fi apagado.</h2><p>O display vai reiniciar em modo setup.</p></body></html>");
+  resetMarkerSet("reset_wifi");
   delay(1200); ESP.restart();
 }
 
 static void handleMetrics()
 {
+  resetMarkerCheckpoint("route_metrics");
   if (server.method() != HTTP_POST) { server.send(405, "application/json", "{\"ok\":false,\"error\":\"method_not_allowed\"}"); return; }
+  if (ESP.getFreeHeap() < METRICS_MIN_FREE_HEAP || ESP.getMaxFreeBlockSize() < METRICS_MIN_MAX_BLOCK)
+  {
+    resetMarkerCheckpoint("route_metrics_heap_skip");
+    server.send(503, "application/json", "{\"ok\":false,\"error\":\"low_heap\"}");
+    return;
+  }
+  resetMarkerCheckpoint("route_metrics_body");
   String body = server.arg("plain");
   if (body.length() == 0) { server.send(400, "application/json", "{\"ok\":false,\"error\":\"empty_body\"}"); return; }
+  if (body.length() > 384) { server.send(413, "application/json", "{\"ok\":false,\"error\":\"payload_too_large\"}"); return; }
   // O payload Gamer HUD acrescenta strings e campos opcionais ao payload legado.
+  resetMarkerCheckpoint("route_metrics_parse");
   StaticJsonDocument<512> doc;
   if (deserializeJson(doc, body)) { server.send(400, "application/json", "{\"ok\":false,\"error\":\"invalid_json\"}"); return; }
   if (!doc.containsKey("cpu") || !doc.containsKey("ram") || !doc.containsKey("gpu")) { server.send(400, "application/json", "{\"ok\":false,\"error\":\"missing_fields\"}"); return; }
+  resetMarkerCheckpoint("route_metrics_apply");
   int cpu = metricsClampPercentInt(doc["cpu"] | 0);
   int ram = metricsClampPercentInt(doc["ram"] | 0);
   int gpu = metricsClampPercentInt(doc["gpu"] | 0);
+  bool gamerChanged = cpu != appState.cpuCurrent || ram != appState.ramCurrent || gpu != appState.gpuCurrent;
   appState.cpuTarget = cpu; appState.ramTarget = ram; appState.gpuTarget = gpu;
   appState.cpuCurrent = cpu; appState.ramCurrent = ram; appState.gpuCurrent = gpu;
   if (doc.containsKey("disk"))
@@ -95,32 +171,55 @@ static void handleMetrics()
   }
   if (doc.containsKey("diskLabel"))
   {
-    String diskLabel = doc["diskLabel"].as<String>();
-    diskLabel.trim();
-    if (diskLabel.length() > 0)
+    const char* diskLabel = doc["diskLabel"] | "";
+    String previousDiskLabel = appState.diskLabel;
+    if (assignCompactText(appState.diskLabel, diskLabel, 4) && appState.diskLabel.length() > 0)
     {
-      if (diskLabel.length() > 4) diskLabel = diskLabel.substring(0, 4);
-      appState.diskLabel = diskLabel;
       appState.lastDiskLabelDrawn = "";
+      gamerChanged = true;
     }
+    else if (appState.diskLabel.length() == 0) appState.diskLabel = previousDiskLabel;
   }
   // Campos opcionais, ja normalizados pelo futuro PC Agent, para o Gamer HUD.
   // A rota /metrics e o contrato do PC Monitor permanecem os mesmos.
-  if (doc.containsKey("game")) { appState.gamerGame = doc["game"].as<String>(); appState.gamerGame.trim(); }
-  if (doc.containsKey("source")) { appState.gamerSource = doc["source"].as<String>(); appState.gamerSource.trim(); }
-  if (doc.containsKey("fps")) appState.gamerFps = doc["fps"].isNull() ? -1 : doc["fps"].as<int>();
-  if (doc.containsKey("frametime")) appState.gamerFrametime = doc["frametime"].isNull() ? -1.0f : doc["frametime"].as<float>();
-  if (doc.containsKey("gpuTemp")) appState.gamerGpuTemp = doc["gpuTemp"].isNull() ? -1 : doc["gpuTemp"].as<int>();
-  if (doc.containsKey("cpuTemp")) appState.gamerCpuTemp = doc["cpuTemp"].isNull() ? -1 : doc["cpuTemp"].as<int>();
-  if (doc.containsKey("vram")) appState.gamerVram = doc["vram"].isNull() ? -1.0f : doc["vram"].as<float>();
-  appState.gamerDataVersion++;
+  if (doc.containsKey("game")) gamerChanged = assignCompactText(appState.gamerGame, doc["game"] | "", 48) || gamerChanged;
+  if (doc.containsKey("source")) gamerChanged = assignCompactText(appState.gamerSource, doc["source"] | "", 12) || gamerChanged;
+  if (doc.containsKey("fps"))
+  {
+    int fps = doc["fps"].isNull() ? -1 : clampIntRange(doc["fps"].as<int>(), 0, 999);
+    if (appState.gamerFps != fps) { appState.gamerFps = fps; gamerChanged = true; }
+  }
+  if (doc.containsKey("frametime"))
+  {
+    float frametime = doc["frametime"].isNull() ? -1.0f : sanitizeFrametime(doc["frametime"].as<float>());
+    if (appState.gamerFrametime != frametime) { appState.gamerFrametime = frametime; gamerChanged = true; }
+  }
+  if (doc.containsKey("gpuTemp"))
+  {
+    int gpuTemp = doc["gpuTemp"].isNull() ? -1 : clampIntRange(doc["gpuTemp"].as<int>(), 0, 120);
+    if (appState.gamerGpuTemp != gpuTemp) { appState.gamerGpuTemp = gpuTemp; gamerChanged = true; }
+  }
+  if (doc.containsKey("cpuTemp"))
+  {
+    int cpuTemp = doc["cpuTemp"].isNull() ? -1 : clampIntRange(doc["cpuTemp"].as<int>(), 0, 120);
+    if (appState.gamerCpuTemp != cpuTemp) { appState.gamerCpuTemp = cpuTemp; gamerChanged = true; }
+  }
+  if (doc.containsKey("vram"))
+  {
+    float vram = doc["vram"].as<float>();
+    vram = doc["vram"].isNull() || isnan(vram) || isinf(vram) || vram < 0.0f || vram > 128.0f ? -1.0f : vram;
+    if (appState.gamerVram != vram) { appState.gamerVram = vram; gamerChanged = true; }
+  }
+  if (gamerChanged) appState.gamerDataVersion++;
   appState.lastCpuDrawn = -1; appState.lastRamDrawn = -1; appState.lastGpuDrawn = -1;
   appState.lastPcMetricsReceived = millis();
   server.send(200, "application/json", "{\"ok\":true}");
+  resetMarkerCheckpoint("route_metrics_done");
 }
 
 static void handleTheme()
 {
+  resetMarkerCheckpoint("route_theme");
   if (server.method() != HTTP_POST) { server.send(405, "application/json", "{\"ok\":false,\"error\":\"method_not_allowed\"}"); return; }
   String body = server.arg("plain");
   StaticJsonDocument<96> doc;
@@ -136,10 +235,12 @@ static void handleTheme()
   json += themeManagerGetKey(themeManagerGetActive());
   json += "\"}";
   server.send(200, "application/json", json);
+  resetMarkerCheckpoint("route_theme_done");
 }
 
 static void handleConfig()
 {
+  resetMarkerCheckpoint("route_config");
   String json = "{\"ok\":true,\"theme\":\"";
   json += themeManagerGetKey(themeManagerGetActive());
   json += "\",\"pcOnline\":";
@@ -150,6 +251,29 @@ static void handleConfig()
 
 static void handleStatus()
 {
+  resetMarkerCheckpoint("route_status");
+  if (ESP.getFreeHeap() < STATUS_MIN_FREE_HEAP || ESP.getMaxFreeBlockSize() < STATUS_MIN_MAX_BLOCK)
+  {
+    resetMarkerCheckpoint("route_status_low_heap");
+    String json = "{\"name\":\"TinyDash\",\"mode\":\"";
+    json += appState.isApMode ? "AP" : "STA";
+    json += "\",\"theme\":\"";
+    json += themeManagerGetKey(themeManagerGetActive());
+    json += "\",\"uptimeMs\":";
+    json += String(millis());
+    json += ",\"pcOnline\":";
+    json += metricsHasRecentPcMetrics() ? "true" : "false";
+    json += ",\"heap\":";
+    json += String(ESP.getFreeHeap());
+    json += ",\"heapFragmentation\":";
+    json += String(ESP.getHeapFragmentation());
+    json += ",\"maxFreeBlockSize\":";
+    json += String(ESP.getMaxFreeBlockSize());
+    json += ",\"lowHeap\":true}";
+    server.send(200, "application/json", json);
+    return;
+  }
+  resetMarkerCheckpoint("route_status_full");
   String ip = appState.isApMode ? WiFi.softAPIP().toString() : WiFi.localIP().toString();
   String ssid = appState.isApMode ? String(AP_SSID) : WiFi.SSID();
   String json = "{";
@@ -162,7 +286,10 @@ static void handleStatus()
   json += ",";
   json += "\"theme\":\""; json += themeManagerGetKey(themeManagerGetActive()); json += "\",";
   json += "\"uptimeMs\":"; json += String(millis()); json += ",";
-  json += "\"resetReason\":\""; json += ESP.getResetReason(); json += "\",";
+  json += "\"resetReason\":\""; json += jsonEscape(ESP.getResetReason()); json += "\",";
+  json += "\"resetInfo\":\""; json += jsonEscape(ESP.getResetInfo()); json += "\",";
+  json += "\"restartIntent\":\""; json += jsonEscape(appState.lastRestartIntent); json += "\",";
+  json += "\"lastCheckpoint\":\""; json += jsonEscape(appState.lastResetCheckpoint); json += "\",";
   json += "\"cpu\":"; json += String(appState.cpuCurrent); json += ",";
   json += "\"ram\":"; json += String(appState.ramCurrent); json += ",";
   json += "\"gpu\":"; json += String(appState.gpuCurrent); json += ",";
@@ -172,11 +299,13 @@ static void handleStatus()
   json += "\"lastPcMetricsAgeMs\":"; json += appState.lastPcMetricsReceived == 0 ? "null" : String(millis() - appState.lastPcMetricsReceived); json += ",";
   json += "\"temperature\":"; json += appState.hasWeather ? String(appState.weatherTemp, 1) : "null"; json += ",";
   json += "\"weather\":\""; json += appState.weatherText; json += "\",";
+  json += "\"weatherStatus\":\""; json += jsonEscape(appState.weatherStatus); json += "\",";
   json += "\"heap\":"; json += String(ESP.getFreeHeap()); json += ",";
   json += "\"heapFragmentation\":"; json += String(ESP.getHeapFragmentation()); json += ",";
   json += "\"maxFreeBlockSize\":"; json += String(ESP.getMaxFreeBlockSize()); json += ",";
   json += "\"flashSize\":"; json += String(ESP.getFlashChipRealSize()); json += "}";
   server.send(200, "application/json", json);
+  resetMarkerCheckpoint("route_status_done");
 }
 
 void webServerSetup()

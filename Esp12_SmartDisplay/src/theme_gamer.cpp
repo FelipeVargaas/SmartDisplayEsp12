@@ -1,8 +1,12 @@
+#include <Arduino.h>
 #include <TFT_eSPI.h>
+#include <stdio.h>
+#include <string.h>
 
 #include "app_state.h"
 #include "config.h"
 #include "metrics.h"
+#include "reset_marker.h"
 
 namespace
 {
@@ -25,6 +29,8 @@ const int ROW1_Y = 36;
 const int ROW2_Y = 102;
 const int ROW3_Y = 168;
 const unsigned long GAMER_STATUS_INTERVAL_MS = 3000;
+const unsigned long GAMER_VALUES_INTERVAL_MS = 500;
+unsigned long gamerLastValuesDrawAt = 0;
 
 void gamerCard(int x, int y)
 {
@@ -32,9 +38,10 @@ void gamerCard(int x, int y)
   appState.tft.drawRoundRect(x, y, CARD_W, CARD_H, 9, GAMER_BORDER);
 }
 
-String percentOrDash(int value)
+void percentOrDash(int value, char* buffer, size_t bufferSize)
 {
-  return value < 0 ? "--" : String(value) + "%";
+  if (value < 0) snprintf(buffer, bufferSize, "--");
+  else snprintf(buffer, bufferSize, "%d%%", value);
 }
 
 void gamerLabel(const char* label, int x, int y, uint16_t color)
@@ -51,7 +58,7 @@ void gamerBar(int x, int y, int value, uint16_t color)
   if (value >= 0) appState.tft.fillRoundRect(x, y, (width * constrain(value, 0, 100)) / 100, 3, 2, color);
 }
 
-int gamerCenteredValueX(int cardX, const String& value)
+int gamerCenteredValueX(int cardX, const char* value)
 {
   int x = cardX + (CARD_W - appState.tft.textWidth(value)) / 2;
   return x < cardX + 8 ? cardX + 8 : x;
@@ -62,12 +69,13 @@ void gamerUsageCard(int x, int y, const char* label, int value, uint16_t color)
   appState.tft.fillRect(x + 2, y + 2, CARD_W - 4, CARD_H - 4, GAMER_CARD);
   gamerLabel(label, x + 9, y + 8, color);
   appState.tft.setTextFont(2); appState.tft.setTextSize(2); appState.tft.setTextColor(GAMER_TEXT, GAMER_CARD);
-  String text = percentOrDash(value);
+  char text[16];
+  percentOrDash(value, text, sizeof(text));
   appState.tft.setCursor(gamerCenteredValueX(x, text), y + 21); appState.tft.print(text);
   gamerBar(x + 9, y + 54, value, color);
 }
 
-void gamerValueCard(int x, int y, const char* label, const String& value, uint16_t color)
+void gamerValueCard(int x, int y, const char* label, const char* value, uint16_t color)
 {
   appState.tft.fillRect(x + 2, y + 2, CARD_W - 4, CARD_H - 4, GAMER_CARD);
   gamerLabel(label, x + 9, y + 8, color);
@@ -81,9 +89,28 @@ void gamerTemperatureCard(int x, int y, int temperature)
 {
   appState.tft.fillRect(x + 2, y + 2, CARD_W - 4, CARD_H - 4, GAMER_CARD);
   gamerLabel("GPU TEMP", x + 9, y + 8, GAMER_ORANGE);
-  String value = temperature < 0 ? "--\xB0" : String(temperature) + "\xB0";
+  char value[16];
+  if (temperature < 0) snprintf(value, sizeof(value), "--\xB0");
+  else snprintf(value, sizeof(value), "%d\xB0", temperature);
   appState.tft.setTextFont(2); appState.tft.setTextSize(2); appState.tft.setTextColor(GAMER_ORANGE, GAMER_CARD);
   appState.tft.setCursor(gamerCenteredValueX(x, value), y + 21); appState.tft.print(value);
+}
+
+void gamerCopyStatus(char* target, size_t targetSize, const String& value, const char* fallback)
+{
+  const char* source = value.length() ? value.c_str() : fallback;
+  strncpy(target, source, targetSize - 1);
+  target[targetSize - 1] = '\0';
+}
+
+void gamerTrimStatusToWidth(char* status, size_t statusSize, int maxWidth)
+{
+  while (strlen(status) > 3 && appState.tft.textWidth(status) > maxWidth)
+  {
+    size_t len = strlen(status);
+    status[len - 2] = '.';
+    status[len - 1] = '\0';
+  }
 }
 
 void gamerDrawHeader()
@@ -91,19 +118,19 @@ void gamerDrawHeader()
   appState.tft.fillRect(0, 0, DISPLAY_WIDTH, 32, TFT_BLACK);
   bool showSource = appState.gamerShowSource;
   bool sourceOnline = metricsHasRecentPcMetrics() && appState.gamerSource.length() > 0;
-  String status;
+  char status[56];
   if (showSource)
   {
-    String source = appState.gamerSource.length() ? appState.gamerSource : "RTSS";
-    status = source + (sourceOnline ? " ON" : " OFF");
+    char source[16];
+    gamerCopyStatus(source, sizeof(source), appState.gamerSource, "RTSS");
+    snprintf(status, sizeof(status), "%s %s", source, sourceOnline ? "ON" : "OFF");
   }
   else
   {
-    status = appState.gamerGame.length() ? appState.gamerGame : "GAME HUD";
+    gamerCopyStatus(status, sizeof(status), appState.gamerGame, "GAME HUD");
   }
   appState.tft.setTextFont(2); appState.tft.setTextSize(1);
-  while (status.length() > 3 && appState.tft.textWidth(status) > 180)
-    status = status.substring(0, status.length() - 2) + ".";
+  gamerTrimStatusToWidth(status, sizeof(status), 180);
   int statusWidth = appState.tft.textWidth(status);
   int groupWidth = statusWidth + (showSource ? 9 : 0);
   int startX = (DISPLAY_WIDTH - groupWidth) / 2;
@@ -114,17 +141,34 @@ void gamerDrawHeader()
 
 void gamerDrawValues()
 {
+  resetMarkerCheckpoint("gamer_draw_values");
   gamerDrawHeader();
   bool pcOnline = metricsHasRecentPcMetrics();
-  gamerValueCard(LEFT_X, ROW1_Y, "FPS", !pcOnline ? "144" : appState.gamerFps < 0 ? "--" : String(appState.gamerFps), GAMER_CYAN);
-  gamerValueCard(RIGHT_X, ROW1_Y, "FRAME", !pcOnline ? "6.9 ms" : appState.gamerFrametime < 0 ? "-- ms" : String(appState.gamerFrametime, 1) + " ms", GAMER_TEXT);
+  char fpsText[16];
+  if (!pcOnline) snprintf(fpsText, sizeof(fpsText), "144");
+  else if (appState.gamerFps < 0) snprintf(fpsText, sizeof(fpsText), "--");
+  else snprintf(fpsText, sizeof(fpsText), "%d", appState.gamerFps);
+  gamerValueCard(LEFT_X, ROW1_Y, "FPS", fpsText, GAMER_CYAN);
+  yield();
+  char frameText[12];
+  if (!pcOnline) snprintf(frameText, sizeof(frameText), "6.9 ms");
+  else if (appState.gamerFrametime < 0) snprintf(frameText, sizeof(frameText), "-- ms");
+  else snprintf(frameText, sizeof(frameText), "%.1f ms", appState.gamerFrametime);
+  gamerValueCard(RIGHT_X, ROW1_Y, "FRAME", frameText, GAMER_TEXT);
+  yield();
   int gpu = appState.gamerDataVersion == 0 ? -1 : appState.gpuCurrent;
   int cpu = appState.gamerDataVersion == 0 ? -1 : appState.cpuCurrent;
   int ram = appState.gamerDataVersion == 0 ? -1 : appState.ramCurrent;
   gamerUsageCard(LEFT_X, ROW2_Y, "GPU", gpu, GAMER_GREEN);
+  yield();
   gamerTemperatureCard(RIGHT_X, ROW2_Y, !pcOnline ? 68 : appState.gamerGpuTemp);
+  yield();
   gamerUsageCard(LEFT_X, ROW3_Y, "RAM", ram, GAMER_PURPLE);
+  yield();
   gamerUsageCard(RIGHT_X, ROW3_Y, "CPU", cpu, GAMER_BLUE);
+  yield();
+  gamerLastValuesDrawAt = millis();
+  resetMarkerCheckpoint("gamer_draw_done");
 }
 }
 
@@ -153,7 +197,8 @@ void themeGamerUpdateIfNeeded()
     redrawHeader = true;
   }
 
-  if (appState.gamerDrawnVersion != appState.gamerDataVersion || appState.gamerLastPcOnline != pcOnline)
+  if ((appState.gamerDrawnVersion != appState.gamerDataVersion || appState.gamerLastPcOnline != pcOnline) &&
+      now - gamerLastValuesDrawAt >= GAMER_VALUES_INTERVAL_MS)
   {
     appState.gamerLastPcOnline = pcOnline;
     gamerDrawValues();

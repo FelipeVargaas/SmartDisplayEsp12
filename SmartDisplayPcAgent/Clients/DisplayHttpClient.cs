@@ -1,10 +1,12 @@
-﻿using System;
+using SmartDisplayPcAgent.Models;
+using SmartDisplayPcAgent.Services;
+using System;
+using System.Collections.Generic;
 using System.Net.Http;
 using System.Text;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
-using SmartDisplayPcAgent.Models;
 
 namespace SmartDisplayPcAgent.Clients;
 
@@ -15,32 +17,77 @@ public sealed class DisplayHttpClient : IDisposable
         Timeout = TimeSpan.FromMilliseconds(1800)
     };
 
+    public bool LastSendSkipped { get; private set; }
+
     public async Task<bool> SendMetricsAsync(
         string displayAddress,
         PcMetricsSnapshot snapshot,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        bool includeDisk = true,
+        bool includeGamerTelemetry = false,
+        bool waitForSlot = false)
+    {
+        LastSendSkipped = false;
+
+        if (waitForSlot)
+        {
+            return await DisplayRequestCoordinator.RunBoolAsync(
+                ct => SendMetricsCoreAsync(displayAddress, snapshot, ct, includeDisk, includeGamerTelemetry),
+                TimeSpan.FromMilliseconds(500),
+                cancellationToken);
+        }
+
+        bool? result = await DisplayRequestCoordinator.TryRunBoolAsync(
+            ct => SendMetricsCoreAsync(displayAddress, snapshot, ct, includeDisk, includeGamerTelemetry),
+            cancellationToken);
+
+        if (!result.HasValue)
+        {
+            LastSendSkipped = true;
+            return false;
+        }
+
+        return result.Value;
+    }
+
+    private async Task<bool> SendMetricsCoreAsync(
+        string displayAddress,
+        PcMetricsSnapshot snapshot,
+        CancellationToken cancellationToken,
+        bool includeDisk,
+        bool includeGamerTelemetry)
     {
         if (string.IsNullOrWhiteSpace(displayAddress))
             return false;
 
         string baseUrl = NormalizeBaseUrl(displayAddress);
 
-        var payload = new
+        var payload = new Dictionary<string, object?>
         {
-            cpu = ToPercentInt(snapshot.CpuUsage),
-            ram = ToPercentInt(snapshot.RamUsage),
-            gpu = ToPercentInt(snapshot.GpuUsage),
-            disk = ToPercentInt(snapshot.DiskUsage),
-            diskLabel = NormalizeDiskLabel(snapshot.DiskLabel),
-
-            // Campos preparados para o tema Gamer.
-            // RTSS/MSI ainda não alimenta estes campos; por enquanto eles seguem nulos/vazios.
-            gpuTemp = ToNullableInt(snapshot.GpuTemperature),
-            game = NormalizeGameName(snapshot.Game),
-            fps = snapshot.Fps,
-            frametime = NormalizeFrametime(snapshot.Frametime),
-            source = NormalizeSource(snapshot.Source)
+            ["cpu"] = ToPercentInt(snapshot.CpuUsage),
+            ["ram"] = ToPercentInt(snapshot.RamUsage),
+            ["gpu"] = ToPercentInt(snapshot.GpuUsage)
         };
+
+        if (includeDisk)
+        {
+            payload["disk"] = ToPercentInt(snapshot.DiskUsage);
+            payload["diskLabel"] = NormalizeDiskLabel(snapshot.DiskLabel);
+        }
+
+        if (includeGamerTelemetry)
+        {
+            int? gpuTemp = ToNullableInt(snapshot.GpuTemperature);
+            string game = NormalizeGameName(snapshot.Game);
+            double? frametime = NormalizeFrametime(snapshot.Frametime);
+            string? source = NormalizeSource(snapshot.Source);
+
+            if (gpuTemp.HasValue) payload["gpuTemp"] = gpuTemp.Value;
+            if (!string.IsNullOrWhiteSpace(game)) payload["game"] = game;
+            if (snapshot.Fps.HasValue) payload["fps"] = snapshot.Fps.Value;
+            if (frametime.HasValue) payload["frametime"] = frametime.Value;
+            if (!string.IsNullOrWhiteSpace(source)) payload["source"] = source;
+        }
 
         string json = JsonSerializer.Serialize(payload);
 
@@ -134,7 +181,11 @@ public sealed class DisplayHttpClient : IDisposable
         if (string.IsNullOrWhiteSpace(source))
             return null;
 
-        return source.Trim();
+        string value = source.Trim();
+
+        return value.Length <= 12
+            ? value
+            : value[..12];
     }
 
     public void Dispose()

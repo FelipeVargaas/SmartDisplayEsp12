@@ -1,4 +1,5 @@
 using SmartDisplayPcAgent.Models;
+using SmartDisplayPcAgent.Services;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -12,16 +13,38 @@ namespace SmartDisplayPcAgent.Clients;
 
 public sealed class DeviceControlClient : IDisposable
 {
-    private static readonly SemaphoreSlim StatusRequestGate = new(1, 1);
-
     private readonly HttpClient _httpClient = new()
     {
         Timeout = TimeSpan.FromMilliseconds(2500)
     };
 
     public string LastError { get; private set; } = string.Empty;
+    public bool LastRequestSkipped { get; private set; }
 
     public async Task<DeviceStatusSnapshot?> GetStatusAsync(
+        string displayAddress,
+        CancellationToken cancellationToken,
+        bool waitForSlot = false)
+    {
+        LastRequestSkipped = false;
+
+        if (waitForSlot)
+        {
+            return await DisplayRequestCoordinator.RunAsync(
+                ct => GetStatusCoreAsync(displayAddress, ct),
+                TimeSpan.FromMilliseconds(700),
+                cancellationToken);
+        }
+
+        var result = await DisplayRequestCoordinator.TryRunResultAsync(
+            ct => GetStatusCoreAsync(displayAddress, ct),
+            cancellationToken);
+
+        LastRequestSkipped = result.Skipped;
+        return result.Value;
+    }
+
+    private async Task<DeviceStatusSnapshot?> GetStatusCoreAsync(
         string displayAddress,
         CancellationToken cancellationToken)
     {
@@ -34,48 +57,47 @@ public sealed class DeviceControlClient : IDisposable
         {
             LastError = string.Empty;
 
-            await StatusRequestGate.WaitAsync(cancellationToken);
+            // Cache buster ajuda quando algum proxy/stack resolve reaproveitar resposta antiga.
+            using var response = await _httpClient.GetAsync($"{baseUrl}/status?t={Environment.TickCount64}", cancellationToken);
 
-            try
+            string responseBody = await response.Content.ReadAsStringAsync(cancellationToken);
+
+            if (!response.IsSuccessStatusCode)
             {
-                // Cache buster ajuda quando algum proxy/stack resolve reaproveitar resposta antiga.
-                using var response = await _httpClient.GetAsync($"{baseUrl}/status?t={Environment.TickCount64}", cancellationToken);
-
-                string responseBody = await response.Content.ReadAsStringAsync(cancellationToken);
-
-                if (!response.IsSuccessStatusCode)
-                {
-                    LastError = $"HTTP {(int)response.StatusCode}: {responseBody}";
-                    return null;
-                }
-
-                using var document = JsonDocument.Parse(responseBody);
-
-                var root = document.RootElement;
-
-                return new DeviceStatusSnapshot(
-                    Name: GetString(root, "name", "TinyDash"),
-                    Mode: GetString(root, "mode", "--"),
-                    Ip: GetString(root, "ip", "--"),
-                    Ssid: GetString(root, "ssid", "--"),
-                    Rssi: GetNullableInt(root, "rssi"),
-                    Theme: GetString(root, "theme", "pc_monitor"),
-                    Cpu: GetDouble(root, "cpu"),
-                    Ram: GetDouble(root, "ram"),
-                    Gpu: GetDouble(root, "gpu"),
-                    Disk: GetDouble(root, "disk"),
-                    DiskLabel: GetString(root, "diskLabel", "---"),
-                    PcOnline: GetBool(root, "pcOnline"),
-                    LastPcMetricsAgeMs: GetNullableLong(root, "lastPcMetricsAgeMs"),
-                    Temperature: GetNullableDouble(root, "temperature"),
-                    Weather: GetString(root, "weather", "--"),
-                    Heap: GetNullableLong(root, "heap"),
-                    FlashSize: GetNullableLong(root, "flashSize"));
+                LastError = $"HTTP {(int)response.StatusCode}: {responseBody}";
+                return null;
             }
-            finally
-            {
-                StatusRequestGate.Release();
-            }
+
+            using var document = JsonDocument.Parse(responseBody);
+
+            var root = document.RootElement;
+
+            return new DeviceStatusSnapshot(
+                Name: GetString(root, "name", "TinyDash"),
+                Mode: GetString(root, "mode", "--"),
+                Ip: GetString(root, "ip", "--"),
+                Ssid: GetString(root, "ssid", "--"),
+                Rssi: GetNullableInt(root, "rssi"),
+                Theme: GetString(root, "theme", "pc_monitor"),
+                Cpu: GetDouble(root, "cpu"),
+                Ram: GetDouble(root, "ram"),
+                Gpu: GetDouble(root, "gpu"),
+                Disk: GetDouble(root, "disk"),
+                DiskLabel: GetString(root, "diskLabel", "---"),
+                PcOnline: GetBool(root, "pcOnline"),
+                LastPcMetricsAgeMs: GetNullableLong(root, "lastPcMetricsAgeMs"),
+                UptimeMs: GetNullableLong(root, "uptimeMs"),
+                ResetReason: GetString(root, "resetReason", "--"),
+                ResetInfo: GetString(root, "resetInfo", "--"),
+                RestartIntent: GetString(root, "restartIntent", "--"),
+                LastCheckpoint: GetString(root, "lastCheckpoint", "--"),
+                Temperature: GetNullableDouble(root, "temperature"),
+                Weather: GetString(root, "weather", "--"),
+                WeatherStatus: GetString(root, "weatherStatus", "--"),
+                Heap: GetNullableLong(root, "heap"),
+                HeapFragmentation: GetNullableInt(root, "heapFragmentation"),
+                MaxFreeBlockSize: GetNullableLong(root, "maxFreeBlockSize"),
+                FlashSize: GetNullableLong(root, "flashSize"));
         }
         catch (Exception ex)
         {
@@ -95,6 +117,17 @@ public sealed class DeviceControlClient : IDisposable
 
         string baseUrl = NormalizeBaseUrl(displayAddress);
 
+        return await DisplayRequestCoordinator.RunBoolAsync(
+            ct => SetThemeCoreAsync(baseUrl, themeKey, ct),
+            TimeSpan.FromSeconds(2),
+            cancellationToken);
+    }
+
+    private async Task<bool> SetThemeCoreAsync(
+        string baseUrl,
+        string themeKey,
+        CancellationToken cancellationToken)
+    {
         try
         {
             LastError = string.Empty;

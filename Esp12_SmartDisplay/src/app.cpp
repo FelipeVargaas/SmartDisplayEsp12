@@ -8,17 +8,61 @@
 #include "config.h"
 #include "display_ui.h"
 #include "metrics.h"
+#include "reset_marker.h"
 #include "theme_manager.h"
 #include "theme_render.h"
 #include "weather.h"
 #include "web_server.h"
 #include "wifi_manager.h"
 
+namespace
+{
+void reserveRuntimeStrings()
+{
+  appState.gamerGame.reserve(48);
+  appState.gamerSource.reserve(12);
+  appState.diskLabel.reserve(4);
+  appState.lastDiskLabelDrawn.reserve(4);
+  appState.weatherText.reserve(12);
+  appState.weatherStatus.reserve(18);
+  appState.lastRestartIntent.reserve(24);
+  appState.lastResetCheckpoint.reserve(24);
+}
+
+bool activeThemeUsesWeather()
+{
+  ThemeId theme = themeManagerGetActive();
+  return theme == THEME_PC_MONITOR || theme == THEME_MINIMAL_CLOCK;
+}
+
+unsigned long weatherRetryInterval()
+{
+  if (appState.hasWeather) return WEATHER_UPDATE_INTERVAL_MS;
+  return appState.weatherRetryCount < WEATHER_FAST_RETRY_LIMIT ? WEATHER_FIRST_RETRY_INTERVAL_MS : WEATHER_RETRY_INTERVAL_MS;
+}
+
+void recordWeatherUpdateResult(bool success)
+{
+  if (success)
+  {
+    appState.weatherRetryCount = 0;
+    appState.lastClockCheck = 0;
+    return;
+  }
+
+  if (appState.weatherRetryCount < 255) appState.weatherRetryCount++;
+}
+}
+
 void appSetup()
 {
   Serial.begin(115200);
   delay(300);
   randomSeed(ESP.getCycleCount());
+  reserveRuntimeStrings();
+  appState.lastRestartIntent = resetMarkerConsume();
+  appState.lastResetCheckpoint = resetMarkerReadCheckpoint();
+  resetMarkerCheckpoint("boot_setup");
   appState.safeMode = bootGuardBegin();
   displayUiInit();
   if (!appState.safeMode) displayUiInitSprites();
@@ -26,6 +70,7 @@ void appSetup()
   themeManagerLoad();
   if (!wifiConnect()) wifiStartApMode();
   webServerSetup();
+  resetMarkerCheckpoint("web_ready");
   if (!appState.isApMode)
   {
     configTime(GMT_OFFSET_SEC, DAYLIGHT_OFFSET_SEC, "pool.ntp.org", "time.nist.gov");
@@ -40,9 +85,19 @@ void appSetup()
       displayUiDrawStartupInfo(ipAddress);
       delay(900);
       themeDrawBase();
-      weatherUpdate();
-      appState.lastWeatherUpdate = millis();
+      resetMarkerCheckpoint("theme_ready");
+      appState.lastThemeUsesWeather = activeThemeUsesWeather();
+      if (appState.lastThemeUsesWeather)
+      {
+        recordWeatherUpdateResult(weatherUpdate());
+        appState.lastWeatherUpdate = millis();
+      }
+      else
+      {
+        appState.lastWeatherUpdate = 0;
+      }
       themeUpdateIfNeeded();
+      resetMarkerCheckpoint("setup_done");
     }
   }
   Serial.println(); Serial.println("=====================================");
@@ -61,6 +116,7 @@ void appSetup()
   Serial.print("Flash real: "); Serial.println(ESP.getFlashChipRealSize());
   Serial.print("Heap livre: "); Serial.println(ESP.getFreeHeap());
   Serial.print("Metric sprite: "); Serial.println(appState.metricSpriteReady ? "OK" : "FALHOU");
+  resetMarkerCheckpoint("loop_start");
 }
 
 void appLoop()
@@ -72,10 +128,21 @@ void appLoop()
   unsigned long now = millis();
   if (!metricsHasRecentPcMetrics() && USE_FAKE_METRICS_WHEN_PC_OFFLINE) metricsUpdateFakeTargets();
   metricsAnimateFakeValues();
-  if (now - appState.lastWeatherUpdate >= WEATHER_UPDATE_INTERVAL_MS)
+  bool usesWeather = activeThemeUsesWeather();
+  if (usesWeather && !appState.lastThemeUsesWeather)
+  {
+    appState.weatherRetryCount = 0;
+    appState.lastWeatherUpdate = 0;
+  }
+  appState.lastThemeUsesWeather = usesWeather;
+
+  unsigned long weatherInterval = weatherRetryInterval();
+  if (usesWeather && (appState.lastWeatherUpdate == 0 || now - appState.lastWeatherUpdate >= weatherInterval))
   {
     appState.lastWeatherUpdate = now;
-    if (weatherUpdate()) appState.lastClockCheck = 0;
+    resetMarkerCheckpoint("weather_update");
+    recordWeatherUpdateResult(weatherUpdate());
+    resetMarkerCheckpoint("weather_done");
   }
   themeUpdateIfNeeded();
 }

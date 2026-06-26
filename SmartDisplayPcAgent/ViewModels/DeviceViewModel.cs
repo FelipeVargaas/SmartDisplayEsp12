@@ -74,7 +74,28 @@ public partial class DeviceViewModel : ObservableObject, IDisposable
     private string lastMetricsText = "--";
 
     [ObservableProperty]
+    private string uptimeText = "--";
+
+    [ObservableProperty]
+    private string resetReasonText = "--";
+
+    [ObservableProperty]
+    private string resetInfoText = "--";
+
+    [ObservableProperty]
+    private string restartIntentText = "--";
+
+    [ObservableProperty]
+    private string lastCheckpointText = "--";
+
+    [ObservableProperty]
     private string heapText = "--";
+
+    [ObservableProperty]
+    private string heapFragmentationText = "--";
+
+    [ObservableProperty]
+    private string maxFreeBlockText = "--";
 
     [ObservableProperty]
     private string flashText = "--";
@@ -84,6 +105,9 @@ public partial class DeviceViewModel : ObservableObject, IDisposable
 
     [ObservableProperty]
     private string temperatureText = "--";
+
+    [ObservableProperty]
+    private string weatherStatusText = "--";
 
     [ObservableProperty]
     private string displayMetricsText = "--";
@@ -116,7 +140,7 @@ public partial class DeviceViewModel : ObservableObject, IDisposable
 
             try
             {
-                await Task.Delay(10000, cancellationToken);
+                await Task.Delay(30000, cancellationToken);
             }
             catch (TaskCanceledException)
             {
@@ -129,7 +153,7 @@ public partial class DeviceViewModel : ObservableObject, IDisposable
     private async Task RefreshStatusAsync()
     {
         using var timeoutCts = new CancellationTokenSource(TimeSpan.FromSeconds(3));
-        await RefreshStatusInternalAsync(timeoutCts.Token);
+        await RefreshStatusInternalAsync(timeoutCts.Token, waitForSlot: true);
     }
 
     [RelayCommand]
@@ -165,17 +189,20 @@ public partial class DeviceViewModel : ObservableObject, IDisposable
         StatusMessage = "Tema enviado para o TinyDash";
 
         using var refreshCts = new CancellationTokenSource(TimeSpan.FromSeconds(3));
-        await RefreshStatusInternalAsync(refreshCts.Token);
+        await RefreshStatusInternalAsync(refreshCts.Token, waitForSlot: true);
 
         IsApplyingTheme = false;
     }
 
-    private async Task RefreshStatusInternalAsync(CancellationToken cancellationToken)
+    private async Task RefreshStatusInternalAsync(CancellationToken cancellationToken, bool waitForSlot = false)
     {
-        var status = await _deviceControlClient.GetStatusAsync(State.DisplayIp, cancellationToken);
+        var status = await _deviceControlClient.GetStatusAsync(State.DisplayIp, cancellationToken, waitForSlot);
 
         if (status is null)
         {
+            if (_deviceControlClient.LastRequestSkipped)
+                return;
+
             Dispatcher.UIThread.Post(() =>
             {
                 StatusMessage = string.IsNullOrWhiteSpace(_deviceControlClient.LastError)
@@ -206,10 +233,18 @@ public partial class DeviceViewModel : ObservableObject, IDisposable
             DeviceThemeText = formattedTheme;
             PcOnlineText = status.PcOnline ? "Yes" : "No";
             LastMetricsText = FormatAge(status.LastPcMetricsAgeMs);
+            UptimeText = FormatDuration(status.UptimeMs);
+            ResetReasonText = FormatStatusText(status.ResetReason);
+            ResetInfoText = FormatStatusText(status.ResetInfo);
+            RestartIntentText = FormatStatusText(status.RestartIntent);
+            LastCheckpointText = FormatStatusText(status.LastCheckpoint);
             HeapText = FormatBytes(status.Heap);
+            HeapFragmentationText = status.HeapFragmentation.HasValue ? $"{status.HeapFragmentation.Value}%" : "--";
+            MaxFreeBlockText = FormatBytes(status.MaxFreeBlockSize);
             FlashText = FormatBytes(status.FlashSize);
             WeatherText = string.IsNullOrWhiteSpace(status.Weather) ? "--" : status.Weather;
             TemperatureText = status.Temperature.HasValue ? $"{status.Temperature.Value:0.0} °C" : "--";
+            WeatherStatusText = FormatStatusText(status.WeatherStatus);
             DisplayMetricsText =
                 $"CPU {status.Cpu:0}%  RAM {status.Ram:0}%  GPU {status.Gpu:0}%  {status.DiskLabel} {status.Disk:0}%";
             LastRefreshText = DateTime.Now.ToString("HH:mm:ss");
@@ -245,7 +280,8 @@ public partial class DeviceViewModel : ObservableObject, IDisposable
         bool sent = await _displayHttpClient.SendMetricsAsync(
             State.DisplayIp,
             snapshot,
-            timeoutCts.Token);
+            timeoutCts.Token,
+            waitForSlot: true);
 
         State.DisplayStatusText = sent
             ? $"Teste enviado para {State.DisplayIp}"
@@ -273,6 +309,24 @@ public partial class DeviceViewModel : ObservableObject, IDisposable
             return $"{ageMs.Value} ms ago";
 
         return $"{ageMs.Value / 1000.0:0.0} s ago";
+    }
+
+    private static string FormatDuration(long? durationMs)
+    {
+        if (!durationMs.HasValue)
+            return "--";
+
+        long totalSeconds = Math.Max(0, durationMs.Value / 1000);
+        long hours = totalSeconds / 3600;
+        long minutes = totalSeconds % 3600 / 60;
+        long seconds = totalSeconds % 60;
+
+        return $"{hours}h {minutes}m {seconds}s";
+    }
+
+    private static string FormatStatusText(string? value)
+    {
+        return string.IsNullOrWhiteSpace(value) ? "--" : value.Trim();
     }
 
     private static string FormatBytes(long? bytes)

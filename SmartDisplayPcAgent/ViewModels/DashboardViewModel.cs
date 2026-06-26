@@ -18,6 +18,7 @@ public partial class DashboardViewModel : ObservableObject, IDisposable
     private readonly DisplayHttpClient _displayHttpClient = new();
     private readonly DeviceControlClient _deviceControlClient = new();
     private readonly HardwareInfoService _hardwareInfoService = new();
+    private readonly GamerTelemetryService _gamerTelemetryService = new();
     private readonly CancellationTokenSource _cts = new();
 
     private DateTime _lastDeviceStatusRefresh = DateTime.MinValue;
@@ -136,6 +137,21 @@ public partial class DashboardViewModel : ObservableObject, IDisposable
     [ObservableProperty]
     private double storageUsedPercent;
 
+    [ObservableProperty]
+    private string gamerGameText = "--";
+
+    [ObservableProperty]
+    private string gamerFpsText = "--";
+
+    [ObservableProperty]
+    private string gamerFrametimeText = "--";
+
+    [ObservableProperty]
+    private string gamerSourceText = "RTSS OFF";
+
+    [ObservableProperty]
+    private string gamerStatusText = "RTSS OFF";
+
     private async Task StartMetricsLoopAsync(CancellationToken cancellationToken)
     {
         while (!cancellationToken.IsCancellationRequested)
@@ -143,6 +159,21 @@ public partial class DashboardViewModel : ObservableObject, IDisposable
             try
             {
                 var snapshot = _metricsService.GetSnapshot();
+                var gamerTelemetry = _gamerTelemetryService.GetSnapshot();
+
+                snapshot = snapshot with
+                {
+                    Game = gamerTelemetry.Game,
+                    Fps = gamerTelemetry.Fps,
+                    Frametime = gamerTelemetry.Frametime,
+                    Source = gamerTelemetry.Source
+                };
+
+                string gamerGameText = string.IsNullOrWhiteSpace(gamerTelemetry.Game) ? "--" : gamerTelemetry.Game;
+                string gamerFpsText = gamerTelemetry.Fps.HasValue ? gamerTelemetry.Fps.Value.ToString() : "--";
+                string gamerFrametimeText = gamerTelemetry.Frametime.HasValue ? $"{gamerTelemetry.Frametime.Value:0.0} ms" : "--";
+                string gamerSourceText = string.IsNullOrWhiteSpace(gamerTelemetry.Source) ? "RTSS OFF" : gamerTelemetry.Source;
+                string gamerStatusText = gamerTelemetry.Status;
 
                 double cpu = Math.Round(snapshot.CpuUsage);
                 double ram = Math.Round(snapshot.RamUsage);
@@ -165,18 +196,33 @@ public partial class DashboardViewModel : ObservableObject, IDisposable
 
                 if (State.SendToDisplayEnabled)
                 {
+                    string activeThemeKey = NormalizeThemeKey(_activeThemeKey);
                     bool sent = await _displayHttpClient.SendMetricsAsync(
                         State.DisplayIp,
                         snapshot,
-                        cancellationToken);
+                        cancellationToken,
+                        includeDisk: ShouldSendDiskMetrics(activeThemeKey),
+                        includeGamerTelemetry: activeThemeKey == "gamer");
+
+                    if (_displayHttpClient.LastSendSkipped)
+                    {
+                        bool hasRecentEspSuccess = DisplayRequestCoordinator.HasRecentSuccess(TimeSpan.FromSeconds(45));
+                        displayStatus = "ESP ocupado, envio pulado";
+                        displayStatusShort = hasRecentEspSuccess ? "Online" : "Waiting";
+                        espHeaderStatus = hasRecentEspSuccess ? "ESP ONLINE" : "ESP WAIT";
+                        lastPostText = "Skipped";
+                    }
+                    else
+                    {
 
                     displayStatus = sent
                         ? $"Enviado para {State.DisplayIp}"
                         : $"Falha ao enviar para {State.DisplayIp}";
 
-                    displayStatusShort = sent ? "Online" : "Offline";
-                    espHeaderStatus = sent ? "ESP ONLINE" : "ESP OFFLINE";
+                    displayStatusShort = sent ? "Online" : DisplayRequestCoordinator.HasRecentSuccess(TimeSpan.FromSeconds(45)) ? "Unstable" : "Offline";
+                    espHeaderStatus = sent ? "ESP ONLINE" : DisplayRequestCoordinator.HasRecentSuccess(TimeSpan.FromSeconds(45)) ? "ESP INSTAVEL" : "ESP OFFLINE";
                     lastPostText = sent ? "OK · 1s ago" : "Failed";
+                }
                 }
                 else
                 {
@@ -185,7 +231,7 @@ public partial class DashboardViewModel : ObservableObject, IDisposable
                     lastPostText = "Disabled";
                 }
 
-                if ((DateTime.Now - _lastDeviceStatusRefresh).TotalSeconds >= 15 && !_isDeviceStatusRefreshRunning)
+                if ((DateTime.Now - _lastDeviceStatusRefresh).TotalMilliseconds >= 30000 && !_isDeviceStatusRefreshRunning)
                 {
                     _lastDeviceStatusRefresh = DateTime.Now;
                     _isDeviceStatusRefreshRunning = true;
@@ -211,12 +257,15 @@ public partial class DashboardViewModel : ObservableObject, IDisposable
                         }
                         else
                         {
-                            espHeaderStatus = "ESP OFFLINE";
+                            bool hasRecentEspSuccess = DisplayRequestCoordinator.HasRecentSuccess(TimeSpan.FromSeconds(45));
+                            espHeaderStatus = _deviceControlClient.LastRequestSkipped
+                                ? hasRecentEspSuccess ? "ESP ONLINE" : "ESP WAIT"
+                                : hasRecentEspSuccess ? "ESP INSTAVEL" : "ESP OFFLINE";
 
                             Dispatcher.UIThread.Post(() =>
                             {
                                 DeviceHeaderText = $"No response · {State.DisplayIp}";
-                                EspHeaderStatusText = "ESP OFFLINE";
+                                EspHeaderStatusText = espHeaderStatus;
                             });
                         }
                     }
@@ -234,6 +283,11 @@ public partial class DashboardViewModel : ObservableObject, IDisposable
                     GpuTemperature = gpuTemperature;
                     GpuTemperatureDisplayCompactText = gpuTemperatureDisplayCompactText;
                     PcSummaryGpuTemperatureText = gpuTemperatureDisplayCompactText;
+                    GamerGameText = gamerGameText;
+                    GamerFpsText = gamerFpsText;
+                    GamerFrametimeText = gamerFrametimeText;
+                    GamerSourceText = gamerSourceText;
+                    GamerStatusText = gamerStatusText;
                     StatusText = "Coletando dados locais";
                     DisplayStatusText = displayStatus;
                     DisplayStatusShortText = displayStatusShort;
@@ -279,14 +333,21 @@ public partial class DashboardViewModel : ObservableObject, IDisposable
             GpuUsage,
             DiskUsage,
             DiskLabel,
-            GpuTemperature: GpuTemperature);
+            GpuTemperature: GpuTemperature,
+            Game: GamerGameText == "--" ? string.Empty : GamerGameText,
+            Fps: int.TryParse(GamerFpsText, out int fps) ? fps : null,
+            Frametime: ParseFrametimeText(GamerFrametimeText),
+            Source: GamerSourceText == "RTSS" ? "RTSS" : null);
 
         using var timeoutCts = new CancellationTokenSource(TimeSpan.FromSeconds(2));
 
         bool sent = await _displayHttpClient.SendMetricsAsync(
             State.DisplayIp,
             snapshot,
-            timeoutCts.Token);
+            timeoutCts.Token,
+            includeDisk: ShouldSendDiskMetrics(_activeThemeKey),
+            includeGamerTelemetry: NormalizeThemeKey(_activeThemeKey) == "gamer",
+            waitForSlot: true);
 
         DisplayStatusText = sent
             ? $"Teste enviado para {State.DisplayIp}"
@@ -350,12 +411,14 @@ public partial class DashboardViewModel : ObservableObject, IDisposable
             case "gamer":
                 ThemePanelTitle = "GAMER HUD";
                 ThemePanelBodyText =
-                    $"Game          --{Environment.NewLine}" +
-                    $"FPS           --{Environment.NewLine}" +
-                    $"Frametime     --{Environment.NewLine}" +
+                    $"Game          {GamerGameText}{Environment.NewLine}" +
+                    $"FPS           {GamerFpsText}{Environment.NewLine}" +
+                    $"Frametime     {GamerFrametimeText}{Environment.NewLine}" +
                     $"GPU Temp      {GpuTemperatureDisplayCompactText}{Environment.NewLine}" +
-                    $"Source        RTSS OFF";
-                ThemePanelStatusText = "RTSS/MSI reservado para a próxima fase";
+                    $"Source        {GamerSourceText}";
+                ThemePanelStatusText = GamerStatusText == "RTSS"
+                    ? "RTSS ativo enviando FPS/frametime"
+                    : GamerStatusText;
                 break;
 
             case "minimal_clock":
@@ -398,6 +461,20 @@ public partial class DashboardViewModel : ObservableObject, IDisposable
         }
     }
 
+    private static double? ParseFrametimeText(string text)
+    {
+        if (string.IsNullOrWhiteSpace(text) || text.Trim() == "--")
+            return null;
+
+        string value = text
+            .Replace("ms", string.Empty, StringComparison.OrdinalIgnoreCase)
+            .Trim();
+
+        return double.TryParse(value, out double parsed)
+            ? parsed
+            : null;
+    }
+
     private static string BuildDisksText(IReadOnlyList<DiskMetricsSnapshot>? disks)
     {
         if (disks is null || disks.Count == 0)
@@ -421,6 +498,12 @@ public partial class DashboardViewModel : ObservableObject, IDisposable
         return temperature.HasValue
             ? $"{temperature.Value:0}°C"
             : "--";
+    }
+
+    private static bool ShouldSendDiskMetrics(string? theme)
+    {
+        string normalizedTheme = NormalizeThemeKey(theme);
+        return normalizedTheme == "pc_monitor" || normalizedTheme == "gamer";
     }
 
     public static string NormalizeThemeKey(string? theme)

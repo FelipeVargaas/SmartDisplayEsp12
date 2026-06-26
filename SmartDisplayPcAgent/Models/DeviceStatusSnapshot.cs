@@ -16,9 +16,17 @@ public sealed record DeviceStatusSnapshot(
     string DiskLabel,
     bool PcOnline,
     long? LastPcMetricsAgeMs,
+    long? UptimeMs,
+    string ResetReason,
+    string ResetInfo,
+    string RestartIntent,
+    string LastCheckpoint,
     double? Temperature,
     string Weather,
+    string WeatherStatus,
     long? Heap,
+    int? HeapFragmentation,
+    long? MaxFreeBlockSize,
     long? FlashSize)
 {
     public static DeviceStatusSnapshot Empty { get; } = new(
@@ -35,8 +43,16 @@ public sealed record DeviceStatusSnapshot(
         DiskLabel: "---",
         PcOnline: false,
         LastPcMetricsAgeMs: null,
+        UptimeMs: null,
+        ResetReason: "--",
+        ResetInfo: "--",
+        RestartIntent: "--",
+        LastCheckpoint: "--",
         Temperature: null,
         Weather: "--",
+        WeatherStatus: "--",
         Heap: null,
+        HeapFragmentation: null,
+        MaxFreeBlockSize: null,
         FlashSize: null);
 }

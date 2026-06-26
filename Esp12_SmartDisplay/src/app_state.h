@@ -11,6 +11,8 @@ struct AppState
   String scannedNetworks;
   bool isApMode;
   bool safeMode;
+  String lastRestartIntent;
+  String lastResetCheckpoint;
 
   int cpuCurrent;
   int ramCurrent;
@@ -49,6 +51,9 @@ struct AppState
   int weatherCode;
   bool hasWeather;
   String weatherText;
+  String weatherStatus;
+  uint8_t weatherRetryCount;
+  bool lastThemeUsesWeather;
 
   unsigned long lastCpuTargetUpdate;
   unsigned long lastRamTargetUpdate;

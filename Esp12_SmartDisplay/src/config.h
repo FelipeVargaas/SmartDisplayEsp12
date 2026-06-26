@@ -18,7 +18,10 @@ const float WEATHER_LON = -43.1729;
 static const char* const WEATHER_TIMEZONE = "America%2FSao_Paulo";
 const long GMT_OFFSET_SEC = -3 * 3600;
 const int DAYLIGHT_OFFSET_SEC = 0;
-const unsigned long WEATHER_UPDATE_INTERVAL_MS = 10UL * 60UL * 1000UL;
+const unsigned long WEATHER_UPDATE_INTERVAL_MS = 30UL * 60UL * 1000UL;
+const unsigned long WEATHER_FIRST_RETRY_INTERVAL_MS = 30UL * 1000UL;
+const unsigned long WEATHER_RETRY_INTERVAL_MS = 3UL * 60UL * 1000UL;
+const uint8_t WEATHER_FAST_RETRY_LIMIT = 3;
 
 #define EEPROM_SIZE 128
 #define SSID_ADDR 0

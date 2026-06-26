@@ -79,36 +79,71 @@
                            Classes="section-title"/>
 
                 <Grid Grid.Row="1"
-                      RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto"
+                      RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto"
                       RowSpacing="10">
                     <Grid ColumnDefinitions="120,*">
+                        <TextBlock Text="Uptime" Classes="muted"/>
+                        <TextBlock Grid.Column="1" Text="{Binding UptimeText}" HorizontalAlignment="Right"/>
+                    </Grid>
+
+                    <Grid Grid.Row="1" ColumnDefinitions="120,*">
+                        <TextBlock Text="Last reset" Classes="muted"/>
+                        <TextBlock Grid.Column="1" Text="{Binding ResetReasonText}" HorizontalAlignment="Right"/>
+                    </Grid>
+
+                    <Grid Grid.Row="2" ColumnDefinitions="120,*">
+                        <TextBlock Text="Reset detail" Classes="muted"/>
+                        <TextBlock Grid.Column="1" Text="{Binding ResetInfoText}" HorizontalAlignment="Right"/>
+                    </Grid>
+
+                    <Grid Grid.Row="3" ColumnDefinitions="120,*">
+                        <TextBlock Text="Marker" Classes="muted"/>
+                        <TextBlock Grid.Column="1" Text="{Binding RestartIntentText}" HorizontalAlignment="Right"/>
+                    </Grid>
+
+                    <Grid Grid.Row="4" ColumnDefinitions="120,*">
+                        <TextBlock Text="Checkpoint" Classes="muted"/>
+                        <TextBlock Grid.Column="1" Text="{Binding LastCheckpointText}" HorizontalAlignment="Right"/>
+                    </Grid>
+
+                    <Grid Grid.Row="5" ColumnDefinitions="120,*">
                         <TextBlock Text="Heap" Classes="muted"/>
                         <TextBlock Grid.Column="1" Text="{Binding HeapText}" HorizontalAlignment="Right"/>
                     </Grid>
 
-                    <Grid Grid.Row="1" ColumnDefinitions="120,*">
+                    <Grid Grid.Row="6" ColumnDefinitions="120,*">
+                        <TextBlock Text="Frag" Classes="muted"/>
+                        <TextBlock Grid.Column="1" Text="{Binding HeapFragmentationText}" HorizontalAlignment="Right"/>
+                    </Grid>
+
+                    <Grid Grid.Row="7" ColumnDefinitions="120,*">
+                        <TextBlock Text="Max block" Classes="muted"/>
+                        <TextBlock Grid.Column="1" Text="{Binding MaxFreeBlockText}" HorizontalAlignment="Right"/>
+                    </Grid>
+
+                    <Grid Grid.Row="8" ColumnDefinitions="120,*">
                         <TextBlock Text="Flash" Classes="muted"/>
                         <TextBlock Grid.Column="1" Text="{Binding FlashText}" HorizontalAlignment="Right"/>
                     </Grid>
 
-                    <Grid Grid.Row="2" ColumnDefinitions="120,*">
+                    <Grid Grid.Row="9" ColumnDefinitions="120,*">
                         <TextBlock Text="Weather" Classes="muted"/>
                         <TextBlock Grid.Column="1" Text="{Binding WeatherText}" HorizontalAlignment="Right"/>
                     </Grid>
 
-                    <Grid Grid.Row="3" ColumnDefinitions="120,*">
+                    <Grid Grid.Row="10" ColumnDefinitions="120,*">
                         <TextBlock Text="Temp" Classes="muted"/>
                         <TextBlock Grid.Column="1" Text="{Binding TemperatureText}" HorizontalAlignment="Right"/>
                     </Grid>
 
-                    <Grid Grid.Row="4" ColumnDefinitions="120,*">
-                        <TextBlock Text="Last data" Classes="muted"/>
-                        <TextBlock Grid.Column="1" Text="{Binding LastMetricsText}" HorizontalAlignment="Right"/>
+                    <Grid Grid.Row="11" ColumnDefinitions="120,*">
+                        <TextBlock Text="Weather status" Classes="muted"/>
+                        <TextBlock Grid.Column="1" Text="{Binding WeatherStatusText}" HorizontalAlignment="Right"/>
                     </Grid>
 
-                    <Grid Grid.Row="5" ColumnDefinitions="120,*">
-                        <TextBlock Text="Metrics" Classes="muted"/>
-                        <TextBlock Grid.Column="1" Text="{Binding DisplayMetricsText}" HorizontalAlignment="Right"/>
+                    <Grid Grid.Row="12" ColumnDefinitions="120,*">
+                        <TextBlock Text="Last data" Classes="muted"/>
+                        <TextBlock Grid.Column="1" Text="{Binding LastMetricsText}" HorizontalAlignment="Right"/>
                     </Grid>
                 </Grid>
 

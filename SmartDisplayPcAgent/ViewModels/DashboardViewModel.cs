@@ -537,7 +537,7 @@ public partial class DashboardViewModel : ObservableObject, IDisposable
             [
                 new FilePickerFileType("Images")
                 {
-                    Patterns = ["*.png", "*.jpg", "*.jpeg", "*.bmp", "*.webp"]
+                    Patterns = ["*.gif", "*.png", "*.jpg", "*.jpeg", "*.bmp", "*.webp"]
                 }
             ]
         });
@@ -565,8 +565,8 @@ public partial class DashboardViewModel : ObservableObject, IDisposable
             byte[] payload = _animationImageService.CreateUploadPayload(sourceBytes);
 
             AnimationPreviewImage?.Dispose();
-            AnimationPreviewImage = new Bitmap(new MemoryStream(sourceBytes));
-            HasAnimationPreviewImage = true;
+            AnimationPreviewImage = TryCreatePreviewBitmap(sourceBytes);
+            HasAnimationPreviewImage = AnimationPreviewImage is not null;
             _animationImagePayload = payload;
             CanUploadAnimationImage = true;
             AnimationSelectedFileText = files[0].Name;
@@ -862,6 +862,18 @@ public partial class DashboardViewModel : ObservableObject, IDisposable
     }
 
     private static string S(string name) => Strings.Get(name);
+
+    private static Bitmap? TryCreatePreviewBitmap(byte[] sourceBytes)
+    {
+        try
+        {
+            return new Bitmap(new MemoryStream(sourceBytes));
+        }
+        catch
+        {
+            return null;
+        }
+    }
 
     private static Avalonia.Controls.TopLevel? GetMainTopLevel()
     {

@@ -161,17 +161,24 @@ bool animationImageRender()
   ImageHeader header;
   if (!readHeader(header) || !headerIsValid(header)) return false;
 
+  bool oldSwapBytes = appState.tft.getSwapBytes();
+  appState.tft.setSwapBytes(true);
   uint32_t address = storageStart() + sizeof(ImageHeader);
   for (uint16_t y = 0; y < ANIMATION_IMAGE_HEIGHT; y += RENDER_ROWS)
   {
     uint16_t rows = ANIMATION_IMAGE_HEIGHT - y;
     if (rows > RENDER_ROWS) rows = RENDER_ROWS;
     size_t bytes = size_t(ANIMATION_IMAGE_WIDTH) * rows * 2;
-    if (!ESP.flashRead(address, reinterpret_cast<uint8_t*>(renderBuffer), bytes)) return false;
+    if (!ESP.flashRead(address, reinterpret_cast<uint8_t*>(renderBuffer), bytes))
+    {
+      appState.tft.setSwapBytes(oldSwapBytes);
+      return false;
+    }
     appState.tft.pushImage(0, y, ANIMATION_IMAGE_WIDTH, rows, renderBuffer);
     address += bytes;
     yield();
   }
+  appState.tft.setSwapBytes(oldSwapBytes);
   return true;
 }
 

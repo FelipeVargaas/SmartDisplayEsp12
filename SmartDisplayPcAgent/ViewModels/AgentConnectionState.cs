@@ -1,4 +1,5 @@
 using CommunityToolkit.Mvvm.ComponentModel;
+using SmartDisplayPcAgent.Resources;
 
 namespace SmartDisplayPcAgent.ViewModels;
 
@@ -14,11 +15,11 @@ public partial class AgentConnectionState : ObservableObject
     private string activeThemeKey = "pc_monitor";
 
     [ObservableProperty]
-    private string displayStatusText = "Pronto para enviar telemetria";
+    private string displayStatusText = Strings.Get("StatusReadyToSend");
 
     [ObservableProperty]
-    private string displayStatusShortText = "Ready";
+    private string displayStatusShortText = Strings.Get("StatusReady");
 
     [ObservableProperty]
-    private string lastPostText = "Waiting";
+    private string lastPostText = Strings.Get("StatusWaiting");
 }

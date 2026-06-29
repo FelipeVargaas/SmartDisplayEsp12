@@ -1,0 +1,149 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <data name="AppSubtitle" xml:space="preserve"><value>Serviço de telemetria do display</value></data>
+  <data name="NavDashboard" xml:space="preserve"><value>Painel</value></data>
+  <data name="NavDevice" xml:space="preserve"><value>Dispositivo</value></data>
+  <data name="SendInterval" xml:space="preserve"><value>Intervalo de envio: 1,0 s</value></data>
+  <data name="Version" xml:space="preserve"><value>Versão: 1.0.0</value></data>
+  <data name="LanguageLabel" xml:space="preserve"><value>Idioma</value></data>
+  <data name="LanguageRestartHint" xml:space="preserve"><value>Reinicie para aplicar</value></data>
+  <data name="LanguagePortugueseBrazil" xml:space="preserve"><value>Português (BR)</value></data>
+  <data name="LanguageEnglish" xml:space="preserve"><value>English</value></data>
+  <data name="DashboardLocalMetrics" xml:space="preserve"><value>MÉTRICAS LOCAIS</value></data>
+  <data name="DashboardPcSummary" xml:space="preserve"><value>RESUMO DO PC</value></data>
+  <data name="DashboardMemory" xml:space="preserve"><value>MEMÓRIA</value></data>
+  <data name="DashboardStorage" xml:space="preserve"><value>ARMAZENAMENTO</value></data>
+  <data name="DashboardCores" xml:space="preserve"><value>Núcleos</value></data>
+  <data name="DashboardThreads" xml:space="preserve"><value>Threads</value></data>
+  <data name="DashboardClock" xml:space="preserve"><value>Clock</value></data>
+  <data name="DashboardSpeed" xml:space="preserve"><value>Velocidade</value></data>
+  <data name="DashboardModules" xml:space="preserve"><value>Módulos</value></data>
+  <data name="DashboardChannel" xml:space="preserve"><value>Canal</value></data>
+  <data name="DashboardVram" xml:space="preserve"><value>VRAM</value></data>
+  <data name="DashboardTemp" xml:space="preserve"><value>Temp</value></data>
+  <data name="DashboardTotal" xml:space="preserve"><value>Total</value></data>
+  <data name="DashboardUsed" xml:space="preserve"><value>Usado</value></data>
+  <data name="DashboardDisks" xml:space="preserve"><value>DISCOS</value></data>
+  <data name="DashboardTelemetryMoved" xml:space="preserve"><value>Controles de telemetria movidos para Dispositivo</value></data>
+  <data name="GameNames" xml:space="preserve"><value>Nomes de jogos</value></data>
+  <data name="GameNamesDescription" xml:space="preserve"><value>Mapeie o processo detectado para o nome amigável enviado ao TinyDash Gamer HUD.</value></data>
+  <data name="Process" xml:space="preserve"><value>Processo</value></data>
+  <data name="DisplayName" xml:space="preserve"><value>Nome exibido</value></data>
+  <data name="Source" xml:space="preserve"><value>Origem</value></data>
+  <data name="Status" xml:space="preserve"><value>Status</value></data>
+  <data name="Close" xml:space="preserve"><value>Fechar</value></data>
+  <data name="Delete" xml:space="preserve"><value>Excluir</value></data>
+  <data name="Save" xml:space="preserve"><value>Salvar</value></data>
+  <data name="AnimationImage" xml:space="preserve"><value>Imagem de animação</value></data>
+  <data name="File" xml:space="preserve"><value>Arquivo</value></data>
+  <data name="ChooseImage" xml:space="preserve"><value>Escolher imagem</value></data>
+  <data name="AnimationStorageNote" xml:space="preserve"><value>O ESP armazena uma imagem na flash reservada e renderiza sem o Agent depois do upload.</value></data>
+  <data name="Upload" xml:space="preserve"><value>Enviar</value></data>
+  <data name="ImageUpload" xml:space="preserve"><value>Enviar imagem</value></data>
+  <data name="DeviceConnection" xml:space="preserve"><value>CONEXÃO</value></data>
+  <data name="Name" xml:space="preserve"><value>Nome</value></data>
+  <data name="Mode" xml:space="preserve"><value>Modo</value></data>
+  <data name="AgentTarget" xml:space="preserve"><value>Alvo do Agent</value></data>
+  <data name="DeviceIp" xml:space="preserve"><value>IP do dispositivo</value></data>
+  <data name="Theme" xml:space="preserve"><value>Tema</value></data>
+  <data name="PcOnline" xml:space="preserve"><value>PC online</value></data>
+  <data name="Refresh" xml:space="preserve"><value>Atualizar</value></data>
+  <data name="OpenServer" xml:space="preserve"><value>Abrir servidor</value></data>
+  <data name="ResetSavedWifi" xml:space="preserve"><value>Resetar Wi-Fi salvo</value></data>
+  <data name="FirmwareUpdateOta" xml:space="preserve"><value>Atualização OTA</value></data>
+  <data name="DeviceSystem" xml:space="preserve"><value>SISTEMA</value></data>
+  <data name="Runtime" xml:space="preserve"><value>Execução</value></data>
+  <data name="Uptime" xml:space="preserve"><value>Tempo ligado</value></data>
+  <data name="LastReset" xml:space="preserve"><value>Último reset</value></data>
+  <data name="Checkpoint" xml:space="preserve"><value>Checkpoint</value></data>
+  <data name="LastData" xml:space="preserve"><value>Último dado</value></data>
+  <data name="Marker" xml:space="preserve"><value>Marcador</value></data>
+  <data name="Health" xml:space="preserve"><value>Saúde</value></data>
+  <data name="Heap" xml:space="preserve"><value>Heap</value></data>
+  <data name="MaxBlock" xml:space="preserve"><value>Bloco max.</value></data>
+  <data name="Weather" xml:space="preserve"><value>Clima</value></data>
+  <data name="Advanced" xml:space="preserve"><value>Avançado</value></data>
+  <data name="DisplayTheme" xml:space="preserve"><value>TEMA DO DISPLAY</value></data>
+  <data name="Active" xml:space="preserve"><value>Ativo</value></data>
+  <data name="ApplyTheme" xml:space="preserve"><value>Aplicar tema</value></data>
+  <data name="Telemetry" xml:space="preserve"><value>TELEMETRIA</value></data>
+  <data name="SendTelemetryToDisplay" xml:space="preserve"><value>Enviar telemetria para o display</value></data>
+  <data name="SendTest" xml:space="preserve"><value>Enviar teste</value></data>
+  <data name="TargetIpConfigured" xml:space="preserve"><value>IP alvo configurado em Conexão.</value></data>
+  <data name="Cancel" xml:space="preserve"><value>Cancelar</value></data>
+  <data name="StatusStartingCollection" xml:space="preserve"><value>Iniciando coleta...</value></data>
+  <data name="StatusCollectingLocalData" xml:space="preserve"><value>Coletando dados locais</value></data>
+  <data name="StatusSendDisabled" xml:space="preserve"><value>Envio para display desativado</value></data>
+  <data name="StatusReadyToSend" xml:space="preserve"><value>Pronto para enviar telemetria</value></data>
+  <data name="StatusPaused" xml:space="preserve"><value>Pausado</value></data>
+  <data name="StatusReady" xml:space="preserve"><value>Pronto</value></data>
+  <data name="StatusWaiting" xml:space="preserve"><value>Aguardando</value></data>
+  <data name="StatusDisabled" xml:space="preserve"><value>Desativado</value></data>
+  <data name="StatusOnline" xml:space="preserve"><value>Online</value></data>
+  <data name="StatusOffline" xml:space="preserve"><value>Offline</value></data>
+  <data name="StatusWaitingShort" xml:space="preserve"><value>Aguardando</value></data>
+  <data name="StatusUnstable" xml:space="preserve"><value>Instável</value></data>
+  <data name="StatusIdle" xml:space="preserve"><value>Ocioso</value></data>
+  <data name="StatusSkipped" xml:space="preserve"><value>Pulado</value></data>
+  <data name="StatusFailed" xml:space="preserve"><value>Falhou</value></data>
+  <data name="StatusBackoff" xml:space="preserve"><value>Aguardando</value></data>
+  <data name="StatusLowHeap" xml:space="preserve"><value>Heap baixo</value></data>
+  <data name="EspReady" xml:space="preserve"><value>ESP PRONTO</value></data>
+  <data name="EspOnline" xml:space="preserve"><value>ESP ONLINE</value></data>
+  <data name="EspWait" xml:space="preserve"><value>ESP AGUARDANDO</value></data>
+  <data name="EspUnstable" xml:space="preserve"><value>ESP INSTÁVEL</value></data>
+  <data name="EspOffline" xml:space="preserve"><value>ESP OFFLINE</value></data>
+  <data name="EspBusy" xml:space="preserve"><value>ESP OCUPADO</value></data>
+  <data name="NoDisksDetected" xml:space="preserve"><value>Nenhum disco detectado</value></data>
+  <data name="NoDeviceStatusYet" xml:space="preserve"><value>Sem status do dispositivo ainda</value></data>
+  <data name="DetectingCpu" xml:space="preserve"><value>Detectando CPU...</value></data>
+  <data name="DetectingGpu" xml:space="preserve"><value>Detectando GPU...</value></data>
+  <data name="Unknown" xml:space="preserve"><value>Desconhecido</value></data>
+  <data name="Storage" xml:space="preserve"><value>Armazenamento</value></data>
+  <data name="NoImageSelected" xml:space="preserve"><value>Nenhuma imagem selecionada.</value></data>
+  <data name="AnimationDetails" xml:space="preserve"><value>PNG, JPG ou BMP. O Agent corta em quadrado e envia 240x240 RGB565.</value></data>
+  <data name="AnimationChoosePrepare" xml:space="preserve"><value>Escolha uma imagem para preparar o asset de animação do TinyDash.</value></data>
+  <data name="NoGameDetectedYet" xml:space="preserve"><value>Nenhum jogo detectado ainda.</value></data>
+  <data name="NoResponseFormat" xml:space="preserve"><value>Sem resposta - {0}</value></data>
+  <data name="EspBusySkipped" xml:space="preserve"><value>ESP ocupado, envio pulado</value></data>
+  <data name="SentToFormat" xml:space="preserve"><value>Enviado para {0}</value></data>
+  <data name="SendFailedFormat" xml:space="preserve"><value>Falha ao enviar para {0}</value></data>
+  <data name="EspLowHeapWaiting" xml:space="preserve"><value>ESP com heap baixo, aguardando</value></data>
+  <data name="EspLowHeapResumeFormat" xml:space="preserve"><value>ESP com heap baixo, retomando em {0}s</value></data>
+  <data name="ThemeNoTelemetryFormat" xml:space="preserve"><value>{0} não usa telemetria</value></data>
+  <data name="CollectionErrorFormat" xml:space="preserve"><value>Erro na coleta: {0}</value></data>
+  <data name="TestingSend" xml:space="preserve"><value>Testando envio...</value></data>
+  <data name="TestSentFormat" xml:space="preserve"><value>Teste enviado para {0}</value></data>
+  <data name="TestFailedFormat" xml:space="preserve"><value>Falha no teste para {0}</value></data>
+  <data name="OkOneSecondAgo" xml:space="preserve"><value>OK - 1s atrás</value></data>
+  <data name="OkNow" xml:space="preserve"><value>OK - agora</value></data>
+  <data name="DeviceWaitingStatus" xml:space="preserve"><value>Aguardando status do dispositivo...</value></data>
+  <data name="Never" xml:space="preserve"><value>Nunca</value></data>
+  <data name="SelectThemeApply" xml:space="preserve"><value>Selecione um tema e aplique no TinyDash.</value></data>
+  <data name="ThemeSelectedFormat" xml:space="preserve"><value>Tema selecionado: {0}</value></data>
+  <data name="ThemeActiveFormat" xml:space="preserve"><value>Tema ativo no TinyDash: {0}</value></data>
+  <data name="NoThemeSelected" xml:space="preserve"><value>Nenhum tema selecionado.</value></data>
+  <data name="ApplyingThemeFormat" xml:space="preserve"><value>Aplicando {0}...</value></data>
+  <data name="ThemeApplyFailedFormat" xml:space="preserve"><value>Falha ao aplicar {0}.</value></data>
+  <data name="ThemePostFailedFormat" xml:space="preserve"><value>Falha no POST /theme para {0}</value></data>
+  <data name="ThemeAppliedRefreshFormat" xml:space="preserve"><value>{0} aplicado. Atualizando status...</value></data>
+  <data name="ThemeSentTinyDash" xml:space="preserve"><value>Tema enviado para o TinyDash</value></data>
+  <data name="DeviceStatusUpdated" xml:space="preserve"><value>Status atualizado</value></data>
+  <data name="Yes" xml:space="preserve"><value>Sim</value></data>
+  <data name="No" xml:space="preserve"><value>Não</value></data>
+  <data name="MsAgoFormat" xml:space="preserve"><value>{0} ms atrás</value></data>
+  <data name="SecondsAgoFormat" xml:space="preserve"><value>{0:0.0} s atrás</value></data>
+  <data name="ConfigureTargetIpFirst" xml:space="preserve"><value>Configure o IP alvo primeiro.</value></data>
+  <data name="OpeningFormat" xml:space="preserve"><value>Abrindo {0}</value></data>
+  <data name="ResetWifiTitle" xml:space="preserve"><value>Resetar Wi-Fi salvo?</value></data>
+  <data name="ResetWifiMessage" xml:space="preserve"><value>Isto pedirá ao ESP para esquecer as credenciais Wi-Fi salvas. A confirmação evita acionamento acidental.</value></data>
+  <data name="OpenFirmwareUpdateTitle" xml:space="preserve"><value>Abrir atualização de firmware?</value></data>
+  <data name="OpenFirmwareUpdateMessage" xml:space="preserve"><value>Atualização de firmware é uma ação administrativa. Este botão está preparado para uma rodada futura e não envia nada agora.</value></data>
+  <data name="Continue" xml:space="preserve"><value>Continuar</value></data>
+  <data name="ResetWifiConfirmed" xml:space="preserve"><value>Reset Wi-Fi confirmado. A chamada real será ligada em uma rodada futura.</value></data>
+  <data name="FirmwareUpdateConfirmed" xml:space="preserve"><value>Firmware Update OTA confirmado. Função real será ligada em uma rodada futura.</value></data>
+</root>

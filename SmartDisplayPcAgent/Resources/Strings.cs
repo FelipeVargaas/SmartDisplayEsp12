@@ -1,0 +1,81 @@
+using System.Globalization;
+using System.Resources;
+
+namespace SmartDisplayPcAgent.Resources;
+
+public static class Strings
+{
+    private static readonly ResourceManager ResourceManager = new("SmartDisplayPcAgent.Resources.Strings", typeof(Strings).Assembly);
+
+    public static string Get(string name) => ResourceManager.GetString(name, CultureInfo.CurrentUICulture) ?? name;
+
+    public static string AppSubtitle => Get(nameof(AppSubtitle));
+    public static string NavDashboard => Get(nameof(NavDashboard));
+    public static string NavDevice => Get(nameof(NavDevice));
+    public static string SendInterval => Get(nameof(SendInterval));
+    public static string Version => Get(nameof(Version));
+    public static string LanguageLabel => Get(nameof(LanguageLabel));
+    public static string LanguageRestartHint => Get(nameof(LanguageRestartHint));
+    public static string DashboardLocalMetrics => Get(nameof(DashboardLocalMetrics));
+    public static string DashboardPcSummary => Get(nameof(DashboardPcSummary));
+    public static string DashboardMemory => Get(nameof(DashboardMemory));
+    public static string DashboardStorage => Get(nameof(DashboardStorage));
+    public static string DashboardCores => Get(nameof(DashboardCores));
+    public static string DashboardThreads => Get(nameof(DashboardThreads));
+    public static string DashboardClock => Get(nameof(DashboardClock));
+    public static string DashboardSpeed => Get(nameof(DashboardSpeed));
+    public static string DashboardModules => Get(nameof(DashboardModules));
+    public static string DashboardChannel => Get(nameof(DashboardChannel));
+    public static string DashboardVram => Get(nameof(DashboardVram));
+    public static string DashboardTemp => Get(nameof(DashboardTemp));
+    public static string DashboardTotal => Get(nameof(DashboardTotal));
+    public static string DashboardUsed => Get(nameof(DashboardUsed));
+    public static string DashboardDisks => Get(nameof(DashboardDisks));
+    public static string DashboardTelemetryMoved => Get(nameof(DashboardTelemetryMoved));
+    public static string GameNames => Get(nameof(GameNames));
+    public static string GameNamesDescription => Get(nameof(GameNamesDescription));
+    public static string Process => Get(nameof(Process));
+    public static string DisplayName => Get(nameof(DisplayName));
+    public static string Source => Get(nameof(Source));
+    public static string Status => Get(nameof(Status));
+    public static string Close => Get(nameof(Close));
+    public static string Delete => Get(nameof(Delete));
+    public static string Save => Get(nameof(Save));
+    public static string AnimationImage => Get(nameof(AnimationImage));
+    public static string File => Get(nameof(File));
+    public static string ChooseImage => Get(nameof(ChooseImage));
+    public static string AnimationStorageNote => Get(nameof(AnimationStorageNote));
+    public static string Upload => Get(nameof(Upload));
+    public static string ImageUpload => Get(nameof(ImageUpload));
+    public static string DeviceConnection => Get(nameof(DeviceConnection));
+    public static string Name => Get(nameof(Name));
+    public static string Mode => Get(nameof(Mode));
+    public static string AgentTarget => Get(nameof(AgentTarget));
+    public static string DeviceIp => Get(nameof(DeviceIp));
+    public static string Theme => Get(nameof(Theme));
+    public static string PcOnline => Get(nameof(PcOnline));
+    public static string Refresh => Get(nameof(Refresh));
+    public static string OpenServer => Get(nameof(OpenServer));
+    public static string ResetSavedWifi => Get(nameof(ResetSavedWifi));
+    public static string FirmwareUpdateOta => Get(nameof(FirmwareUpdateOta));
+    public static string DeviceSystem => Get(nameof(DeviceSystem));
+    public static string Runtime => Get(nameof(Runtime));
+    public static string Uptime => Get(nameof(Uptime));
+    public static string LastReset => Get(nameof(LastReset));
+    public static string Checkpoint => Get(nameof(Checkpoint));
+    public static string LastData => Get(nameof(LastData));
+    public static string Marker => Get(nameof(Marker));
+    public static string Health => Get(nameof(Health));
+    public static string Heap => Get(nameof(Heap));
+    public static string MaxBlock => Get(nameof(MaxBlock));
+    public static string Weather => Get(nameof(Weather));
+    public static string Advanced => Get(nameof(Advanced));
+    public static string DisplayTheme => Get(nameof(DisplayTheme));
+    public static string Active => Get(nameof(Active));
+    public static string ApplyTheme => Get(nameof(ApplyTheme));
+    public static string Telemetry => Get(nameof(Telemetry));
+    public static string SendTelemetryToDisplay => Get(nameof(SendTelemetryToDisplay));
+    public static string SendTest => Get(nameof(SendTest));
+    public static string TargetIpConfigured => Get(nameof(TargetIpConfigured));
+    public static string Cancel => Get(nameof(Cancel));
+}

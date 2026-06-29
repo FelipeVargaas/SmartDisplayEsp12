@@ -278,3 +278,10 @@ C:\gitProjects\SmartDisplayPcAgent\SmartDisplayEsp12\SmartDisplayPcAgent\obj\Deb
 C:\gitProjects\SmartDisplayPcAgent\SmartDisplayEsp12\SmartDisplayPcAgent\obj\Debug\net9.0\SmartDisplayPcAgent.pdb
 C:\gitProjects\SmartDisplayPcAgent\SmartDisplayEsp12\SmartDisplayPcAgent\obj\Debug\net9.0\SmartDisplayPcAgent.genruntimeconfig.cache
 C:\gitProjects\SmartDisplayPcAgent\SmartDisplayEsp12\SmartDisplayPcAgent\obj\Debug\net9.0\ref\SmartDisplayPcAgent.dll
+C:\gitProjects\SmartDisplayPcAgent\SmartDisplayEsp12\SmartDisplayPcAgent\bin\Debug\net9.0\en\SmartDisplayPcAgent.resources.dll
+C:\gitProjects\SmartDisplayPcAgent\SmartDisplayEsp12\SmartDisplayPcAgent\obj\Debug\net9.0\SmartDisplayPcAgent.Resources.Strings.resources
+C:\gitProjects\SmartDisplayPcAgent\SmartDisplayEsp12\SmartDisplayPcAgent\obj\Debug\net9.0\SmartDisplayPcAgent.Resources.Strings.en.resources
+C:\gitProjects\SmartDisplayPcAgent\SmartDisplayEsp12\SmartDisplayPcAgent\obj\Debug\net9.0\SmartDisplayPcAgent.csproj.GenerateResource.cache
+C:\gitProjects\SmartDisplayPcAgent\SmartDisplayEsp12\SmartDisplayPcAgent\obj\Debug\net9.0\en\SmartDisplayPcAgent.resources.cs
+C:\gitProjects\SmartDisplayPcAgent\SmartDisplayEsp12\SmartDisplayPcAgent\obj\Debug\net9.0\en\SmartDisplayPcAgent.resources.dll
+C:\gitProjects\SmartDisplayPcAgent\SmartDisplayEsp12\.vscode\bin\pcagent\en\SmartDisplayPcAgent.resources.dll

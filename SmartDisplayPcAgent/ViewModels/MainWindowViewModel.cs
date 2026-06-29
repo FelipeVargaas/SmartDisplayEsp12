@@ -1,16 +1,32 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using SmartDisplayPcAgent.Resources;
+using SmartDisplayPcAgent.Services;
 using System;
+using System.Collections.Generic;
+using System.Globalization;
+using System.Linq;
 
 namespace SmartDisplayPcAgent.ViewModels;
 
 public partial class MainWindowViewModel : ObservableObject, IDisposable
 {
+    private readonly LocalizationSettingsService _localizationSettingsService = new();
+
     public MainWindowViewModel()
     {
         State = new AgentConnectionState();
         Dashboard = new DashboardViewModel(State);
         Device = new DeviceViewModel(State);
+        AvailableLanguages =
+        [
+            new LanguageOption("pt-BR", Strings.Get("LanguagePortugueseBrazil")),
+            new LanguageOption("en", Strings.Get("LanguageEnglish")),
+        ];
+
+        string cultureName = _localizationSettingsService.LoadCultureName();
+        selectedLanguage = AvailableLanguages.FirstOrDefault(language => language.CultureName == cultureName)
+            ?? AvailableLanguages[0];
     }
 
     public AgentConnectionState State { get; }
@@ -18,6 +34,14 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
     public DashboardViewModel Dashboard { get; }
 
     public DeviceViewModel Device { get; }
+
+    public IReadOnlyList<LanguageOption> AvailableLanguages { get; }
+
+    [ObservableProperty]
+    private LanguageOption? selectedLanguage;
+
+    [ObservableProperty]
+    private string languageRestartText = string.Empty;
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(IsDashboardSelected))]
@@ -38,6 +62,19 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
     private void SelectDevice()
     {
         SelectedPageIndex = 1;
+    }
+
+    partial void OnSelectedLanguageChanged(LanguageOption? value)
+    {
+        if (value is null)
+            return;
+
+        _localizationSettingsService.SaveCultureName(value.CultureName);
+
+        string currentCultureName = LocalizationSettingsService.NormalizeCultureName(CultureInfo.CurrentUICulture.Name);
+        LanguageRestartText = value.CultureName == currentCultureName
+            ? string.Empty
+            : Strings.LanguageRestartHint;
     }
 
     public void Dispose()

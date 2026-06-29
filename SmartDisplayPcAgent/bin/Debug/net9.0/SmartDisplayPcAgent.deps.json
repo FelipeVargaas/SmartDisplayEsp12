@@ -19,6 +19,11 @@
         },
         "runtime": {
           "SmartDisplayPcAgent.dll": {}
+        },
+        "resources": {
+          "en/SmartDisplayPcAgent.resources.dll": {
+            "locale": "en"
+          }
         }
       },
       "Avalonia/11.3.10": {

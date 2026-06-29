@@ -3,6 +3,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using SmartDisplayPcAgent.Clients;
 using SmartDisplayPcAgent.Models;
+using SmartDisplayPcAgent.Resources;
 using SmartDisplayPcAgent.Services;
 using System;
 using System.Collections.Generic;
@@ -48,7 +49,7 @@ public partial class DeviceViewModel : ObservableObject, IDisposable
     private ThemeOption? selectedTheme;
 
     [ObservableProperty]
-    private string statusMessage = "Aguardando status do dispositivo...";
+    private string statusMessage = S("DeviceWaitingStatus");
 
     [ObservableProperty]
     private string deviceName = "TinyDash";
@@ -114,10 +115,10 @@ public partial class DeviceViewModel : ObservableObject, IDisposable
     private string displayMetricsText = "--";
 
     [ObservableProperty]
-    private string lastRefreshText = "Never";
+    private string lastRefreshText = S("Never");
 
     [ObservableProperty]
-    private string themeApplyStatusText = "Selecione um tema e aplique no TinyDash.";
+    private string themeApplyStatusText = S("SelectThemeApply");
 
     [ObservableProperty]
     private bool isApplyingTheme;
@@ -132,7 +133,7 @@ public partial class DeviceViewModel : ObservableObject, IDisposable
     private string confirmDialogMessage = string.Empty;
 
     [ObservableProperty]
-    private string confirmDialogActionText = "Confirm";
+    private string confirmDialogActionText = "Confirmar";
 
     private string pendingConfirmAction = string.Empty;
 
@@ -143,8 +144,8 @@ public partial class DeviceViewModel : ObservableObject, IDisposable
 
         _hasPendingThemeSelection = value.Key != _currentThemeKey;
         ThemeApplyStatusText = _hasPendingThemeSelection
-            ? $"Tema selecionado: {value.DisplayName}"
-            : $"Tema ativo no TinyDash: {value.DisplayName}";
+            ? string.Format(S("ThemeSelectedFormat"), value.DisplayName)
+            : string.Format(S("ThemeActiveFormat"), value.DisplayName);
     }
 
     private async Task StartStatusLoopAsync(CancellationToken cancellationToken)
@@ -176,12 +177,12 @@ public partial class DeviceViewModel : ObservableObject, IDisposable
     {
         if (SelectedTheme is null)
         {
-            ThemeApplyStatusText = "Nenhum tema selecionado.";
+            ThemeApplyStatusText = S("NoThemeSelected");
             return;
         }
 
         IsApplyingTheme = true;
-        ThemeApplyStatusText = $"Aplicando {SelectedTheme.DisplayName}...";
+        ThemeApplyStatusText = string.Format(S("ApplyingThemeFormat"), SelectedTheme.DisplayName);
 
         using var timeoutCts = new CancellationTokenSource(TimeSpan.FromSeconds(3));
 
@@ -193,15 +194,15 @@ public partial class DeviceViewModel : ObservableObject, IDisposable
         if (!applied)
         {
             IsApplyingTheme = false;
-            ThemeApplyStatusText = $"Falha ao aplicar {SelectedTheme.DisplayName}.";
+            ThemeApplyStatusText = string.Format(S("ThemeApplyFailedFormat"), SelectedTheme.DisplayName);
             StatusMessage = string.IsNullOrWhiteSpace(_deviceControlClient.LastError)
-                ? $"Falha no POST /theme para {State.DisplayIp}"
+                ? string.Format(S("ThemePostFailedFormat"), State.DisplayIp)
                 : _deviceControlClient.LastError;
             return;
         }
 
-        ThemeApplyStatusText = $"{SelectedTheme.DisplayName} aplicado. Atualizando status...";
-        StatusMessage = "Tema enviado para o TinyDash";
+        ThemeApplyStatusText = string.Format(S("ThemeAppliedRefreshFormat"), SelectedTheme.DisplayName);
+        StatusMessage = S("ThemeSentTinyDash");
         State.ActiveThemeKey = SelectedTheme.Key;
 
         using var refreshCts = new CancellationTokenSource(TimeSpan.FromSeconds(3));
@@ -222,7 +223,7 @@ public partial class DeviceViewModel : ObservableObject, IDisposable
             Dispatcher.UIThread.Post(() =>
             {
                 StatusMessage = string.IsNullOrWhiteSpace(_deviceControlClient.LastError)
-                    ? $"Sem resposta de {State.DisplayIp}"
+                    ? string.Format(S("NoResponseFormat"), State.DisplayIp)
                     : _deviceControlClient.LastError;
                 LastRefreshText = DateTime.Now.ToString("HH:mm:ss");
             });
@@ -241,14 +242,14 @@ public partial class DeviceViewModel : ObservableObject, IDisposable
             _currentThemeKey = normalizedTheme;
             State.ActiveThemeKey = normalizedTheme;
 
-            StatusMessage = "Status atualizado";
+            StatusMessage = S("DeviceStatusUpdated");
             DeviceName = status.Name;
             DeviceMode = status.Mode;
             DeviceIp = status.Ip;
             DeviceSsid = status.Ssid;
             DeviceRssiText = status.Rssi.HasValue ? $"{status.Rssi.Value} dBm" : "--";
             DeviceThemeText = formattedTheme;
-            PcOnlineText = status.PcOnline ? "Yes" : "No";
+            PcOnlineText = status.PcOnline ? S("Yes") : S("No");
             LastMetricsText = FormatAge(status.LastPcMetricsAgeMs);
             UptimeText = FormatDuration(status.UptimeMs);
             ResetReasonText = FormatStatusText(status.ResetReason);
@@ -274,12 +275,12 @@ public partial class DeviceViewModel : ObservableObject, IDisposable
                 SelectedTheme = matchingTheme;
                 _isSyncingThemeFromDevice = false;
                 _hasPendingThemeSelection = false;
-                ThemeApplyStatusText = $"Tema ativo no TinyDash: {matchingTheme.DisplayName}";
+                ThemeApplyStatusText = string.Format(S("ThemeActiveFormat"), matchingTheme.DisplayName);
             }
             else if (SelectedTheme?.Key == normalizedTheme)
             {
                 _hasPendingThemeSelection = false;
-                ThemeApplyStatusText = $"Tema ativo no TinyDash: {matchingTheme.DisplayName}";
+                ThemeApplyStatusText = string.Format(S("ThemeActiveFormat"), matchingTheme.DisplayName);
             }
         });
     }
@@ -287,7 +288,7 @@ public partial class DeviceViewModel : ObservableObject, IDisposable
     [RelayCommand]
     private async Task SendTestAsync()
     {
-        State.DisplayStatusText = "Testando envio...";
+        State.DisplayStatusText = S("TestingSend");
         State.LastPostText = "Testing";
 
         var snapshot = _metricsService.GetSnapshot();
@@ -301,11 +302,11 @@ public partial class DeviceViewModel : ObservableObject, IDisposable
             waitForSlot: true);
 
         State.DisplayStatusText = sent
-            ? $"Teste enviado para {State.DisplayIp}"
-            : $"Falha no teste para {State.DisplayIp}";
+            ? string.Format(S("TestSentFormat"), State.DisplayIp)
+            : string.Format(S("TestFailedFormat"), State.DisplayIp);
 
-        State.DisplayStatusShortText = sent ? "Online" : "Offline";
-        State.LastPostText = sent ? "OK · now" : "Failed";
+        State.DisplayStatusShortText = sent ? S("StatusOnline") : S("StatusOffline");
+        State.LastPostText = sent ? S("OkNow") : S("StatusFailed");
     }
 
     [RelayCommand]
@@ -313,7 +314,7 @@ public partial class DeviceViewModel : ObservableObject, IDisposable
     {
         if (string.IsNullOrWhiteSpace(State.DisplayIp))
         {
-            StatusMessage = "Configure target IP first.";
+            StatusMessage = S("ConfigureTargetIpFirst");
             return;
         }
 
@@ -323,23 +324,23 @@ public partial class DeviceViewModel : ObservableObject, IDisposable
         if (status is null)
         {
             StatusMessage = string.IsNullOrWhiteSpace(_deviceControlClient.LastError)
-                ? $"Sem resposta de {State.DisplayIp}"
+                ? string.Format(S("NoResponseFormat"), State.DisplayIp)
                 : _deviceControlClient.LastError;
             return;
         }
 
         string url = NormalizeDeviceUrl(State.DisplayIp);
         Process.Start(new ProcessStartInfo(url) { UseShellExecute = true });
-        StatusMessage = $"Abrindo {url}";
+        StatusMessage = string.Format(S("OpeningFormat"), url);
     }
 
     [RelayCommand]
     private void RequestResetWifi()
     {
         pendingConfirmAction = "reset_wifi";
-        ConfirmDialogTitle = "Reset saved Wi-Fi?";
-        ConfirmDialogMessage = "This will ask the ESP to forget the saved Wi-Fi credentials. Keep this guarded so it cannot happen by accident.";
-        ConfirmDialogActionText = "Reset Wi-Fi";
+        ConfirmDialogTitle = S("ResetWifiTitle");
+        ConfirmDialogMessage = S("ResetWifiMessage");
+        ConfirmDialogActionText = S("ResetSavedWifi");
         IsConfirmDialogOpen = true;
     }
 
@@ -347,9 +348,9 @@ public partial class DeviceViewModel : ObservableObject, IDisposable
     private void RequestFirmwareUpdate()
     {
         pendingConfirmAction = "firmware_update";
-        ConfirmDialogTitle = "Open firmware update?";
-        ConfirmDialogMessage = "Firmware update is an administrative action. This button is prepared for a later round and will not upload anything now.";
-        ConfirmDialogActionText = "Continue";
+        ConfirmDialogTitle = S("OpenFirmwareUpdateTitle");
+        ConfirmDialogMessage = S("OpenFirmwareUpdateMessage");
+        ConfirmDialogActionText = S("Continue");
         IsConfirmDialogOpen = true;
     }
 
@@ -364,9 +365,9 @@ public partial class DeviceViewModel : ObservableObject, IDisposable
     private void ConfirmDialog()
     {
         if (pendingConfirmAction == "reset_wifi")
-            StatusMessage = "Reset Wi-Fi confirmado. A chamada real sera ligada em uma rodada futura.";
+            StatusMessage = S("ResetWifiConfirmed");
         else if (pendingConfirmAction == "firmware_update")
-            StatusMessage = "Firmware Update OTA confirmado. Funcao real sera ligada em uma rodada futura.";
+            StatusMessage = S("FirmwareUpdateConfirmed");
 
         pendingConfirmAction = string.Empty;
         IsConfirmDialogOpen = false;
@@ -387,9 +388,9 @@ public partial class DeviceViewModel : ObservableObject, IDisposable
             return "--";
 
         if (ageMs.Value < 1000)
-            return $"{ageMs.Value} ms ago";
+            return string.Format(S("MsAgoFormat"), ageMs.Value);
 
-        return $"{ageMs.Value / 1000.0:0.0} s ago";
+        return string.Format(S("SecondsAgoFormat"), ageMs.Value / 1000.0);
     }
 
     private static string FormatDuration(long? durationMs)
@@ -438,4 +439,6 @@ public partial class DeviceViewModel : ObservableObject, IDisposable
 
         return value.TrimEnd('/') + "/";
     }
+
+    private static string S(string name) => Strings.Get(name);
 }

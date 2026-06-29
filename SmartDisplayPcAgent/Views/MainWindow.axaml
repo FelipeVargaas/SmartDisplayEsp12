@@ -1,5 +1,6 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:res="using:SmartDisplayPcAgent.Resources"
         xmlns:vm="using:SmartDisplayPcAgent.ViewModels"
         xmlns:views="using:SmartDisplayPcAgent.Views"
         x:Class="SmartDisplayPcAgent.Views.MainWindow"
@@ -160,7 +161,7 @@
                                    Foreground="#D46F2A"/>
                     </StackPanel>
 
-                    <TextBlock Text="Display telemetry service"
+                    <TextBlock Text="{x:Static res:Strings.AppSubtitle}"
                                FontSize="14"
                                Classes="muted"/>
                 </StackPanel>
@@ -173,12 +174,12 @@
                         VerticalAlignment="Center">
                 <Button Classes="nav-tab"
                         Classes.active="{Binding IsDashboardSelected}"
-                        Content="Dashboard"
+                        Content="{x:Static res:Strings.NavDashboard}"
                         Command="{Binding SelectDashboardCommand}"/>
 
                 <Button Classes="nav-tab"
                         Classes.active="{Binding IsDeviceSelected}"
-                        Content="Device"
+                        Content="{x:Static res:Strings.NavDevice}"
                         Command="{Binding SelectDeviceCommand}"/>
             </StackPanel>
 
@@ -226,6 +227,7 @@
 
         <Grid Grid.Row="2"
               ColumnDefinitions="*,Auto,*"
+              ColumnSpacing="18"
               MinHeight="28">
             <TextBlock Grid.Column="0"
                        Text="{Binding Dashboard.StatusText}"
@@ -233,15 +235,39 @@
                        VerticalAlignment="Center"/>
 
             <TextBlock Grid.Column="1"
-                       Text="Send interval: 1.0 s"
+                       Text="{x:Static res:Strings.SendInterval}"
                        Classes="muted"
                        VerticalAlignment="Center"/>
 
-            <TextBlock Grid.Column="2"
-                       Text="Version: 1.0.0"
-                       Classes="muted"
-                       HorizontalAlignment="Right"
-                       VerticalAlignment="Center"/>
+            <StackPanel Grid.Column="2"
+                        Orientation="Horizontal"
+                        Spacing="10"
+                        HorizontalAlignment="Right"
+                        VerticalAlignment="Center">
+                <TextBlock Text="{x:Static res:Strings.LanguageLabel}"
+                           Classes="muted"
+                           VerticalAlignment="Center"/>
+
+                <ComboBox Width="145"
+                          Height="30"
+                          ItemsSource="{Binding AvailableLanguages}"
+                          SelectedItem="{Binding SelectedLanguage, Mode=TwoWay}">
+                    <ComboBox.ItemTemplate>
+                        <DataTemplate x:DataType="vm:LanguageOption">
+                            <TextBlock Text="{Binding DisplayName}"/>
+                        </DataTemplate>
+                    </ComboBox.ItemTemplate>
+                </ComboBox>
+
+                <TextBlock Text="{Binding LanguageRestartText}"
+                           Classes="accent"
+                           FontSize="12"
+                           VerticalAlignment="Center"/>
+
+                <TextBlock Text="{x:Static res:Strings.Version}"
+                           Classes="muted"
+                           VerticalAlignment="Center"/>
+            </StackPanel>
         </Grid>
     </Grid>
 </Window>

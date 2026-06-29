@@ -7,6 +7,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using SmartDisplayPcAgent.Clients;
 using SmartDisplayPcAgent.Models;
+using SmartDisplayPcAgent.Resources;
 using SmartDisplayPcAgent.Services;
 using System;
 using System.Collections.Generic;
@@ -62,19 +63,19 @@ public partial class DashboardViewModel : ObservableObject, IDisposable
     private string gpuTemperatureDisplayCompactText = "--";
 
     [ObservableProperty]
-    private string statusText = "Iniciando coleta...";
+    private string statusText = S("StatusStartingCollection");
 
     [ObservableProperty]
-    private string displayStatusText = "Envio para display desativado";
+    private string displayStatusText = S("StatusSendDisabled");
 
     [ObservableProperty]
-    private string displayStatusShortText = "Paused";
+    private string displayStatusShortText = S("StatusPaused");
 
     [ObservableProperty]
-    private string espHeaderStatusText = "ESP READY";
+    private string espHeaderStatusText = S("EspReady");
 
     [ObservableProperty]
-    private string lastPostText = "Disabled";
+    private string lastPostText = S("StatusDisabled");
 
     [ObservableProperty]
     private double diskUsage;
@@ -83,25 +84,25 @@ public partial class DashboardViewModel : ObservableObject, IDisposable
     private string diskLabel = "---";
 
     [ObservableProperty]
-    private string disksText = "Nenhum disco detectado";
+    private string disksText = S("NoDisksDetected");
 
     [ObservableProperty]
     private string activeThemeText = "PC Monitor";
 
     [ObservableProperty]
-    private string deviceHeaderText = "No device status yet";
+    private string deviceHeaderText = S("NoDeviceStatusYet");
 
     [ObservableProperty]
     private string themePanelTitle = "PC MONITOR";
 
     [ObservableProperty]
-    private string themePanelBodyText = "Telemetry bridge active";
+    private string themePanelBodyText = "Ponte de telemetria ativa";
 
     [ObservableProperty]
-    private string themePanelStatusText = "Waiting for first device status";
+    private string themePanelStatusText = "Aguardando primeiro status do dispositivo";
 
     [ObservableProperty]
-    private string cpuNameText = "Detecting CPU...";
+    private string cpuNameText = S("DetectingCpu");
 
     [ObservableProperty]
     private string cpuCoresText = "--";
@@ -122,10 +123,10 @@ public partial class DashboardViewModel : ObservableObject, IDisposable
     private string memoryModulesText = "--";
 
     [ObservableProperty]
-    private string memoryChannelText = "Unknown";
+    private string memoryChannelText = S("Unknown");
 
     [ObservableProperty]
-    private string gpuNameText = "Detecting GPU...";
+    private string gpuNameText = S("DetectingGpu");
 
     [ObservableProperty]
     private string gpuVramText = "--";
@@ -137,7 +138,7 @@ public partial class DashboardViewModel : ObservableObject, IDisposable
     private string pcSummaryGpuTemperatureText = "--";
 
     [ObservableProperty]
-    private string storageNameText = "Storage";
+    private string storageNameText = S("Storage");
 
     [ObservableProperty]
     private string storageTotalText = "--";
@@ -176,13 +177,13 @@ public partial class DashboardViewModel : ObservableObject, IDisposable
     private bool isAnimationThemeActive;
 
     [ObservableProperty]
-    private string animationSelectedFileText = "No image selected.";
+    private string animationSelectedFileText = S("NoImageSelected");
 
     [ObservableProperty]
-    private string animationImageDetailsText = "PNG, JPG or BMP. The Agent crops to square and sends 240x240 RGB565.";
+    private string animationImageDetailsText = S("AnimationDetails");
 
     [ObservableProperty]
-    private string animationImageStatusText = "Choose an image to prepare the TinyDash animation asset.";
+    private string animationImageStatusText = S("AnimationChoosePrepare");
 
     [ObservableProperty]
     private bool canUploadAnimationImage;
@@ -203,7 +204,7 @@ public partial class DashboardViewModel : ObservableObject, IDisposable
     private string gameAliasDisplayNameText = "";
 
     [ObservableProperty]
-    private string gameAliasStatusText = "No game detected yet.";
+    private string gameAliasStatusText = S("NoGameDetectedYet");
 
     private async Task RefreshDeviceStatusForDashboardAsync(CancellationToken cancellationToken)
     {
@@ -225,13 +226,13 @@ public partial class DashboardViewModel : ObservableObject, IDisposable
                 if (deviceStatus.LowHeap)
                     _metricsBackoffUntil = DateTime.Now.AddSeconds(10);
                 string themeText = FormatThemeName(_activeThemeKey);
-                string deviceHeader = $"{themeText} · {deviceStatus.Ip}";
+                string deviceHeader = $"{themeText} - {deviceStatus.Ip}";
 
                 Dispatcher.UIThread.Post(() =>
                 {
                     ActiveThemeText = themeText;
                     DeviceHeaderText = deviceHeader;
-                    EspHeaderStatusText = "ESP ONLINE";
+                    EspHeaderStatusText = S("EspOnline");
                     UpdateThemePanel(_activeThemeKey);
                 });
             }
@@ -239,12 +240,12 @@ public partial class DashboardViewModel : ObservableObject, IDisposable
             {
                 bool hasRecentEspSuccess = DisplayRequestCoordinator.HasRecentSuccess(TimeSpan.FromSeconds(45));
                 string espHeaderStatus = _deviceControlClient.LastRequestSkipped
-                    ? hasRecentEspSuccess ? "ESP ONLINE" : "ESP WAIT"
-                    : hasRecentEspSuccess ? "ESP INSTAVEL" : "ESP OFFLINE";
+                    ? hasRecentEspSuccess ? S("EspOnline") : S("EspWait")
+                    : hasRecentEspSuccess ? S("EspUnstable") : S("EspOffline");
 
                 Dispatcher.UIThread.Post(() =>
                 {
-                    DeviceHeaderText = $"No response · {State.DisplayIp}";
+                    DeviceHeaderText = string.Format(S("NoResponseFormat"), State.DisplayIp);
                     EspHeaderStatusText = espHeaderStatus;
                 });
             }
@@ -313,46 +314,46 @@ public partial class DashboardViewModel : ObservableObject, IDisposable
                     if (_displayHttpClient.LastSendSkipped)
                     {
                         bool hasRecentEspSuccess = DisplayRequestCoordinator.HasRecentSuccess(TimeSpan.FromSeconds(45));
-                        displayStatus = "ESP ocupado, envio pulado";
-                        displayStatusShort = hasRecentEspSuccess ? "Online" : "Waiting";
-                        espHeaderStatus = hasRecentEspSuccess ? "ESP ONLINE" : "ESP WAIT";
-                        lastPostText = "Skipped";
+                        displayStatus = S("EspBusySkipped");
+                        displayStatusShort = hasRecentEspSuccess ? S("StatusOnline") : S("StatusWaitingShort");
+                        espHeaderStatus = hasRecentEspSuccess ? S("EspOnline") : S("EspWait");
+                        lastPostText = S("StatusSkipped");
                     }
                     else
                     {
 
                     displayStatus = sent
-                        ? $"Enviado para {State.DisplayIp}"
-                        : $"Falha ao enviar para {State.DisplayIp}";
+                        ? string.Format(S("SentToFormat"), State.DisplayIp)
+                        : string.Format(S("SendFailedFormat"), State.DisplayIp);
 
-                    displayStatusShort = sent ? "Online" : DisplayRequestCoordinator.HasRecentSuccess(TimeSpan.FromSeconds(45)) ? "Unstable" : "Offline";
-                    espHeaderStatus = sent ? "ESP ONLINE" : DisplayRequestCoordinator.HasRecentSuccess(TimeSpan.FromSeconds(45)) ? "ESP INSTAVEL" : "ESP OFFLINE";
-                    lastPostText = sent ? "OK · 1s ago" : "Failed";
+                    displayStatusShort = sent ? S("StatusOnline") : DisplayRequestCoordinator.HasRecentSuccess(TimeSpan.FromSeconds(45)) ? S("StatusUnstable") : S("StatusOffline");
+                    espHeaderStatus = sent ? S("EspOnline") : DisplayRequestCoordinator.HasRecentSuccess(TimeSpan.FromSeconds(45)) ? S("EspUnstable") : S("EspOffline");
+                    lastPostText = sent ? S("OkOneSecondAgo") : S("StatusFailed");
                     if (_displayHttpClient.LastLowHeap)
                     {
                         _metricsBackoffUntil = DateTime.Now.AddSeconds(10);
-                        displayStatus = "ESP low heap, aguardando";
-                        displayStatusShort = "Backoff";
-                        espHeaderStatus = "ESP BUSY";
-                        lastPostText = "Low heap";
+                        displayStatus = S("EspLowHeapWaiting");
+                        displayStatusShort = S("StatusBackoff");
+                        espHeaderStatus = S("EspBusy");
+                        lastPostText = S("StatusLowHeap");
                     }
                 }
                 }
                 else if (State.SendToDisplayEnabled && ShouldSendMetricsForTheme(activeThemeKey) && metricsBackoffActive)
                 {
                     int remainingSeconds = Math.Max(1, (int)Math.Ceiling((_metricsBackoffUntil - DateTime.Now).TotalSeconds));
-                    displayStatus = $"ESP low heap, retomando em {remainingSeconds}s";
-                    displayStatusShort = "Backoff";
-                    espHeaderStatus = "ESP BUSY";
-                    lastPostText = "Backoff";
+                    displayStatus = string.Format(S("EspLowHeapResumeFormat"), remainingSeconds);
+                    displayStatusShort = S("StatusBackoff");
+                    espHeaderStatus = S("EspBusy");
+                    lastPostText = S("StatusBackoff");
                 }
                 else
                 {
                     displayStatus = State.SendToDisplayEnabled
-                        ? $"{FormatThemeName(activeThemeKey)} não usa telemetria"
-                        : "Envio para display desativado";
-                    displayStatusShort = State.SendToDisplayEnabled ? "Idle" : "Paused";
-                    lastPostText = State.SendToDisplayEnabled ? "Idle" : "Disabled";
+                        ? string.Format(S("ThemeNoTelemetryFormat"), FormatThemeName(activeThemeKey))
+                        : S("StatusSendDisabled");
+                    displayStatusShort = State.SendToDisplayEnabled ? S("StatusIdle") : S("StatusPaused");
+                    lastPostText = State.SendToDisplayEnabled ? S("StatusIdle") : S("StatusDisabled");
                 }
 
                 if ((DateTime.Now - _lastDeviceStatusRefresh).TotalMilliseconds >= 30000 && !_isDeviceStatusRefreshRunning)
@@ -372,14 +373,14 @@ public partial class DashboardViewModel : ObservableObject, IDisposable
                             if (deviceStatus.LowHeap)
                                 _metricsBackoffUntil = DateTime.Now.AddSeconds(10);
                             string themeText = FormatThemeName(_activeThemeKey);
-                            string deviceHeader = $"{themeText} · {deviceStatus.Ip}";
-                            espHeaderStatus = "ESP ONLINE";
+                            string deviceHeader = $"{themeText} - {deviceStatus.Ip}";
+                            espHeaderStatus = S("EspOnline");
 
                             Dispatcher.UIThread.Post(() =>
                             {
                                 ActiveThemeText = themeText;
                                 DeviceHeaderText = deviceHeader;
-                                EspHeaderStatusText = "ESP ONLINE";
+                                EspHeaderStatusText = S("EspOnline");
                                 UpdateThemePanel(_activeThemeKey);
                             });
                         }
@@ -387,12 +388,12 @@ public partial class DashboardViewModel : ObservableObject, IDisposable
                         {
                             bool hasRecentEspSuccess = DisplayRequestCoordinator.HasRecentSuccess(TimeSpan.FromSeconds(45));
                             espHeaderStatus = _deviceControlClient.LastRequestSkipped
-                                ? hasRecentEspSuccess ? "ESP ONLINE" : "ESP WAIT"
-                                : hasRecentEspSuccess ? "ESP INSTAVEL" : "ESP OFFLINE";
+                                ? hasRecentEspSuccess ? S("EspOnline") : S("EspWait")
+                                : hasRecentEspSuccess ? S("EspUnstable") : S("EspOffline");
 
                             Dispatcher.UIThread.Post(() =>
                             {
-                                DeviceHeaderText = $"No response · {State.DisplayIp}";
+                                DeviceHeaderText = string.Format(S("NoResponseFormat"), State.DisplayIp);
                                 EspHeaderStatusText = espHeaderStatus;
                             });
                         }
@@ -419,7 +420,7 @@ public partial class DashboardViewModel : ObservableObject, IDisposable
                     GamerFrametimeText = gamerFrametimeText;
                     GamerSourceText = gamerSourceText;
                     GamerStatusText = gamerStatusText;
-                    StatusText = "Coletando dados locais";
+                    StatusText = S("StatusCollectingLocalData");
                     DisplayStatusText = displayStatus;
                     DisplayStatusShortText = displayStatusShort;
                     EspHeaderStatusText = espHeaderStatus;
@@ -438,7 +439,7 @@ public partial class DashboardViewModel : ObservableObject, IDisposable
             {
                 Dispatcher.UIThread.Post(() =>
                 {
-                    StatusText = $"Erro na coleta: {ex.Message}";
+                    StatusText = string.Format(S("CollectionErrorFormat"), ex.Message);
                 });
             }
 
@@ -456,7 +457,7 @@ public partial class DashboardViewModel : ObservableObject, IDisposable
     [RelayCommand]
     private async Task SendTestAsync()
     {
-        DisplayStatusText = "Testando envio...";
+        DisplayStatusText = S("TestingSend");
 
         var snapshot = new PcMetricsSnapshot(
             CpuUsage,
@@ -481,12 +482,12 @@ public partial class DashboardViewModel : ObservableObject, IDisposable
             waitForSlot: true);
 
         DisplayStatusText = sent
-            ? $"Teste enviado para {State.DisplayIp}"
-            : $"Falha no teste para {State.DisplayIp}";
+            ? string.Format(S("TestSentFormat"), State.DisplayIp)
+            : string.Format(S("TestFailedFormat"), State.DisplayIp);
 
-        DisplayStatusShortText = sent ? "Online" : "Offline";
-        EspHeaderStatusText = sent ? "ESP ONLINE" : "ESP OFFLINE";
-        LastPostText = sent ? "OK · now" : "Failed";
+        DisplayStatusShortText = sent ? S("StatusOnline") : S("StatusOffline");
+        EspHeaderStatusText = sent ? S("EspOnline") : S("EspOffline");
+        LastPostText = sent ? S("OkNow") : S("StatusFailed");
 
         State.DisplayStatusText = DisplayStatusText;
         State.DisplayStatusShortText = DisplayStatusShortText;
@@ -498,8 +499,8 @@ public partial class DashboardViewModel : ObservableObject, IDisposable
     {
         GameAliasDisplayNameText = _gameAliasService.GetAlias(GameAliasProcessText);
         GameAliasStatusText = GameAliasProcessText == "--"
-            ? "No game detected yet."
-            : $"Editing alias for {GameAliasProcessText}";
+            ? S("NoGameDetectedYet")
+            : $"Editando alias para {GameAliasProcessText}";
         IsGameNamesDialogOpen = true;
     }
 
@@ -508,8 +509,8 @@ public partial class DashboardViewModel : ObservableObject, IDisposable
     {
         IsAnimationImageDialogOpen = true;
         AnimationImageStatusText = _animationImagePayload is null
-            ? "Choose an image to prepare the TinyDash animation asset."
-            : "Image ready to upload.";
+            ? S("AnimationChoosePrepare")
+            : "Imagem pronta para envio.";
     }
 
     [RelayCommand]
@@ -524,13 +525,13 @@ public partial class DashboardViewModel : ObservableObject, IDisposable
         var topLevel = GetMainTopLevel();
         if (topLevel is null)
         {
-            AnimationImageStatusText = "Main window not available.";
+            AnimationImageStatusText = "Janela principal indisponível.";
             return;
         }
 
         var files = await topLevel.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
         {
-            Title = "Choose TinyDash animation image",
+            Title = S("ChooseImage"),
             AllowMultiple = false,
             FileTypeFilter =
             [
@@ -549,7 +550,7 @@ public partial class DashboardViewModel : ObservableObject, IDisposable
             await using var stream = await files[0].OpenReadAsync();
             if (stream.CanSeek && stream.Length > AnimationImageService.MaxSourceBytes)
             {
-                AnimationImageStatusText = "Image is larger than 16 MB.";
+                AnimationImageStatusText = "A imagem tem mais de 16 MB.";
                 return;
             }
 
@@ -557,7 +558,7 @@ public partial class DashboardViewModel : ObservableObject, IDisposable
             await stream.CopyToAsync(memory, _cts.Token);
             if (memory.Length > AnimationImageService.MaxSourceBytes)
             {
-                AnimationImageStatusText = "Image is larger than 16 MB.";
+                AnimationImageStatusText = "A imagem tem mais de 16 MB.";
                 return;
             }
             byte[] sourceBytes = memory.ToArray();
@@ -569,15 +570,15 @@ public partial class DashboardViewModel : ObservableObject, IDisposable
             _animationImagePayload = payload;
             CanUploadAnimationImage = true;
             AnimationSelectedFileText = files[0].Name;
-            AnimationImageDetailsText = $"Prepared 240x240 RGB565 · {AnimationImageService.PixelBytes:N0} bytes pixels · {AnimationImageService.PayloadBytes:N0} bytes upload";
-            AnimationImageStatusText = "Image ready to upload.";
+            AnimationImageDetailsText = $"Preparada 240x240 RGB565 - {AnimationImageService.PixelBytes:N0} bytes de pixels - {AnimationImageService.PayloadBytes:N0} bytes de upload";
+            AnimationImageStatusText = "Imagem pronta para envio.";
             UpdateThemePanel(_activeThemeKey);
         }
         catch (Exception ex)
         {
             _animationImagePayload = null;
             CanUploadAnimationImage = false;
-            AnimationImageStatusText = $"Could not prepare image: {ex.Message}";
+            AnimationImageStatusText = $"Não foi possível preparar a imagem: {ex.Message}";
             UpdateThemePanel(_activeThemeKey);
         }
     }
@@ -587,13 +588,13 @@ public partial class DashboardViewModel : ObservableObject, IDisposable
     {
         if (_animationImagePayload is null)
         {
-            AnimationImageStatusText = "Choose an image first.";
+            AnimationImageStatusText = "Escolha uma imagem primeiro.";
             return;
         }
 
         IsUploadingAnimationImage = true;
         CanUploadAnimationImage = false;
-        AnimationImageStatusText = "Uploading image to TinyDash...";
+        AnimationImageStatusText = "Enviando imagem para o TinyDash...";
 
         using var timeoutCts = new CancellationTokenSource(TimeSpan.FromSeconds(35));
         using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(timeoutCts.Token, _cts.Token);
@@ -604,7 +605,7 @@ public partial class DashboardViewModel : ObservableObject, IDisposable
 
         if (uploaded)
         {
-            AnimationImageStatusText = "Image uploaded. Animation theme will render it directly from ESP flash.";
+            AnimationImageStatusText = "Imagem enviada. O tema Animation vai renderizar direto da flash do ESP.";
             _animationImageUploaded = true;
             ThemePanelStatusText = "Imagem gravada no ESP";
             _ = Task.Run(() => RefreshDeviceStatusForDashboardAsync(_cts.Token));
@@ -612,7 +613,7 @@ public partial class DashboardViewModel : ObservableObject, IDisposable
         else
         {
             AnimationImageStatusText = string.IsNullOrWhiteSpace(_deviceControlClient.LastError)
-                ? "Upload failed."
+                ? "Falha no upload."
                 : _deviceControlClient.LastError;
         }
     }
@@ -628,19 +629,19 @@ public partial class DashboardViewModel : ObservableObject, IDisposable
     {
         if (string.IsNullOrWhiteSpace(GameAliasProcessText) || GameAliasProcessText == "--")
         {
-            GameAliasStatusText = "No detected process to save.";
+            GameAliasStatusText = "Nenhum processo detectado para salvar.";
             return;
         }
 
         if (string.IsNullOrWhiteSpace(GameAliasDisplayNameText))
         {
-            GameAliasStatusText = "Enter a display name first.";
+            GameAliasStatusText = "Digite um nome exibido primeiro.";
             return;
         }
 
         _gameAliasService.SaveAlias(GameAliasProcessText, GameAliasDisplayNameText);
         GamerGameText = _gameAliasService.Resolve(GameAliasProcessText);
-        GameAliasStatusText = $"Saved {GameAliasProcessText}.";
+        GameAliasStatusText = $"Salvo: {GameAliasProcessText}.";
         UpdateThemePanel(_activeThemeKey);
     }
 
@@ -649,14 +650,14 @@ public partial class DashboardViewModel : ObservableObject, IDisposable
     {
         if (string.IsNullOrWhiteSpace(GameAliasProcessText) || GameAliasProcessText == "--")
         {
-            GameAliasStatusText = "No detected process to remove.";
+            GameAliasStatusText = "Nenhum processo detectado para remover.";
             return;
         }
 
         _gameAliasService.DeleteAlias(GameAliasProcessText);
         GameAliasDisplayNameText = string.Empty;
         GamerGameText = GameAliasProcessText;
-        GameAliasStatusText = $"Removed alias for {GameAliasProcessText}.";
+        GameAliasStatusText = $"Alias removido para {GameAliasProcessText}.";
         UpdateThemePanel(_activeThemeKey);
     }
 
@@ -751,13 +752,13 @@ public partial class DashboardViewModel : ObservableObject, IDisposable
                     $"Upload        {AnimationImageService.PixelBytes / 1024} KB";
                 ThemePanelStatusText = _animationImageUploaded
                     ? "Imagem gravada no ESP"
-                    : "Conversao e envio serao feitos pelo Agent";
+                    : "Conversão e envio serão feitos pelo Agent";
                 break;
 
             default:
                 ThemePanelTitle = "PC MONITOR";
                 ThemePanelBodyText =
-                    $"Telemetry bridge active{Environment.NewLine}" +
+                    $"Ponte de telemetria ativa{Environment.NewLine}" +
                     $"Required      CPU RAM GPU{Environment.NewLine}" +
                     $"Optional      GPU Temp Disk{Environment.NewLine}" +
                     $"Payload       Valid";
@@ -859,6 +860,8 @@ public partial class DashboardViewModel : ObservableObject, IDisposable
             _ => "PC Monitor"
         };
     }
+
+    private static string S(string name) => Strings.Get(name);
 
     private static Avalonia.Controls.TopLevel? GetMainTopLevel()
     {

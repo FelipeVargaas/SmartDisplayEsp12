@@ -1,5 +1,6 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:res="using:SmartDisplayPcAgent.Resources"
              xmlns:vm="using:SmartDisplayPcAgent.ViewModels"
              x:Class="SmartDisplayPcAgent.Views.DashboardView"
              x:DataType="vm:DashboardViewModel">
@@ -16,7 +17,7 @@
                 Classes="card">
             <Grid RowDefinitions="Auto,*"
                   RowSpacing="14">
-                <TextBlock Text="LOCAL METRICS"
+                <TextBlock Text="{x:Static res:Strings.DashboardLocalMetrics}"
                            Classes="section-title"/>
 
                 <Grid Grid.Row="1"
@@ -71,7 +72,7 @@
                 Classes="card">
             <Grid RowDefinitions="Auto,*"
                   RowSpacing="12">
-                <TextBlock Text="PC SUMMARY"
+                <TextBlock Text="{x:Static res:Strings.DashboardPcSummary}"
                            Classes="section-title"/>
 
                 <Grid Grid.Row="1"
@@ -102,17 +103,17 @@
                                        MaxLines="2"/>
 
                             <Grid Grid.Row="2" ColumnDefinitions="*,Auto">
-                                <TextBlock Text="Cores" Classes="muted" FontSize="12"/>
+                                <TextBlock Text="{x:Static res:Strings.DashboardCores}" Classes="muted" FontSize="12"/>
                                 <TextBlock Grid.Column="1" Text="{Binding CpuCoresText}" FontSize="12"/>
                             </Grid>
 
                             <Grid Grid.Row="3" ColumnDefinitions="*,Auto">
-                                <TextBlock Text="Threads" Classes="muted" FontSize="12"/>
+                                <TextBlock Text="{x:Static res:Strings.DashboardThreads}" Classes="muted" FontSize="12"/>
                                 <TextBlock Grid.Column="1" Text="{Binding CpuThreadsText}" FontSize="12"/>
                             </Grid>
 
                             <Grid Grid.Row="4" ColumnDefinitions="*,Auto">
-                                <TextBlock Text="Clock" Classes="muted" FontSize="12"/>
+                                <TextBlock Text="{x:Static res:Strings.DashboardClock}" Classes="muted" FontSize="12"/>
                                 <TextBlock Grid.Column="1" Text="{Binding CpuClockText}" FontSize="12"/>
                             </Grid>
                         </Grid>
@@ -127,7 +128,7 @@
                             Padding="10">
                         <Grid RowDefinitions="Auto,*,Auto,Auto,Auto"
                               RowSpacing="4">
-                            <TextBlock Text="MEMORY"
+                            <TextBlock Text="{x:Static res:Strings.DashboardMemory}"
                                        Classes="accent"
                                        FontWeight="SemiBold"
                                        FontSize="12"/>
@@ -140,17 +141,17 @@
                                        MaxLines="2"/>
 
                             <Grid Grid.Row="2" ColumnDefinitions="*,Auto">
-                                <TextBlock Text="Speed" Classes="muted" FontSize="12"/>
+                                <TextBlock Text="{x:Static res:Strings.DashboardSpeed}" Classes="muted" FontSize="12"/>
                                 <TextBlock Grid.Column="1" Text="{Binding MemorySpeedText}" FontSize="12"/>
                             </Grid>
 
                             <Grid Grid.Row="3" ColumnDefinitions="*,Auto">
-                                <TextBlock Text="Modules" Classes="muted" FontSize="12"/>
+                                <TextBlock Text="{x:Static res:Strings.DashboardModules}" Classes="muted" FontSize="12"/>
                                 <TextBlock Grid.Column="1" Text="{Binding MemoryModulesText}" FontSize="12"/>
                             </Grid>
 
                             <Grid Grid.Row="4" ColumnDefinitions="*,Auto">
-                                <TextBlock Text="Channel" Classes="muted" FontSize="12"/>
+                                <TextBlock Text="{x:Static res:Strings.DashboardChannel}" Classes="muted" FontSize="12"/>
                                 <TextBlock Grid.Column="1" Text="{Binding MemoryChannelText}" FontSize="12"/>
                             </Grid>
                         </Grid>
@@ -178,17 +179,17 @@
                                        MaxLines="2"/>
 
                             <Grid Grid.Row="2" ColumnDefinitions="*,Auto">
-                                <TextBlock Text="VRAM" Classes="muted" FontSize="12"/>
+                                <TextBlock Text="{x:Static res:Strings.DashboardVram}" Classes="muted" FontSize="12"/>
                                 <TextBlock Grid.Column="1" Text="{Binding GpuVramText}" FontSize="12"/>
                             </Grid>
 
                             <Grid Grid.Row="3" ColumnDefinitions="*,Auto">
-                                <TextBlock Text="Clock" Classes="muted" FontSize="12"/>
+                                <TextBlock Text="{x:Static res:Strings.DashboardClock}" Classes="muted" FontSize="12"/>
                                 <TextBlock Grid.Column="1" Text="{Binding GpuClockText}" FontSize="12"/>
                             </Grid>
 
                             <Grid Grid.Row="4" ColumnDefinitions="*,Auto">
-                                <TextBlock Text="Temp" Classes="muted" FontSize="12"/>
+                                <TextBlock Text="{x:Static res:Strings.DashboardTemp}" Classes="muted" FontSize="12"/>
                                 <TextBlock Grid.Column="1" Text="{Binding PcSummaryGpuTemperatureText}" FontSize="12"/>
                             </Grid>
                         </Grid>
@@ -203,7 +204,7 @@
                             Padding="10">
                         <Grid RowDefinitions="Auto,*,Auto,Auto,Auto"
                               RowSpacing="4">
-                            <TextBlock Text="STORAGE"
+                            <TextBlock Text="{x:Static res:Strings.DashboardStorage}"
                                        Classes="accent"
                                        FontWeight="SemiBold"
                                        FontSize="12"/>
@@ -216,12 +217,12 @@
                                        MaxLines="2"/>
 
                             <Grid Grid.Row="2" ColumnDefinitions="*,Auto">
-                                <TextBlock Text="Total" Classes="muted" FontSize="12"/>
+                                <TextBlock Text="{x:Static res:Strings.DashboardTotal}" Classes="muted" FontSize="12"/>
                                 <TextBlock Grid.Column="1" Text="{Binding StorageTotalText}" FontSize="12"/>
                             </Grid>
 
                             <Grid Grid.Row="3" ColumnDefinitions="*,Auto">
-                                <TextBlock Text="Used" Classes="muted" FontSize="12"/>
+                                <TextBlock Text="{x:Static res:Strings.DashboardUsed}" Classes="muted" FontSize="12"/>
                                 <TextBlock Grid.Column="1" Text="{Binding StorageUsedText}" FontSize="12"/>
                             </Grid>
 
@@ -261,13 +262,13 @@
 
                     <Button Grid.Column="1"
                             Classes="accent-button"
-                            Content="Game names"
+                            Content="{x:Static res:Strings.GameNames}"
                             IsVisible="{Binding IsGamerThemeActive}"
                             Command="{Binding OpenGameNamesCommand}"/>
 
                     <Button Grid.Column="1"
                             Classes="accent-button"
-                            Content="Image upload"
+                            Content="{x:Static res:Strings.ImageUpload}"
                             IsVisible="{Binding IsAnimationThemeActive}"
                             Command="{Binding OpenAnimationImageCommand}"/>
                 </Grid>
@@ -279,7 +280,7 @@
                 Classes="card">
             <Grid RowDefinitions="Auto,*,Auto"
                   RowSpacing="12">
-                <TextBlock Text="DISKS"
+                <TextBlock Text="{x:Static res:Strings.DashboardDisks}"
                            Classes="section-title"/>
 
                 <TextBlock Grid.Row="1"
@@ -290,7 +291,7 @@
                            TextWrapping="Wrap"/>
 
                 <TextBlock Grid.Row="2"
-                           Text="Telemetry controls moved to Device"
+                           Text="{x:Static res:Strings.DashboardTelemetryMoved}"
                            Classes="muted"
                            FontSize="12"
                            HorizontalAlignment="Right"/>
@@ -307,11 +308,11 @@
                 VerticalAlignment="Center">
             <Grid RowDefinitions="Auto,Auto,Auto,Auto"
                   RowSpacing="16">
-                <TextBlock Text="Game names"
+                <TextBlock Text="{x:Static res:Strings.GameNames}"
                            Classes="section-title"/>
 
                 <TextBlock Grid.Row="1"
-                           Text="Map the detected process to the friendly name sent to the TinyDash Gamer HUD."
+                           Text="{x:Static res:Strings.GameNamesDescription}"
                            Classes="muted"
                            TextWrapping="Wrap"/>
 
@@ -319,24 +320,24 @@
                       RowDefinitions="Auto,Auto,Auto,Auto"
                       RowSpacing="10">
                     <Grid ColumnDefinitions="130,*">
-                        <TextBlock Text="Process" Classes="muted"/>
+                        <TextBlock Text="{x:Static res:Strings.Process}" Classes="muted"/>
                         <TextBlock Grid.Column="1" Text="{Binding GameAliasProcessText}" HorizontalAlignment="Right"/>
                     </Grid>
 
                     <Grid Grid.Row="1" ColumnDefinitions="130,*">
-                        <TextBlock Text="Display name" Classes="muted"/>
+                        <TextBlock Text="{x:Static res:Strings.DisplayName}" Classes="muted"/>
                         <TextBox Grid.Column="1"
                                  Text="{Binding GameAliasDisplayNameText, Mode=TwoWay}"
                                  Watermark="Resident Evil Requiem"/>
                     </Grid>
 
                     <Grid Grid.Row="2" ColumnDefinitions="130,*">
-                        <TextBlock Text="Source" Classes="muted"/>
+                        <TextBlock Text="{x:Static res:Strings.Source}" Classes="muted"/>
                         <TextBlock Grid.Column="1" Text="{Binding GamerSourceText}" HorizontalAlignment="Right"/>
                     </Grid>
 
                     <Grid Grid.Row="3" ColumnDefinitions="130,*">
-                        <TextBlock Text="Status" Classes="muted"/>
+                        <TextBlock Text="{x:Static res:Strings.Status}" Classes="muted"/>
                         <TextBlock Grid.Column="1" Text="{Binding GameAliasStatusText}" HorizontalAlignment="Right"/>
                     </Grid>
                 </Grid>
@@ -345,15 +346,15 @@
                             Orientation="Horizontal"
                             HorizontalAlignment="Right"
                             Spacing="10">
-                    <Button Content="Close"
+                    <Button Content="{x:Static res:Strings.Close}"
                             Command="{Binding CloseGameNamesCommand}"/>
 
                     <Button Classes="accent-button"
-                            Content="Delete"
+                            Content="{x:Static res:Strings.Delete}"
                             Command="{Binding DeleteGameAliasCommand}"/>
 
                     <Button Classes="accent-button"
-                            Content="Save"
+                            Content="{x:Static res:Strings.Save}"
                             Command="{Binding SaveGameAliasCommand}"/>
                 </StackPanel>
             </Grid>
@@ -369,7 +370,7 @@
                 VerticalAlignment="Center">
             <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto"
                   RowSpacing="16">
-                <TextBlock Text="Animation image"
+                <TextBlock Text="{x:Static res:Strings.AnimationImage}"
                            Classes="section-title"/>
 
                 <TextBlock Grid.Row="1"
@@ -402,28 +403,28 @@
                           RowDefinitions="Auto,Auto,*"
                           RowSpacing="10">
                         <Grid ColumnDefinitions="90,*">
-                            <TextBlock Text="File" Classes="muted"/>
+                            <TextBlock Text="{x:Static res:Strings.File}" Classes="muted"/>
                             <TextBlock Grid.Column="1"
                                        Text="{Binding AnimationSelectedFileText}"
                                        TextWrapping="Wrap"/>
                         </Grid>
 
                         <Grid Grid.Row="1" ColumnDefinitions="90,*">
-                            <TextBlock Text="Status" Classes="muted"/>
+                            <TextBlock Text="{x:Static res:Strings.Status}" Classes="muted"/>
                             <TextBlock Grid.Column="1"
                                        Text="{Binding AnimationImageStatusText}"
                                        TextWrapping="Wrap"/>
                         </Grid>
 
                         <Button Grid.Row="2"
-                                Content="Choose image"
+                                Content="{x:Static res:Strings.ChooseImage}"
                                 HorizontalAlignment="Left"
                                 Command="{Binding PickAnimationImageCommand}"/>
                     </Grid>
                 </Grid>
 
                 <TextBlock Grid.Row="3"
-                           Text="The ESP stores one image in reserved flash and renders it without the Agent after upload."
+                           Text="{x:Static res:Strings.AnimationStorageNote}"
                            Classes="muted"
                            FontSize="12"
                            TextWrapping="Wrap"/>
@@ -432,11 +433,11 @@
                             Orientation="Horizontal"
                             HorizontalAlignment="Right"
                             Spacing="10">
-                    <Button Content="Close"
+                    <Button Content="{x:Static res:Strings.Close}"
                             Command="{Binding CloseAnimationImageCommand}"/>
 
                     <Button Classes="accent-button"
-                            Content="Upload"
+                            Content="{x:Static res:Strings.Upload}"
                             IsEnabled="{Binding CanUploadAnimationImage}"
                             Command="{Binding UploadAnimationImageCommand}"/>
                 </StackPanel>

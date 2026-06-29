@@ -1,5 +1,6 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:res="using:SmartDisplayPcAgent.Resources"
              xmlns:vm="using:SmartDisplayPcAgent.ViewModels"
              x:Class="SmartDisplayPcAgent.Views.DeviceView"
              x:DataType="vm:DeviceViewModel">
@@ -16,24 +17,24 @@
                 Classes="card">
             <Grid RowDefinitions="Auto,*,Auto"
                   RowSpacing="14">
-                <TextBlock Text="CONNECTION"
+                <TextBlock Text="{x:Static res:Strings.DeviceConnection}"
                            Classes="section-title"/>
 
                 <Grid Grid.Row="1"
                       RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto"
                       RowSpacing="10">
                     <Grid ColumnDefinitions="120,*">
-                        <TextBlock Text="Name" Classes="muted"/>
+                        <TextBlock Text="{x:Static res:Strings.Name}" Classes="muted"/>
                         <TextBlock Grid.Column="1" Text="{Binding DeviceName}" HorizontalAlignment="Right"/>
                     </Grid>
 
                     <Grid Grid.Row="1" ColumnDefinitions="120,*">
-                        <TextBlock Text="Mode" Classes="muted"/>
+                        <TextBlock Text="{x:Static res:Strings.Mode}" Classes="muted"/>
                         <TextBlock Grid.Column="1" Text="{Binding DeviceMode}" HorizontalAlignment="Right"/>
                     </Grid>
 
                     <Grid Grid.Row="2" ColumnDefinitions="120,*">
-                        <TextBlock Text="Agent target" Classes="muted"/>
+                        <TextBlock Text="{x:Static res:Strings.AgentTarget}" Classes="muted"/>
                         <TextBox Grid.Column="1"
                                  Text="{Binding State.DisplayIp, Mode=TwoWay}"
                                  Width="170"
@@ -42,7 +43,7 @@
                     </Grid>
 
                     <Grid Grid.Row="3" ColumnDefinitions="120,*">
-                        <TextBlock Text="Device IP" Classes="muted"/>
+                        <TextBlock Text="{x:Static res:Strings.DeviceIp}" Classes="muted"/>
                         <TextBlock Grid.Column="1" Text="{Binding DeviceIp}" HorizontalAlignment="Right"/>
                     </Grid>
 
@@ -57,18 +58,18 @@
                     </Grid>
 
                     <Grid Grid.Row="6" ColumnDefinitions="120,*">
-                        <TextBlock Text="Theme" Classes="muted"/>
+                        <TextBlock Text="{x:Static res:Strings.Theme}" Classes="muted"/>
                         <TextBlock Grid.Column="1" Text="{Binding DeviceThemeText}" Foreground="#FF7A1A" HorizontalAlignment="Right"/>
                     </Grid>
 
                     <Grid Grid.Row="7" ColumnDefinitions="120,*">
-                        <TextBlock Text="PC Online" Classes="muted"/>
+                        <TextBlock Text="{x:Static res:Strings.PcOnline}" Classes="muted"/>
                         <TextBlock Grid.Column="1" Text="{Binding PcOnlineText}" Classes="ok" HorizontalAlignment="Right"/>
                     </Grid>
 
                     <Button Grid.Row="8"
                             Classes="accent-button"
-                            Content="Refresh"
+                            Content="{x:Static res:Strings.Refresh}"
                             Command="{Binding RefreshStatusCommand}"
                             HorizontalAlignment="Right"
                             Margin="0,6,0,0"/>
@@ -80,19 +81,19 @@
 
                     <Button Grid.Column="0"
                             Classes="accent-button"
-                            Content="Open server"
+                            Content="{x:Static res:Strings.OpenServer}"
                             Command="{Binding OpenServerCommand}"
                             HorizontalAlignment="Stretch"/>
 
                     <Button Grid.Column="1"
                             Classes="accent-button"
-                            Content="Reset saved Wi-Fi"
+                            Content="{x:Static res:Strings.ResetSavedWifi}"
                             Command="{Binding RequestResetWifiCommand}"
                             HorizontalAlignment="Stretch"/>
 
                     <Button Grid.Column="2"
                             Classes="accent-button"
-                            Content="Firmware Update OTA"
+                            Content="{x:Static res:Strings.FirmwareUpdateOta}"
                             Command="{Binding RequestFirmwareUpdateCommand}"
                             HorizontalAlignment="Stretch"/>
 
@@ -105,7 +106,7 @@
                 Classes="card">
             <Grid RowDefinitions="Auto,*,Auto"
                   RowSpacing="14">
-                <TextBlock Text="SYSTEM"
+                <TextBlock Text="{x:Static res:Strings.DeviceSystem}"
                            Classes="section-title"/>
 
                 <Grid Grid.Row="1"
@@ -114,30 +115,30 @@
                     <Grid Grid.Column="0"
                           RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto"
                           RowSpacing="10">
-                        <TextBlock Text="Runtime" Classes="muted" FontWeight="SemiBold"/>
+                        <TextBlock Text="{x:Static res:Strings.Runtime}" Classes="muted" FontWeight="SemiBold"/>
 
                         <Grid Grid.Row="1" ColumnDefinitions="96,*">
-                            <TextBlock Text="Uptime" Classes="muted"/>
+                            <TextBlock Text="{x:Static res:Strings.Uptime}" Classes="muted"/>
                             <TextBlock Grid.Column="1" Text="{Binding UptimeText}" HorizontalAlignment="Right"/>
                         </Grid>
 
                         <Grid Grid.Row="2" ColumnDefinitions="96,*">
-                            <TextBlock Text="Last reset" Classes="muted"/>
+                            <TextBlock Text="{x:Static res:Strings.LastReset}" Classes="muted"/>
                             <TextBlock Grid.Column="1" Text="{Binding ResetReasonText}" HorizontalAlignment="Right"/>
                         </Grid>
 
                         <Grid Grid.Row="3" ColumnDefinitions="96,*">
-                            <TextBlock Text="Checkpoint" Classes="muted"/>
+                            <TextBlock Text="{x:Static res:Strings.Checkpoint}" Classes="muted"/>
                             <TextBlock Grid.Column="1" Text="{Binding LastCheckpointText}" HorizontalAlignment="Right"/>
                         </Grid>
 
                         <Grid Grid.Row="4" ColumnDefinitions="96,*">
-                            <TextBlock Text="Last data" Classes="muted"/>
+                            <TextBlock Text="{x:Static res:Strings.LastData}" Classes="muted"/>
                             <TextBlock Grid.Column="1" Text="{Binding LastMetricsText}" HorizontalAlignment="Right"/>
                         </Grid>
 
                         <Grid Grid.Row="5" ColumnDefinitions="96,*">
-                            <TextBlock Text="Marker" Classes="muted"/>
+                            <TextBlock Text="{x:Static res:Strings.Marker}" Classes="muted"/>
                             <TextBlock Grid.Column="1" Text="{Binding RestartIntentText}" HorizontalAlignment="Right"/>
                         </Grid>
                     </Grid>
@@ -145,35 +146,35 @@
                     <Grid Grid.Column="1"
                           RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto"
                           RowSpacing="10">
-                        <TextBlock Text="Health" Classes="muted" FontWeight="SemiBold"/>
+                        <TextBlock Text="{x:Static res:Strings.Health}" Classes="muted" FontWeight="SemiBold"/>
 
                         <Grid Grid.Row="1" ColumnDefinitions="96,*">
-                            <TextBlock Text="Heap" Classes="muted"/>
+                            <TextBlock Text="{x:Static res:Strings.Heap}" Classes="muted"/>
                             <TextBlock Grid.Column="1" Text="{Binding HeapText}" HorizontalAlignment="Right"/>
                         </Grid>
 
                         <Grid Grid.Row="2" ColumnDefinitions="96,*">
-                            <TextBlock Text="Max block" Classes="muted"/>
+                            <TextBlock Text="{x:Static res:Strings.MaxBlock}" Classes="muted"/>
                             <TextBlock Grid.Column="1" Text="{Binding MaxFreeBlockText}" HorizontalAlignment="Right"/>
                         </Grid>
 
                         <Grid Grid.Row="3" ColumnDefinitions="96,*">
-                            <TextBlock Text="Weather" Classes="muted"/>
+                            <TextBlock Text="{x:Static res:Strings.Weather}" Classes="muted"/>
                             <TextBlock Grid.Column="1" Text="{Binding WeatherText}" HorizontalAlignment="Right"/>
                         </Grid>
 
                         <Grid Grid.Row="4" ColumnDefinitions="96,*">
-                            <TextBlock Text="Temp" Classes="muted"/>
+                            <TextBlock Text="{x:Static res:Strings.DashboardTemp}" Classes="muted"/>
                             <TextBlock Grid.Column="1" Text="{Binding TemperatureText}" HorizontalAlignment="Right"/>
                         </Grid>
 
                         <Grid Grid.Row="5" ColumnDefinitions="96,*">
-                            <TextBlock Text="Advanced" Classes="muted"/>
+                            <TextBlock Text="{x:Static res:Strings.Advanced}" Classes="muted"/>
                             <TextBlock Grid.Column="1" Text="{Binding WeatherStatusText}" HorizontalAlignment="Right"/>
                         </Grid>
 
                         <Grid Grid.Row="6" ColumnDefinitions="96,*">
-                            <TextBlock Text="Memory" Classes="muted"/>
+                            <TextBlock Text="{x:Static res:Strings.DashboardMemory}" Classes="muted"/>
                             <TextBlock Grid.Column="1" Text="{Binding HeapFragmentationText}" HorizontalAlignment="Right"/>
                         </Grid>
                     </Grid>
@@ -205,12 +206,12 @@
                 <Grid Grid.Column="0"
                       RowDefinitions="Auto,Auto,Auto,Auto"
                       RowSpacing="8">
-                    <TextBlock Text="DISPLAY THEME"
+                    <TextBlock Text="{x:Static res:Strings.DisplayTheme}"
                                Classes="section-title"/>
 
                     <Grid Grid.Row="1"
                           ColumnDefinitions="120,*">
-                        <TextBlock Text="Active" Classes="muted"/>
+                        <TextBlock Text="{x:Static res:Strings.Active}" Classes="muted"/>
                         <TextBlock Grid.Column="1"
                                    Text="{Binding DeviceThemeText}"
                                    Foreground="#FF7A1A"
@@ -234,7 +235,7 @@
 
                         <Button Grid.Column="1"
                                 Classes="accent-button"
-                                Content="Apply Theme"
+                                Content="{x:Static res:Strings.ApplyTheme}"
                                 Command="{Binding ApplyThemeCommand}"/>
                     </Grid>
 
@@ -248,7 +249,7 @@
                 <Grid Grid.Column="1"
                       RowDefinitions="Auto,Auto,Auto"
                       RowSpacing="8">
-                    <TextBlock Text="TELEMETRY"
+                    <TextBlock Text="{x:Static res:Strings.Telemetry}"
                                Classes="section-title"/>
 
                     <Grid Grid.Row="1"
@@ -256,7 +257,7 @@
                           ColumnSpacing="12">
                         <StackPanel Grid.Column="0"
                                     Spacing="6">
-                            <CheckBox Content="Send telemetry to display"
+                            <CheckBox Content="{x:Static res:Strings.SendTelemetryToDisplay}"
                                       IsChecked="{Binding State.SendToDisplayEnabled}"/>
 
                             <TextBlock Text="{Binding State.DisplayStatusText}"
@@ -274,13 +275,13 @@
                                        FontWeight="SemiBold"/>
 
                             <Button Classes="accent-button"
-                                    Content="Send Test"
+                                    Content="{x:Static res:Strings.SendTest}"
                                     Command="{Binding SendTestCommand}"/>
                         </StackPanel>
                     </Grid>
 
                     <TextBlock Grid.Row="2"
-                               Text="Target IP is configured in Connection."
+                               Text="{x:Static res:Strings.TargetIpConfigured}"
                                Classes="muted"
                                FontSize="12"
                                HorizontalAlignment="Right"/>
@@ -310,7 +311,7 @@
                             Orientation="Horizontal"
                             HorizontalAlignment="Right"
                             Spacing="10">
-                    <Button Content="Cancel"
+                    <Button Content="{x:Static res:Strings.Cancel}"
                             Command="{Binding CancelConfirmDialogCommand}"/>
 
                     <Button Classes="accent-button"

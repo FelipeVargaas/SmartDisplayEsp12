@@ -18,6 +18,9 @@ public sealed class DisplayHttpClient : IDisposable
     };
 
     public bool LastSendSkipped { get; private set; }
+    public bool LastLowHeap { get; private set; }
+    public int? LastStatusCode { get; private set; }
+    public string LastError { get; private set; } = string.Empty;
 
     public async Task<bool> SendMetricsAsync(
         string displayAddress,
@@ -28,6 +31,9 @@ public sealed class DisplayHttpClient : IDisposable
         bool waitForSlot = false)
     {
         LastSendSkipped = false;
+        LastLowHeap = false;
+        LastStatusCode = null;
+        LastError = string.Empty;
 
         if (waitForSlot)
         {
@@ -100,10 +106,20 @@ public sealed class DisplayHttpClient : IDisposable
                 content,
                 cancellationToken);
 
-            return response.IsSuccessStatusCode;
+            LastStatusCode = (int)response.StatusCode;
+
+            if (response.IsSuccessStatusCode)
+                return true;
+
+            string responseBody = await response.Content.ReadAsStringAsync(cancellationToken);
+            LastLowHeap = (int)response.StatusCode == 503 &&
+                responseBody.Contains("low_heap", StringComparison.OrdinalIgnoreCase);
+            LastError = $"HTTP {(int)response.StatusCode}: {responseBody}";
+            return false;
         }
-        catch
+        catch (Exception ex)
         {
+            LastError = $"{ex.GetType().Name}: {ex.Message}";
             return false;
         }
     }

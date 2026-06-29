@@ -202,6 +202,7 @@ public partial class DeviceViewModel : ObservableObject, IDisposable
 
         ThemeApplyStatusText = $"{SelectedTheme.DisplayName} aplicado. Atualizando status...";
         StatusMessage = "Tema enviado para o TinyDash";
+        State.ActiveThemeKey = SelectedTheme.Key;
 
         using var refreshCts = new CancellationTokenSource(TimeSpan.FromSeconds(3));
         await RefreshStatusInternalAsync(refreshCts.Token, waitForSlot: true);
@@ -238,6 +239,7 @@ public partial class DeviceViewModel : ObservableObject, IDisposable
             string normalizedTheme = DashboardViewModel.NormalizeThemeKey(status.Theme);
             string formattedTheme = DashboardViewModel.FormatThemeName(normalizedTheme);
             _currentThemeKey = normalizedTheme;
+            State.ActiveThemeKey = normalizedTheme;
 
             StatusMessage = "Status atualizado";
             DeviceName = status.Name;

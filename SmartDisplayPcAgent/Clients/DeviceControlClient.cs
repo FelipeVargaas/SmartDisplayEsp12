@@ -18,6 +18,11 @@ public sealed class DeviceControlClient : IDisposable
         Timeout = TimeSpan.FromMilliseconds(2500)
     };
 
+    private readonly HttpClient _uploadHttpClient = new()
+    {
+        Timeout = TimeSpan.FromSeconds(30)
+    };
+
     public string LastError { get; private set; } = string.Empty;
     public bool LastRequestSkipped { get; private set; }
 
@@ -97,7 +102,11 @@ public sealed class DeviceControlClient : IDisposable
                 Heap: GetNullableLong(root, "heap"),
                 HeapFragmentation: GetNullableInt(root, "heapFragmentation"),
                 MaxFreeBlockSize: GetNullableLong(root, "maxFreeBlockSize"),
-                FlashSize: GetNullableLong(root, "flashSize"));
+                FlashSize: GetNullableLong(root, "flashSize"),
+                AnimationImage: GetBool(root, "animationImage"),
+                AnimationImageMaxBytes: GetNullableLong(root, "animationImageMaxBytes"),
+                AnimationImageStorageBytes: GetNullableLong(root, "animationImageStorageBytes"),
+                LowHeap: GetBool(root, "lowHeap"));
         }
         catch (TaskCanceledException)
         {
@@ -108,6 +117,58 @@ public sealed class DeviceControlClient : IDisposable
         {
             LastError = $"{ex.GetType().Name}: {ex.Message}";
             return null;
+        }
+    }
+
+
+    public async Task<bool> UploadAnimationImageAsync(
+        string displayAddress,
+        byte[] payload,
+        CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(displayAddress) || payload.Length == 0)
+            return false;
+
+        string baseUrl = NormalizeBaseUrl(displayAddress);
+
+        return await DisplayRequestCoordinator.RunBoolAsync(
+            ct => UploadAnimationImageCoreAsync(baseUrl, payload, ct),
+            TimeSpan.FromSeconds(5),
+            cancellationToken);
+    }
+
+    private async Task<bool> UploadAnimationImageCoreAsync(
+        string baseUrl,
+        byte[] payload,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            LastError = string.Empty;
+
+            using var content = new MultipartFormDataContent();
+            using var imageContent = new ByteArrayContent(payload);
+            imageContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/octet-stream");
+            content.Add(imageContent, "image", "tinydash-animation.tmi");
+
+            using var response = await _uploadHttpClient.PostAsync($"{baseUrl}/animation/image", content, cancellationToken);
+            string body = await response.Content.ReadAsStringAsync(cancellationToken);
+
+            if (response.IsSuccessStatusCode)
+                return true;
+
+            LastError = $"POST /animation/image HTTP {(int)response.StatusCode}: {body}";
+            return false;
+        }
+        catch (TaskCanceledException)
+        {
+            LastError = "Animation image upload timeout after 30s";
+            return false;
+        }
+        catch (Exception ex)
+        {
+            LastError = $"{ex.GetType().Name}: {ex.Message}";
+            return false;
         }
     }
 
@@ -251,5 +312,6 @@ public sealed class DeviceControlClient : IDisposable
     public void Dispose()
     {
         _httpClient.Dispose();
+        _uploadHttpClient.Dispose();
     }
 }

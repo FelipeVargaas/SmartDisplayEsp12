@@ -11,6 +11,9 @@ public partial class AgentConnectionState : ObservableObject
     private bool sendToDisplayEnabled = true;
 
     [ObservableProperty]
+    private string activeThemeKey = "pc_monitor";
+
+    [ObservableProperty]
     private string displayStatusText = "Pronto para enviar telemetria";
 
     [ObservableProperty]

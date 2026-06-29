@@ -27,7 +27,11 @@ public sealed record DeviceStatusSnapshot(
     long? Heap,
     int? HeapFragmentation,
     long? MaxFreeBlockSize,
-    long? FlashSize)
+    long? FlashSize,
+    bool AnimationImage,
+    long? AnimationImageMaxBytes,
+    long? AnimationImageStorageBytes,
+    bool LowHeap)
 {
     public static DeviceStatusSnapshot Empty { get; } = new(
         Name: "TinyDash",
@@ -54,5 +58,9 @@ public sealed record DeviceStatusSnapshot(
         Heap: null,
         HeapFragmentation: null,
         MaxFreeBlockSize: null,
-        FlashSize: null);
+        FlashSize: null,
+        AnimationImage: false,
+        AnimationImageMaxBytes: null,
+        AnimationImageStorageBytes: null,
+        LowHeap: false);
 }

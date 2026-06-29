@@ -262,7 +262,14 @@
                     <Button Grid.Column="1"
                             Classes="accent-button"
                             Content="Game names"
+                            IsVisible="{Binding IsGamerThemeActive}"
                             Command="{Binding OpenGameNamesCommand}"/>
+
+                    <Button Grid.Column="1"
+                            Classes="accent-button"
+                            Content="Image upload"
+                            IsVisible="{Binding IsAnimationThemeActive}"
+                            Command="{Binding OpenAnimationImageCommand}"/>
                 </Grid>
             </Grid>
         </Border>
@@ -348,6 +355,90 @@
                     <Button Classes="accent-button"
                             Content="Save"
                             Command="{Binding SaveGameAliasCommand}"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+    </Border>
+
+    <Border IsVisible="{Binding IsAnimationImageDialogOpen}"
+            Background="#B0070B10">
+        <Border Classes="card"
+                Width="500"
+                Padding="20"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center">
+            <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto"
+                  RowSpacing="16">
+                <TextBlock Text="Animation image"
+                           Classes="section-title"/>
+
+                <TextBlock Grid.Row="1"
+                           Text="{Binding AnimationImageDetailsText}"
+                           Classes="muted"
+                           TextWrapping="Wrap"/>
+
+                <Grid Grid.Row="2"
+                      ColumnDefinitions="160,*"
+                      ColumnSpacing="14">
+                    <Border Width="160"
+                            Height="160"
+                            Background="#080E14"
+                            BorderBrush="#1E2A36"
+                            BorderThickness="1"
+                            CornerRadius="8">
+                        <Grid>
+                            <TextBlock Text="240 x 240"
+                                       Classes="muted"
+                                       HorizontalAlignment="Center"
+                                       VerticalAlignment="Center"
+                                       IsVisible="{Binding !HasAnimationPreviewImage}"/>
+                            <Image Source="{Binding AnimationPreviewImage}"
+                                   Stretch="UniformToFill"
+                                   IsVisible="{Binding HasAnimationPreviewImage}"/>
+                        </Grid>
+                    </Border>
+
+                    <Grid Grid.Column="1"
+                          RowDefinitions="Auto,Auto,*"
+                          RowSpacing="10">
+                        <Grid ColumnDefinitions="90,*">
+                            <TextBlock Text="File" Classes="muted"/>
+                            <TextBlock Grid.Column="1"
+                                       Text="{Binding AnimationSelectedFileText}"
+                                       TextWrapping="Wrap"/>
+                        </Grid>
+
+                        <Grid Grid.Row="1" ColumnDefinitions="90,*">
+                            <TextBlock Text="Status" Classes="muted"/>
+                            <TextBlock Grid.Column="1"
+                                       Text="{Binding AnimationImageStatusText}"
+                                       TextWrapping="Wrap"/>
+                        </Grid>
+
+                        <Button Grid.Row="2"
+                                Content="Choose image"
+                                HorizontalAlignment="Left"
+                                Command="{Binding PickAnimationImageCommand}"/>
+                    </Grid>
+                </Grid>
+
+                <TextBlock Grid.Row="3"
+                           Text="The ESP stores one image in reserved flash and renders it without the Agent after upload."
+                           Classes="muted"
+                           FontSize="12"
+                           TextWrapping="Wrap"/>
+
+                <StackPanel Grid.Row="4"
+                            Orientation="Horizontal"
+                            HorizontalAlignment="Right"
+                            Spacing="10">
+                    <Button Content="Close"
+                            Command="{Binding CloseAnimationImageCommand}"/>
+
+                    <Button Classes="accent-button"
+                            Content="Upload"
+                            IsEnabled="{Binding CanUploadAnimationImage}"
+                            Command="{Binding UploadAnimationImageCommand}"/>
                 </StackPanel>
             </Grid>
         </Border>

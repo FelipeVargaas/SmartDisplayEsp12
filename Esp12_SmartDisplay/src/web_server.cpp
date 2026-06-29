@@ -5,6 +5,7 @@
 #include <math.h>
 #include <string.h>
 
+#include "animation_image.h"
 #include "app_state.h"
 #include "config.h"
 #include "metrics.h"
@@ -23,6 +24,8 @@ const int METRICS_MIN_FREE_HEAP = 12000;
 const int METRICS_MIN_MAX_BLOCK = 8000;
 const int STATUS_MIN_FREE_HEAP = 14000;
 const int STATUS_MIN_MAX_BLOCK = 9000;
+bool animationUploadOk = false;
+bool animationUploadSeen = false;
 }
 
 static String formatUptime()
@@ -146,6 +149,7 @@ static void handleMetrics()
   {
     resetMarkerCheckpoint("route_metrics_heap_skip");
     server.send(503, "application/json", "{\"ok\":false,\"error\":\"low_heap\"}");
+    resetMarkerCheckpoint("route_metrics_heap_skip_done");
     return;
   }
   resetMarkerCheckpoint("route_metrics_body");
@@ -238,6 +242,69 @@ static void handleTheme()
   resetMarkerCheckpoint("route_theme_done");
 }
 
+static void handleAnimationImage()
+{
+  resetMarkerCheckpoint("route_animation_image_done");
+  if (!animationUploadSeen)
+  {
+    server.send(400, "application/json", "{\"ok\":false,\"error\":\"missing_file\"}");
+    return;
+  }
+
+  animationUploadSeen = false;
+  if (!animationUploadOk)
+  {
+    String json = "{\"ok\":false,\"error\":\"";
+    json += animationImageUploadError();
+    json += "\"}";
+    server.send(400, "application/json", json);
+    return;
+  }
+
+  if (themeManagerGetActive() == THEME_ANIMATION) themeForceFullRedraw();
+
+  String json = "{\"ok\":true,\"format\":\"rgb565_raw\",\"width\":";
+  json += String(ANIMATION_IMAGE_WIDTH);
+  json += ",\"height\":";
+  json += String(ANIMATION_IMAGE_HEIGHT);
+  json += ",\"bytes\":";
+  json += String(animationImagePayloadBytes());
+  json += "}";
+  server.send(200, "application/json", json);
+}
+
+static void handleAnimationImageUpload()
+{
+  HTTPUpload& upload = server.upload();
+  if (upload.status == UPLOAD_FILE_START)
+  {
+    resetMarkerCheckpoint("route_animation_image_start");
+    animationUploadSeen = true;
+    animationUploadOk = animationImageUploadBegin();
+  }
+  else if (upload.status == UPLOAD_FILE_WRITE)
+  {
+    if (animationUploadOk)
+    {
+      animationUploadOk = animationImageUploadWrite(upload.buf, upload.currentSize);
+    }
+  }
+  else if (upload.status == UPLOAD_FILE_END)
+  {
+    if (animationUploadOk)
+    {
+      animationUploadOk = animationImageUploadEnd();
+    }
+    resetMarkerCheckpoint(animationUploadOk ? "route_animation_image_ok" : "route_animation_image_failed");
+  }
+  else if (upload.status == UPLOAD_FILE_ABORTED)
+  {
+    animationImageUploadAbort();
+    animationUploadOk = false;
+    resetMarkerCheckpoint("route_animation_image_aborted");
+  }
+}
+
 static void handleConfig()
 {
   resetMarkerCheckpoint("route_config");
@@ -255,22 +322,20 @@ static void handleStatus()
   if (ESP.getFreeHeap() < STATUS_MIN_FREE_HEAP || ESP.getMaxFreeBlockSize() < STATUS_MIN_MAX_BLOCK)
   {
     resetMarkerCheckpoint("route_status_low_heap");
-    String json = "{\"name\":\"TinyDash\",\"mode\":\"";
-    json += appState.isApMode ? "AP" : "STA";
-    json += "\",\"theme\":\"";
-    json += themeManagerGetKey(themeManagerGetActive());
-    json += "\",\"uptimeMs\":";
-    json += String(millis());
-    json += ",\"pcOnline\":";
-    json += metricsHasRecentPcMetrics() ? "true" : "false";
-    json += ",\"heap\":";
-    json += String(ESP.getFreeHeap());
-    json += ",\"heapFragmentation\":";
-    json += String(ESP.getHeapFragmentation());
-    json += ",\"maxFreeBlockSize\":";
-    json += String(ESP.getMaxFreeBlockSize());
-    json += ",\"lowHeap\":true}";
+    char json[256];
+    snprintf(
+      json,
+      sizeof(json),
+      "{\"name\":\"TinyDash\",\"mode\":\"%s\",\"theme\":\"%s\",\"uptimeMs\":%lu,\"pcOnline\":%s,\"heap\":%u,\"heapFragmentation\":%u,\"maxFreeBlockSize\":%u,\"lowHeap\":true}",
+      appState.isApMode ? "AP" : "STA",
+      themeManagerGetKey(themeManagerGetActive()),
+      millis(),
+      metricsHasRecentPcMetrics() ? "true" : "false",
+      ESP.getFreeHeap(),
+      ESP.getHeapFragmentation(),
+      ESP.getMaxFreeBlockSize());
     server.send(200, "application/json", json);
+    resetMarkerCheckpoint("route_status_low_heap_done");
     return;
   }
   resetMarkerCheckpoint("route_status_full");
@@ -304,6 +369,14 @@ static void handleStatus()
   json += "\"heapFragmentation\":"; json += String(ESP.getHeapFragmentation()); json += ",";
   json += "\"maxFreeBlockSize\":"; json += String(ESP.getMaxFreeBlockSize()); json += ",";
   json += "\"flashSize\":"; json += String(ESP.getFlashChipRealSize()); json += "}";
+  json.setCharAt(json.length() - 1, ',');
+  json += "\"animationImage\":";
+  json += animationImageIsAvailable() ? "true" : "false";
+  json += ",\"animationImageMaxBytes\":";
+  json += String(animationImagePayloadBytes());
+  json += ",\"animationImageStorageBytes\":";
+  json += String(animationImageStorageBytes());
+  json += "}";
   server.send(200, "application/json", json);
   resetMarkerCheckpoint("route_status_done");
 }
@@ -317,6 +390,7 @@ void webServerSetup()
   server.on("/status", HTTP_GET, handleStatus);
   server.on("/metrics", HTTP_POST, handleMetrics);
   server.on("/theme", HTTP_POST, handleTheme);
+  server.on("/animation/image", HTTP_POST, handleAnimationImage, handleAnimationImageUpload);
   server.on("/config", HTTP_GET, handleConfig);
   otaUpdateSetup();
   server.begin();

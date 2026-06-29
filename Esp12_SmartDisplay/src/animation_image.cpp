@@ -10,10 +10,12 @@
 namespace
 {
 const uint32_t IMAGE_MAGIC = 0x31494D54UL; // TMI1, little-endian on wire.
+const uint32_t ANIMATION_MAGIC = 0x31414D54UL; // TMA1, little-endian on wire.
 const uint16_t IMAGE_VERSION = 1;
 const uint16_t IMAGE_FORMAT_RGB565_LE = 1;
-const uint32_t IMAGE_STORAGE_BYTES = 128UL * 1024UL;
+const uint32_t IMAGE_STORAGE_BYTES = 960UL * 1024UL;
 const uint16_t RENDER_ROWS = 4;
+const uint16_t DEFAULT_FRAME_DELAY_MS = 150;
 const uint32_t ERASED_WORD = 0xFFFFFFFFUL;
 
 struct ImageHeader
@@ -46,6 +48,10 @@ struct UploadState
 
 UploadState uploadState = {};
 uint16_t renderBuffer[ANIMATION_IMAGE_WIDTH * RENDER_ROWS];
+uint8_t currentFrame = 0;
+uint32_t lastFrameAt = 0;
+
+bool renderFrame(const ImageHeader& header, uint16_t frameIndex);
 
 uint32_t storageStart()
 {
@@ -85,12 +91,41 @@ bool readHeader(ImageHeader& header)
 
 bool headerIsValid(const ImageHeader& header)
 {
-  return header.magic == IMAGE_MAGIC &&
-         header.version == IMAGE_VERSION &&
-         header.format == IMAGE_FORMAT_RGB565_LE &&
-         header.width == ANIMATION_IMAGE_WIDTH &&
-         header.height == ANIMATION_IMAGE_HEIGHT &&
-         header.dataLength == ANIMATION_IMAGE_DATA_BYTES;
+  if (header.version != IMAGE_VERSION ||
+      header.format != IMAGE_FORMAT_RGB565_LE ||
+      header.width != ANIMATION_IMAGE_WIDTH ||
+      header.height != ANIMATION_IMAGE_HEIGHT)
+  {
+    return false;
+  }
+
+  if (header.magic == IMAGE_MAGIC)
+  {
+    return header.dataLength == ANIMATION_IMAGE_DATA_BYTES;
+  }
+
+  if (header.magic == ANIMATION_MAGIC)
+  {
+    uint32_t frameCount = header.reserved0;
+    return frameCount >= 1 &&
+           frameCount <= ANIMATION_IMAGE_MAX_FRAMES &&
+           header.dataLength == ANIMATION_IMAGE_DATA_BYTES * frameCount;
+  }
+
+  return false;
+}
+
+uint16_t frameCountForHeader(const ImageHeader& header)
+{
+  if (header.magic != ANIMATION_MAGIC) return 1;
+  if (header.reserved0 < 1 || header.reserved0 > ANIMATION_IMAGE_MAX_FRAMES) return 1;
+  return static_cast<uint16_t>(header.reserved0);
+}
+
+uint16_t frameDelayForHeader(const ImageHeader& header)
+{
+  if (header.magic != ANIMATION_MAGIC || header.reserved1 < 50 || header.reserved1 > 5000) return DEFAULT_FRAME_DELAY_MS;
+  return static_cast<uint16_t>(header.reserved1);
 }
 
 bool eraseStorage()
@@ -108,7 +143,12 @@ bool eraseStorage()
 bool appendImageData(const uint8_t* data, size_t size)
 {
   if (size == 0) return true;
-  if (uploadState.dataBytes + size > ANIMATION_IMAGE_DATA_BYTES)
+  if (!uploadState.headerReady)
+  {
+    setUploadError("missing_header");
+    return false;
+  }
+  if (uploadState.dataBytes + size > uploadState.header.dataLength)
   {
     setUploadError("payload_too_large");
     return false;
@@ -148,22 +188,13 @@ bool consumeHeaderBytes(const uint8_t*& data, size_t& size)
   }
   return true;
 }
-}
 
-bool animationImageIsAvailable()
+bool renderFrame(const ImageHeader& header, uint16_t frameIndex)
 {
-  ImageHeader header;
-  return readHeader(header) && headerIsValid(header);
-}
-
-bool animationImageRender()
-{
-  ImageHeader header;
-  if (!readHeader(header) || !headerIsValid(header)) return false;
-
+  if (frameIndex >= frameCountForHeader(header)) return false;
   bool oldSwapBytes = appState.tft.getSwapBytes();
   appState.tft.setSwapBytes(true);
-  uint32_t address = storageStart() + sizeof(ImageHeader);
+  uint32_t address = storageStart() + sizeof(ImageHeader) + (ANIMATION_IMAGE_DATA_BYTES * uint32_t(frameIndex));
   for (uint16_t y = 0; y < ANIMATION_IMAGE_HEIGHT; y += RENDER_ROWS)
   {
     uint16_t rows = ANIMATION_IMAGE_HEIGHT - y;
@@ -180,6 +211,39 @@ bool animationImageRender()
   }
   appState.tft.setSwapBytes(oldSwapBytes);
   return true;
+}
+}
+
+bool animationImageIsAvailable()
+{
+  ImageHeader header;
+  return readHeader(header) && headerIsValid(header);
+}
+
+bool animationImageRender()
+{
+  ImageHeader header;
+  if (!readHeader(header) || !headerIsValid(header)) return false;
+  currentFrame = 0;
+  lastFrameAt = millis();
+
+  return renderFrame(header, currentFrame);
+}
+
+void animationImageUpdateIfNeeded()
+{
+  ImageHeader header;
+  if (!readHeader(header) || !headerIsValid(header)) return;
+
+  uint16_t frameCount = frameCountForHeader(header);
+  if (frameCount <= 1) return;
+
+  uint32_t now = millis();
+  uint16_t frameDelay = frameDelayForHeader(header);
+  if (lastFrameAt != 0 && now - lastFrameAt < frameDelay) return;
+
+  currentFrame = (currentFrame + 1) % frameCount;
+  if (renderFrame(header, currentFrame)) lastFrameAt = now;
 }
 
 bool animationImageUploadBegin()
@@ -238,7 +302,7 @@ bool animationImageUploadEnd()
     setUploadError("missing_header");
     return false;
   }
-  if (uploadState.dataBytes != ANIMATION_IMAGE_DATA_BYTES)
+  if (uploadState.dataBytes != uploadState.header.dataLength)
   {
     setUploadError("invalid_length");
     return false;
@@ -276,5 +340,5 @@ uint32_t animationImageStorageBytes()
 
 uint32_t animationImagePayloadBytes()
 {
-  return ANIMATION_IMAGE_DATA_BYTES;
+  return ANIMATION_IMAGE_MAX_DATA_BYTES;
 }

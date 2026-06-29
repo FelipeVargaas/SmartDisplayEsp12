@@ -105,7 +105,7 @@
   <data name="Unknown" xml:space="preserve"><value>Unknown</value></data>
   <data name="Storage" xml:space="preserve"><value>Storage</value></data>
   <data name="NoImageSelected" xml:space="preserve"><value>No image selected.</value></data>
-  <data name="AnimationDetails" xml:space="preserve"><value>GIF, PNG, JPG, BMP or WebP. GIF is prepared as a static frame; real animation comes later.</value></data>
+  <data name="AnimationDetails" xml:space="preserve"><value>Animated GIF up to 8 frames, or PNG, JPG, BMP and WebP images. The Agent prepares 240x240 RGB565.</value></data>
   <data name="AnimationChoosePrepare" xml:space="preserve"><value>Choose an image to prepare the TinyDash animation asset.</value></data>
   <data name="NoGameDetectedYet" xml:space="preserve"><value>No game detected yet.</value></data>
   <data name="NoResponseFormat" xml:space="preserve"><value>No response - {0}</value></data>

@@ -33,7 +33,11 @@ public partial class DashboardViewModel : ObservableObject, IDisposable
     private DateTime _metricsBackoffUntil = DateTime.MinValue;
     private bool _isDeviceStatusRefreshRunning;
     private string _activeThemeKey = "pc_monitor";
+    private byte[]? _animationSourceBytes;
     private byte[]? _animationImagePayload;
+    private readonly List<Bitmap> _animationPreviewFrames = [];
+    private DispatcherTimer? _animationPreviewTimer;
+    private int _animationPreviewFrameIndex;
     private bool _animationImageUploaded;
 
     public DashboardViewModel(AgentConnectionState state)
@@ -196,6 +200,15 @@ public partial class DashboardViewModel : ObservableObject, IDisposable
 
     [ObservableProperty]
     private bool hasAnimationPreviewImage;
+
+    [ObservableProperty]
+    private double animationCropZoom = 1.0;
+
+    [ObservableProperty]
+    private double animationCropOffsetX;
+
+    [ObservableProperty]
+    private double animationCropOffsetY;
 
     [ObservableProperty]
     private string gameAliasProcessText = "--";
@@ -508,6 +521,7 @@ public partial class DashboardViewModel : ObservableObject, IDisposable
     private void OpenAnimationImage()
     {
         IsAnimationImageDialogOpen = true;
+        StartAnimationPreviewTimer();
         AnimationImageStatusText = _animationImagePayload is null
             ? S("AnimationChoosePrepare")
             : "Imagem pronta para envio.";
@@ -516,8 +530,15 @@ public partial class DashboardViewModel : ObservableObject, IDisposable
     [RelayCommand]
     private void CloseAnimationImage()
     {
+        StopAnimationPreviewTimer();
         IsAnimationImageDialogOpen = false;
     }
+
+    partial void OnAnimationCropZoomChanged(double value) => UpdateAnimationFramingPreview();
+
+    partial void OnAnimationCropOffsetXChanged(double value) => UpdateAnimationFramingPreview();
+
+    partial void OnAnimationCropOffsetYChanged(double value) => UpdateAnimationFramingPreview();
 
     [RelayCommand]
     private async Task PickAnimationImageAsync()
@@ -561,21 +582,22 @@ public partial class DashboardViewModel : ObservableObject, IDisposable
                 AnimationImageStatusText = "A imagem tem mais de 16 MB.";
                 return;
             }
-            byte[] sourceBytes = memory.ToArray();
-            byte[] payload = _animationImageService.CreateUploadPayload(sourceBytes);
+            _animationSourceBytes = memory.ToArray();
+            AnimationCropZoom = 1.0;
+            AnimationCropOffsetX = 0.0;
+            AnimationCropOffsetY = 0.0;
+            UpdateAnimationPreview();
+            AnimationImagePayload prepared = PrepareAnimationImagePayload();
 
-            AnimationPreviewImage?.Dispose();
-            AnimationPreviewImage = TryCreatePreviewBitmap(sourceBytes);
-            HasAnimationPreviewImage = AnimationPreviewImage is not null;
-            _animationImagePayload = payload;
             CanUploadAnimationImage = true;
             AnimationSelectedFileText = files[0].Name;
-            AnimationImageDetailsText = $"Preparada 240x240 RGB565 - {AnimationImageService.PixelBytes:N0} bytes de pixels - {AnimationImageService.PayloadBytes:N0} bytes de upload";
+            UpdateAnimationDetailsText(prepared);
             AnimationImageStatusText = "Imagem pronta para envio.";
             UpdateThemePanel(_activeThemeKey);
         }
         catch (Exception ex)
         {
+            _animationSourceBytes = null;
             _animationImagePayload = null;
             CanUploadAnimationImage = false;
             AnimationImageStatusText = $"Não foi possível preparar a imagem: {ex.Message}";
@@ -586,7 +608,7 @@ public partial class DashboardViewModel : ObservableObject, IDisposable
     [RelayCommand]
     private async Task UploadAnimationImageAsync()
     {
-        if (_animationImagePayload is null)
+        if (_animationSourceBytes is null)
         {
             AnimationImageStatusText = "Escolha uma imagem primeiro.";
             return;
@@ -596,12 +618,25 @@ public partial class DashboardViewModel : ObservableObject, IDisposable
         CanUploadAnimationImage = false;
         AnimationImageStatusText = "Enviando imagem para o TinyDash...";
 
-        using var timeoutCts = new CancellationTokenSource(TimeSpan.FromSeconds(35));
-        using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(timeoutCts.Token, _cts.Token);
-        bool uploaded = await _deviceControlClient.UploadAnimationImageAsync(State.DisplayIp, _animationImagePayload, linkedCts.Token);
+        bool uploaded = false;
+        try
+        {
+            AnimationImagePayload prepared = PrepareAnimationImagePayload();
+            UpdateAnimationDetailsText(prepared);
+            using var timeoutCts = new CancellationTokenSource(TimeSpan.FromSeconds(80));
+            using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(timeoutCts.Token, _cts.Token);
+            uploaded = await _deviceControlClient.UploadAnimationImageAsync(State.DisplayIp, prepared.Payload, linkedCts.Token);
+        }
+        catch (Exception ex)
+        {
+            AnimationImageStatusText = $"Nao foi possivel preparar a imagem: {ex.Message}";
+            IsUploadingAnimationImage = false;
+            CanUploadAnimationImage = _animationSourceBytes is not null;
+            return;
+        }
 
         IsUploadingAnimationImage = false;
-        CanUploadAnimationImage = _animationImagePayload is not null;
+        CanUploadAnimationImage = _animationSourceBytes is not null;
 
         if (uploaded)
         {
@@ -622,6 +657,15 @@ public partial class DashboardViewModel : ObservableObject, IDisposable
     private void CloseGameNames()
     {
         IsGameNamesDialogOpen = false;
+    }
+
+    [RelayCommand]
+    private void CenterAnimationCrop()
+    {
+        AnimationCropZoom = 1.0;
+        AnimationCropOffsetX = 0.0;
+        AnimationCropOffsetY = 0.0;
+        UpdateAnimationFramingPreview();
     }
 
     [RelayCommand]
@@ -670,7 +714,8 @@ public partial class DashboardViewModel : ObservableObject, IDisposable
         _displayHttpClient.Dispose();
         _deviceControlClient.Dispose();
         _hardwareInfoService.Dispose();
-        AnimationPreviewImage?.Dispose();
+        _animationSourceBytes = null;
+        DisposeAnimationPreviewFrames();
     }
 
     private void LoadHardwareSummary()
@@ -749,7 +794,7 @@ public partial class DashboardViewModel : ObservableObject, IDisposable
                 ThemePanelBodyText =
                     $"Image         {(_animationImagePayload is null ? "Not selected" : "Ready")}{Environment.NewLine}" +
                     $"Format        RGB565 240x240{Environment.NewLine}" +
-                    $"Upload        {AnimationImageService.PixelBytes / 1024} KB";
+                    $"Upload        up to {AnimationImageService.MaxPayloadBytes / 1024} KB";
                 ThemePanelStatusText = _animationImageUploaded
                     ? "Imagem gravada no ESP"
                     : "Conversão e envio serão feitos pelo Agent";
@@ -862,6 +907,102 @@ public partial class DashboardViewModel : ObservableObject, IDisposable
     }
 
     private static string S(string name) => Strings.Get(name);
+
+    private AnimationImageFraming GetAnimationFraming()
+    {
+        return new AnimationImageFraming(AnimationCropZoom, AnimationCropOffsetX, AnimationCropOffsetY);
+    }
+
+    private AnimationImagePayload PrepareAnimationImagePayload()
+    {
+        if (_animationSourceBytes is null)
+            throw new InvalidOperationException("Escolha uma imagem primeiro.");
+
+        AnimationImagePayload prepared = _animationImageService.CreateUploadPayload(_animationSourceBytes, GetAnimationFraming());
+        _animationImagePayload = prepared.Payload;
+        return prepared;
+    }
+
+    private void UpdateAnimationFramingPreview()
+    {
+        if (_animationSourceBytes is null)
+            return;
+
+        UpdateAnimationPreview();
+        AnimationImageStatusText = "Enquadramento ajustado. Pronto para enviar.";
+    }
+
+    private void UpdateAnimationPreview()
+    {
+        if (_animationSourceBytes is null)
+        {
+            DisposeAnimationPreviewFrames();
+            return;
+        }
+
+        try
+        {
+            AnimationImagePreview preview = _animationImageService.CreatePreview(_animationSourceBytes, GetAnimationFraming());
+            List<Bitmap> frames = preview.Frames
+                .Select(frameBytes => new Bitmap(new MemoryStream(frameBytes)))
+                .ToList();
+
+            DisposeAnimationPreviewFrames();
+            _animationPreviewFrames.AddRange(frames);
+            _animationPreviewFrameIndex = 0;
+            AnimationPreviewImage = _animationPreviewFrames[0];
+            HasAnimationPreviewImage = true;
+            StartAnimationPreviewTimer(preview.DelayMs);
+        }
+        catch
+        {
+            DisposeAnimationPreviewFrames();
+        }
+    }
+
+    private void StartAnimationPreviewTimer(int delayMs = 150)
+    {
+        StopAnimationPreviewTimer();
+        if (_animationPreviewFrames.Count <= 1 || !IsAnimationImageDialogOpen)
+            return;
+
+        _animationPreviewTimer = new DispatcherTimer
+        {
+            Interval = TimeSpan.FromMilliseconds(Math.Clamp(delayMs, 100, 1000))
+        };
+        _animationPreviewTimer.Tick += (_, _) =>
+        {
+            if (_animationPreviewFrames.Count == 0)
+                return;
+
+            _animationPreviewFrameIndex = (_animationPreviewFrameIndex + 1) % _animationPreviewFrames.Count;
+            AnimationPreviewImage = _animationPreviewFrames[_animationPreviewFrameIndex];
+        };
+        _animationPreviewTimer.Start();
+    }
+
+    private void StopAnimationPreviewTimer()
+    {
+        _animationPreviewTimer?.Stop();
+        _animationPreviewTimer = null;
+    }
+
+    private void DisposeAnimationPreviewFrames()
+    {
+        StopAnimationPreviewTimer();
+        AnimationPreviewImage = null;
+        foreach (Bitmap frame in _animationPreviewFrames)
+            frame.Dispose();
+        _animationPreviewFrames.Clear();
+        _animationPreviewFrameIndex = 0;
+        HasAnimationPreviewImage = false;
+    }
+
+    private void UpdateAnimationDetailsText(AnimationImagePayload prepared)
+    {
+        string frameText = prepared.FrameCount == 1 ? "1 frame estatico" : $"{prepared.FrameCount} frames, {prepared.DelayMs} ms/frame";
+        AnimationImageDetailsText = $"Preparada 240x240 RGB565 - {frameText} - {prepared.Payload.Length:N0} bytes de upload";
+    }
 
     private static Bitmap? TryCreatePreviewBitmap(byte[] sourceBytes)
     {

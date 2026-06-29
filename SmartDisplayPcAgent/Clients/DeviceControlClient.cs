@@ -20,7 +20,7 @@ public sealed class DeviceControlClient : IDisposable
 
     private readonly HttpClient _uploadHttpClient = new()
     {
-        Timeout = TimeSpan.FromSeconds(30)
+        Timeout = TimeSpan.FromSeconds(75)
     };
 
     public string LastError { get; private set; } = string.Empty;
@@ -162,7 +162,7 @@ public sealed class DeviceControlClient : IDisposable
         }
         catch (TaskCanceledException)
         {
-            LastError = "Animation image upload timeout after 30s";
+            LastError = "Animation image upload timeout after 75s";
             return false;
         }
         catch (Exception ex)

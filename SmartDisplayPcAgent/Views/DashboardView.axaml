@@ -5,6 +5,32 @@
              x:Class="SmartDisplayPcAgent.Views.DashboardView"
              x:DataType="vm:DashboardViewModel">
 
+    <UserControl.Styles>
+        <Style Selector="Slider.animation-slider">
+            <Setter Property="Foreground" Value="#FF7A1A"/>
+            <Setter Property="Background" Value="#1E2A36"/>
+        </Style>
+
+        <Style Selector="Slider.animation-slider:pointerover">
+            <Setter Property="Foreground" Value="#FF8A2A"/>
+        </Style>
+
+        <Style Selector="Slider.animation-slider /template/ Thumb">
+            <Setter Property="Background" Value="#FF7A1A"/>
+            <Setter Property="BorderBrush" Value="#FF7A1A"/>
+        </Style>
+
+        <Style Selector="Slider.animation-slider /template/ Thumb:pointerover">
+            <Setter Property="Background" Value="#FF8A2A"/>
+            <Setter Property="BorderBrush" Value="#FF8A2A"/>
+        </Style>
+
+        <Style Selector="Slider.animation-slider /template/ Thumb:pressed">
+            <Setter Property="Background" Value="#E96500"/>
+            <Setter Property="BorderBrush" Value="#E96500"/>
+        </Style>
+    </UserControl.Styles>
+
     <Grid>
     <Grid ColumnDefinitions="1.05*,1*"
           RowDefinitions="1.15*,0.85*"
@@ -364,7 +390,7 @@
     <Border IsVisible="{Binding IsAnimationImageDialogOpen}"
             Background="#B0070B10">
         <Border Classes="card"
-                Width="500"
+                Width="560"
                 Padding="20"
                 HorizontalAlignment="Center"
                 VerticalAlignment="Center">
@@ -379,10 +405,10 @@
                            TextWrapping="Wrap"/>
 
                 <Grid Grid.Row="2"
-                      ColumnDefinitions="160,*"
+                      ColumnDefinitions="190,*"
                       ColumnSpacing="14">
-                    <Border Width="160"
-                            Height="160"
+                    <Border Width="190"
+                            Height="190"
                             Background="#080E14"
                             BorderBrush="#1E2A36"
                             BorderThickness="1"
@@ -394,13 +420,13 @@
                                        VerticalAlignment="Center"
                                        IsVisible="{Binding !HasAnimationPreviewImage}"/>
                             <Image Source="{Binding AnimationPreviewImage}"
-                                   Stretch="UniformToFill"
+                                   Stretch="Uniform"
                                    IsVisible="{Binding HasAnimationPreviewImage}"/>
                         </Grid>
                     </Border>
 
                     <Grid Grid.Column="1"
-                          RowDefinitions="Auto,Auto,*"
+                          RowDefinitions="Auto,Auto,Auto,Auto"
                           RowSpacing="10">
                         <Grid ColumnDefinitions="90,*">
                             <TextBlock Text="{x:Static res:Strings.File}" Classes="muted"/>
@@ -416,7 +442,46 @@
                                        TextWrapping="Wrap"/>
                         </Grid>
 
-                        <Button Grid.Row="2"
+                        <Grid Grid.Row="2"
+                              RowDefinitions="Auto,Auto,Auto,Auto"
+                              RowSpacing="6">
+                            <Grid ColumnDefinitions="70,*">
+                                <TextBlock Text="Zoom" Classes="muted"/>
+                                <Slider Grid.Column="1"
+                                        Classes="animation-slider"
+                                        Minimum="1"
+                                        Maximum="4"
+                                        TickFrequency="0.1"
+                                        Value="{Binding AnimationCropZoom, Mode=TwoWay}"/>
+                            </Grid>
+
+                            <Grid Grid.Row="1" ColumnDefinitions="70,*">
+                                <TextBlock Text="X" Classes="muted"/>
+                                <Slider Grid.Column="1"
+                                        Classes="animation-slider"
+                                        Minimum="-1"
+                                        Maximum="1"
+                                        TickFrequency="0.05"
+                                        Value="{Binding AnimationCropOffsetX, Mode=TwoWay}"/>
+                            </Grid>
+
+                            <Grid Grid.Row="2" ColumnDefinitions="70,*">
+                                <TextBlock Text="Y" Classes="muted"/>
+                                <Slider Grid.Column="1"
+                                        Classes="animation-slider"
+                                        Minimum="-1"
+                                        Maximum="1"
+                                        TickFrequency="0.05"
+                                        Value="{Binding AnimationCropOffsetY, Mode=TwoWay}"/>
+                            </Grid>
+
+                            <Button Grid.Row="3"
+                                    Content="Centralizar"
+                                    HorizontalAlignment="Left"
+                                    Command="{Binding CenterAnimationCropCommand}"/>
+                        </Grid>
+
+                        <Button Grid.Row="3"
                                 Content="{x:Static res:Strings.ChooseImage}"
                                 HorizontalAlignment="Left"
                                 Command="{Binding PickAnimationImageCommand}"/>

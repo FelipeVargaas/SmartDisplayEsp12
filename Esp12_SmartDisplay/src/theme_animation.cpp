@@ -87,3 +87,8 @@ void themeAnimationDrawBase()
   drawStaticScreensaver();
   drawAssetDots();
 }
+
+void themeAnimationUpdateIfNeeded()
+{
+  animationImageUpdateIfNeeded();
+}

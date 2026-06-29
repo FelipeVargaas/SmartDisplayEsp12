@@ -47,6 +47,7 @@ public static class Strings
     public static string AnimationStorageNote => Get(nameof(AnimationStorageNote));
     public static string Upload => Get(nameof(Upload));
     public static string ImageUpload => Get(nameof(ImageUpload));
+    public static string NotificationTest => Get(nameof(NotificationTest));
     public static string DeviceConnection => Get(nameof(DeviceConnection));
     public static string Name => Get(nameof(Name));
     public static string Mode => Get(nameof(Mode));

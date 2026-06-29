@@ -13,6 +13,7 @@
 #include "reset_marker.h"
 #include "theme_manager.h"
 #include "theme_render.h"
+#include "theme_work_desk.h"
 #include "web_pages.h"
 #include "wifi_manager.h"
 
@@ -22,6 +23,8 @@ namespace
 {
 const int METRICS_MIN_FREE_HEAP = 12000;
 const int METRICS_MIN_MAX_BLOCK = 8000;
+const int NOTIFY_MIN_FREE_HEAP = 12000;
+const int NOTIFY_MIN_MAX_BLOCK = 8000;
 const int STATUS_MIN_FREE_HEAP = 14000;
 const int STATUS_MIN_MAX_BLOCK = 9000;
 bool animationUploadOk = false;
@@ -242,6 +245,39 @@ static void handleTheme()
   resetMarkerCheckpoint("route_theme_done");
 }
 
+static void handleNotify()
+{
+  resetMarkerCheckpoint("route_notify");
+  if (server.method() != HTTP_POST) { server.send(405, "application/json", "{\"ok\":false,\"error\":\"method_not_allowed\"}"); return; }
+  if (ESP.getFreeHeap() < NOTIFY_MIN_FREE_HEAP || ESP.getMaxFreeBlockSize() < NOTIFY_MIN_MAX_BLOCK)
+  {
+    resetMarkerCheckpoint("route_notify_heap_skip");
+    server.send(503, "application/json", "{\"ok\":false,\"error\":\"low_heap\"}");
+    return;
+  }
+
+  String body = server.arg("plain");
+  if (body.length() == 0) { server.send(400, "application/json", "{\"ok\":false,\"error\":\"empty_body\"}"); return; }
+  if (body.length() > 384) { server.send(413, "application/json", "{\"ok\":false,\"error\":\"payload_too_large\"}"); return; }
+
+  StaticJsonDocument<512> doc;
+  if (deserializeJson(doc, body)) { server.send(400, "application/json", "{\"ok\":false,\"error\":\"invalid_json\"}"); return; }
+
+  const char* appName = doc["appName"] | "App";
+  const char* sender = doc["sender"] | "TinyDash Agent";
+  const char* title = doc["title"] | "Nova notificacao";
+  const char* timeText = doc["time"] | "--:--";
+  const char* accent = doc["accent"] | "#55DFFF";
+  unsigned long durationMs = doc["durationMs"] | 5000UL;
+
+  themeWorkDeskShowNotification(appName, sender, title, timeText, accent, durationMs);
+
+  if (themeManagerGetActive() == THEME_WORK_DESK) themeUpdateIfNeeded();
+
+  server.send(200, "application/json", "{\"ok\":true}");
+  resetMarkerCheckpoint("route_notify_done");
+}
+
 static void handleAnimationImage()
 {
   resetMarkerCheckpoint("route_animation_image_done");
@@ -390,6 +426,7 @@ void webServerSetup()
   server.on("/status", HTTP_GET, handleStatus);
   server.on("/metrics", HTTP_POST, handleMetrics);
   server.on("/theme", HTTP_POST, handleTheme);
+  server.on("/notify", HTTP_POST, handleNotify);
   server.on("/animation/image", HTTP_POST, handleAnimationImage, handleAnimationImageUpload);
   server.on("/config", HTTP_GET, handleConfig);
   otaUpdateSetup();

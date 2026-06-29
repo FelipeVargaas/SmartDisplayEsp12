@@ -5,7 +5,7 @@
         xmlns:views="using:SmartDisplayPcAgent.Views"
         x:Class="SmartDisplayPcAgent.Views.MainWindow"
         x:DataType="vm:MainWindowViewModel"
-        Width="1100"
+        Width="1150"
         Height="750"
         MinWidth="900"
         MinHeight="620"

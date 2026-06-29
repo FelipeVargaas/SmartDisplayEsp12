@@ -44,6 +44,23 @@
   <data name="AnimationStorageNote" xml:space="preserve"><value>The ESP stores one image in reserved flash and renders it without the Agent after upload.</value></data>
   <data name="Upload" xml:space="preserve"><value>Upload</value></data>
   <data name="ImageUpload" xml:space="preserve"><value>Image upload</value></data>
+  <data name="NotificationTest" xml:space="preserve"><value>Test notification</value></data>
+  <data name="WorkDeskClock" xml:space="preserve"><value>Clock</value></data>
+  <data name="WorkDeskWeather" xml:space="preserve"><value>Weather</value></data>
+  <data name="WorkDeskNotify" xml:space="preserve"><value>Notification</value></data>
+  <data name="WorkDeskEspOwned" xml:space="preserve"><value>ESP owned</value></data>
+  <data name="WorkDeskWindowsNotifications" xml:space="preserve"><value>Windows notifications</value></data>
+  <data name="WorkDeskNotifyReady" xml:space="preserve"><value>Temporary notifications ready for Work Desk.</value></data>
+  <data name="WorkDeskNotifySending" xml:space="preserve"><value>Sending test notification...</value></data>
+  <data name="WorkDeskNotifySent" xml:space="preserve"><value>Notification sent to Work Desk.</value></data>
+  <data name="WorkDeskNotifyFailed" xml:space="preserve"><value>Failed to send notification.</value></data>
+  <data name="WorkDeskTestNotificationTitle" xml:space="preserve"><value>Test notification</value></data>
+  <data name="WindowsNotificationsUnavailableVersion" xml:space="preserve"><value>Windows notifications are unavailable on this version.</value></data>
+  <data name="WindowsNotificationsUnavailableFormat" xml:space="preserve"><value>Notifications unavailable: {0}</value></data>
+  <data name="WindowsNotificationPermissionFailedFormat" xml:space="preserve"><value>Notification permission failed: {0}</value></data>
+  <data name="WindowsNotificationPermissionFormat" xml:space="preserve"><value>Notification permission: {0}</value></data>
+  <data name="WindowsNotificationsListening" xml:space="preserve"><value>Listening for Windows notifications.</value></data>
+  <data name="WindowsNotificationsReadErrorFormat" xml:space="preserve"><value>Error reading notifications: {0}</value></data>
   <data name="DeviceConnection" xml:space="preserve"><value>CONNECTION</value></data>
   <data name="Name" xml:space="preserve"><value>Name</value></data>
   <data name="Mode" xml:space="preserve"><value>Mode</value></data>

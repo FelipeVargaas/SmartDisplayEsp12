@@ -1,7 +1,7 @@
 {
   "version": 4,
   "targets": {
-    "net9.0": {
+    "net9.0-windows10.0.19041.0": {
       "Avalonia/11.3.10": {
         "type": "package",
         "dependencies": {
@@ -373,16 +373,15 @@
       "HarfBuzzSharp/8.3.1.1": {
         "type": "package",
         "dependencies": {
-          "HarfBuzzSharp.NativeAssets.Win32": "8.3.1.1",
-          "HarfBuzzSharp.NativeAssets.macOS": "8.3.1.1"
+          "HarfBuzzSharp.NativeAssets.Win32": "8.3.1.1"
         },
         "compile": {
-          "lib/net8.0/HarfBuzzSharp.dll": {
+          "lib/net8.0-windows10.0.19041/HarfBuzzSharp.dll": {
             "related": ".pdb"
           }
         },
         "runtime": {
-          "lib/net8.0/HarfBuzzSharp.dll": {
+          "lib/net8.0-windows10.0.19041/HarfBuzzSharp.dll": {
             "related": ".pdb"
           }
         }
@@ -442,21 +441,6 @@
           }
         }
       },
-      "HarfBuzzSharp.NativeAssets.macOS/8.3.1.1": {
-        "type": "package",
-        "compile": {
-          "lib/net8.0/_._": {}
-        },
-        "runtime": {
-          "lib/net8.0/_._": {}
-        },
-        "runtimeTargets": {
-          "runtimes/osx/native/libHarfBuzzSharp.dylib": {
-            "assetType": "native",
-            "rid": "osx"
-          }
-        }
-      },
       "HarfBuzzSharp.NativeAssets.WebAssembly/8.3.1.1": {
         "type": "package",
         "compile": {
@@ -473,10 +457,10 @@
       "HarfBuzzSharp.NativeAssets.Win32/8.3.1.1": {
         "type": "package",
         "compile": {
-          "lib/net8.0/_._": {}
+          "lib/net8.0-windows10.0.19041/_._": {}
         },
         "runtime": {
-          "lib/net8.0/_._": {}
+          "lib/net8.0-windows10.0.19041/_._": {}
         },
         "runtimeTargets": {
           "runtimes/win-arm64/native/libHarfBuzzSharp.dll": {
@@ -2654,30 +2638,6 @@
         "runtimes/linux-x86/native/libHarfBuzzSharp.so"
       ]
     },
-    "HarfBuzzSharp.NativeAssets.macOS/8.3.1.1": {
-      "sha512": "jbtCsgftcaFLCA13tVKo5iWdElJScrulLTKJre36O4YQTIlwDtPPqhRZNk+Y0vv4D1gxbscasGRucUDfS44ofQ==",
-      "type": "package",
-      "path": "harfbuzzsharp.nativeassets.macos/8.3.1.1",
-      "files": [
-        ".nupkg.metadata",
-        ".signature.p7s",
-        "LICENSE.txt",
-        "README.md",
-        "THIRD-PARTY-NOTICES.txt",
-        "buildTransitive/net462/HarfBuzzSharp.NativeAssets.macOS.targets",
-        "buildTransitive/net8.0-macos14.0/HarfBuzzSharp.NativeAssets.macOS.targets",
-        "harfbuzzsharp.nativeassets.macos.8.3.1.1.nupkg.sha512",
-        "harfbuzzsharp.nativeassets.macos.nuspec",
-        "icon.png",
-        "lib/net462/_._",
-        "lib/net6.0/_._",
-        "lib/net8.0-macos14.0/_._",
-        "lib/net8.0/_._",
-        "lib/netstandard2.0/_._",
-        "lib/netstandard2.1/_._",
-        "runtimes/osx/native/libHarfBuzzSharp.dylib"
-      ]
-    },
     "HarfBuzzSharp.NativeAssets.WebAssembly/8.3.1.1": {
       "sha512": "loJweK2u/mH/3C2zBa0ggJlITIszOkK64HLAZB7FUT670dTg965whLFYHDQo69NmC4+d9UN0icLC9VHidXaVCA==",
       "type": "package",
@@ -3883,7 +3843,7 @@
     }
   },
   "projectFileDependencyGroups": {
-    "net9.0": [
+    "net9.0-windows10.0.19041.0": [
       "Avalonia >= 11.3.10",
       "Avalonia.Desktop >= 11.3.10",
       "Avalonia.Diagnostics >= 11.3.10",
@@ -3911,16 +3871,16 @@
         "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
       ],
       "originalTargetFrameworks": [
-        "net9.0"
+        "net9.0-windows10.0.19041.0"
       ],
       "sources": {
         "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
         "https://api.nuget.org/v3/index.json": {}
       },
       "frameworks": {
-        "net9.0": {
-          "framework": "net9.0",
-          "targetAlias": "net9.0",
+        "net9.0-windows10.0.19041.0": {
+          "framework": "net9.0-windows10.0.19041",
+          "targetAlias": "net9.0-windows10.0.19041.0",
           "projectReferences": {}
         }
       },
@@ -3937,9 +3897,9 @@
       "SdkAnalysisLevel": "10.0.300"
     },
     "frameworks": {
-      "net9.0": {
-        "framework": "net9.0",
-        "targetAlias": "net9.0",
+      "net9.0-windows10.0.19041.0": {
+        "framework": "net9.0-windows10.0.19041",
+        "targetAlias": "net9.0-windows10.0.19041.0",
         "dependencies": {
           "Avalonia": {
             "target": "Package",
@@ -3985,8 +3945,17 @@
         ],
         "assetTargetFallback": true,
         "warn": true,
+        "downloadDependencies": [
+          {
+            "name": "Microsoft.Windows.SDK.NET.Ref",
+            "version": "[10.0.19041.57, 10.0.19041.57]"
+          }
+        ],
         "frameworkReferences": {
           "Microsoft.NETCore.App": {
+            "privateAssets": "all"
+          },
+          "Microsoft.Windows.SDK.NET.Ref.Windows": {
             "privateAssets": "all"
           }
         },

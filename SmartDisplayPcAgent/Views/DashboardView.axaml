@@ -297,6 +297,12 @@
                             Content="{x:Static res:Strings.ImageUpload}"
                             IsVisible="{Binding IsAnimationThemeActive}"
                             Command="{Binding OpenAnimationImageCommand}"/>
+
+                    <Button Grid.Column="1"
+                            Classes="accent-button"
+                            Content="{x:Static res:Strings.NotificationTest}"
+                            IsVisible="{Binding IsWorkDeskThemeActive}"
+                            Command="{Binding SendWorkDeskNotificationTestCommand}"/>
                 </Grid>
             </Grid>
         </Border>

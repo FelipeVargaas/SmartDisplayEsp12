@@ -216,6 +216,65 @@ public sealed class DeviceControlClient : IDisposable
         }
     }
 
+    public async Task<bool> SendNotificationAsync(
+        string displayAddress,
+        string appName,
+        string sender,
+        string title,
+        string accent,
+        int durationMs,
+        CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(displayAddress))
+            return false;
+
+        string baseUrl = NormalizeBaseUrl(displayAddress);
+
+        return await DisplayRequestCoordinator.RunBoolAsync(
+            ct => SendNotificationCoreAsync(baseUrl, appName, sender, title, accent, durationMs, ct),
+            TimeSpan.FromSeconds(2),
+            cancellationToken);
+    }
+
+    private async Task<bool> SendNotificationCoreAsync(
+        string baseUrl,
+        string appName,
+        string sender,
+        string title,
+        string accent,
+        int durationMs,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            LastError = string.Empty;
+
+            string json = JsonSerializer.Serialize(new
+            {
+                appName,
+                sender,
+                title,
+                time = DateTime.Now.ToString("HH:mm", CultureInfo.InvariantCulture),
+                accent,
+                durationMs
+            });
+            using var content = new StringContent(json, Encoding.UTF8, "application/json");
+            using var response = await _httpClient.PostAsync($"{baseUrl}/notify", content, cancellationToken);
+
+            if (response.IsSuccessStatusCode)
+                return true;
+
+            string body = await response.Content.ReadAsStringAsync(cancellationToken);
+            LastError = $"POST /notify HTTP {(int)response.StatusCode}: {body}";
+            return false;
+        }
+        catch (Exception ex)
+        {
+            LastError = $"{ex.GetType().Name}: {ex.Message}";
+            return false;
+        }
+    }
+
     private static string NormalizeBaseUrl(string address)
     {
         string value = address.Trim();

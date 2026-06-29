@@ -17,6 +17,8 @@
 
 namespace
 {
+bool weatherCrashCooldownPending = false;
+
 void reserveRuntimeStrings()
 {
   appState.gamerGame.reserve(48);
@@ -25,6 +27,7 @@ void reserveRuntimeStrings()
   appState.lastDiskLabelDrawn.reserve(4);
   appState.weatherText.reserve(12);
   appState.weatherStatus.reserve(18);
+  appState.weatherUpdatedAt.reserve(6);
   appState.lastRestartIntent.reserve(24);
   appState.lastResetCheckpoint.reserve(24);
 }
@@ -32,7 +35,7 @@ void reserveRuntimeStrings()
 bool activeThemeUsesWeather()
 {
   ThemeId theme = themeManagerGetActive();
-  return theme == THEME_PC_MONITOR || theme == THEME_MINIMAL_CLOCK;
+  return theme == THEME_PC_MONITOR || theme == THEME_MINIMAL_CLOCK || theme == THEME_WORK_DESK;
 }
 
 unsigned long weatherRetryInterval()
@@ -41,16 +44,58 @@ unsigned long weatherRetryInterval()
   return appState.weatherRetryCount < WEATHER_FAST_RETRY_LIMIT ? WEATHER_FIRST_RETRY_INTERVAL_MS : WEATHER_RETRY_INTERVAL_MS;
 }
 
-void recordWeatherUpdateResult(bool success)
+bool timeReached(unsigned long now, unsigned long scheduledAt)
+{
+  return static_cast<long>(now - scheduledAt) >= 0;
+}
+
+bool hasFreshWeather(unsigned long now)
+{
+  return appState.hasWeather &&
+    appState.lastWeatherSuccess != 0 &&
+    now - appState.lastWeatherSuccess < WEATHER_UPDATE_INTERVAL_MS;
+}
+
+void scheduleWeatherForThemeStart(unsigned long now)
+{
+  if (hasFreshWeather(now))
+  {
+    appState.nextWeatherUpdate = appState.lastWeatherSuccess + WEATHER_UPDATE_INTERVAL_MS;
+    return;
+  }
+
+  if (weatherCrashCooldownPending)
+  {
+    appState.weatherStatus = "weather_cooldown";
+    appState.nextWeatherUpdate = now + WEATHER_CRASH_COOLDOWN_MS;
+    weatherCrashCooldownPending = false;
+    return;
+  }
+
+  appState.nextWeatherUpdate = now + WEATHER_THEME_START_DELAY_MS;
+}
+
+void recordWeatherUpdateResult(bool success, unsigned long now)
 {
   if (success)
   {
     appState.weatherRetryCount = 0;
+    appState.lastWeatherSuccess = now;
+    appState.nextWeatherUpdate = now + WEATHER_UPDATE_INTERVAL_MS;
     appState.lastClockCheck = 0;
     return;
   }
 
   if (appState.weatherRetryCount < 255) appState.weatherRetryCount++;
+  appState.nextWeatherUpdate = now + weatherRetryInterval();
+}
+
+void runWeatherUpdate(unsigned long now)
+{
+  appState.lastWeatherUpdate = now;
+  resetMarkerCheckpoint("weather_update");
+  recordWeatherUpdateResult(weatherUpdate(), now);
+  resetMarkerCheckpoint("weather_done");
 }
 }
 
@@ -62,6 +107,7 @@ void appSetup()
   reserveRuntimeStrings();
   appState.lastRestartIntent = resetMarkerConsume();
   appState.lastResetCheckpoint = resetMarkerReadCheckpoint();
+  weatherCrashCooldownPending = appState.lastResetCheckpoint == "weather_get";
   resetMarkerCheckpoint("boot_setup");
   appState.safeMode = bootGuardBegin();
   displayUiInit();
@@ -89,12 +135,12 @@ void appSetup()
       appState.lastThemeUsesWeather = activeThemeUsesWeather();
       if (appState.lastThemeUsesWeather)
       {
-        recordWeatherUpdateResult(weatherUpdate());
-        appState.lastWeatherUpdate = millis();
+        scheduleWeatherForThemeStart(millis());
       }
       else
       {
         appState.lastWeatherUpdate = 0;
+        appState.nextWeatherUpdate = 0;
       }
       themeUpdateIfNeeded();
       resetMarkerCheckpoint("setup_done");
@@ -132,17 +178,17 @@ void appLoop()
   if (usesWeather && !appState.lastThemeUsesWeather)
   {
     appState.weatherRetryCount = 0;
-    appState.lastWeatherUpdate = 0;
+    scheduleWeatherForThemeStart(now);
+  }
+  else if (!usesWeather)
+  {
+    appState.nextWeatherUpdate = 0;
   }
   appState.lastThemeUsesWeather = usesWeather;
 
-  unsigned long weatherInterval = weatherRetryInterval();
-  if (usesWeather && (appState.lastWeatherUpdate == 0 || now - appState.lastWeatherUpdate >= weatherInterval))
+  if (usesWeather && appState.nextWeatherUpdate != 0 && timeReached(now, appState.nextWeatherUpdate))
   {
-    appState.lastWeatherUpdate = now;
-    resetMarkerCheckpoint("weather_update");
-    recordWeatherUpdateResult(weatherUpdate());
-    resetMarkerCheckpoint("weather_done");
+    runWeatherUpdate(now);
   }
   themeUpdateIfNeeded();
 }

@@ -3,7 +3,8 @@
 #include <ArduinoJson.h>
 #include <ESP8266HTTPClient.h>
 #include <ESP8266WiFi.h>
-#include <WiFiClientSecureBearSSL.h>
+#include <math.h>
+#include <time.h>
 
 #include "app_state.h"
 #include "config.h"
@@ -28,12 +29,34 @@ static String weatherCodeToText(int code)
 
 static String buildWeatherUrl()
 {
-  String url = "https://api.open-meteo.com/v1/forecast?latitude=";
+  String url = "http://api.open-meteo.com/v1/forecast?latitude=";
   url += String(WEATHER_LAT, 4);
   url += "&longitude="; url += String(WEATHER_LON, 4);
-  url += "&current=temperature_2m,weather_code";
+  url += "&current=temperature_2m,relative_humidity_2m,weather_code";
+  url += "&daily=weather_code,temperature_2m_max,temperature_2m_min";
+  url += "&forecast_days=3";
   url += "&timezone="; url += WEATHER_TIMEZONE;
   return url;
+}
+
+static String formatWeatherUpdatedAt()
+{
+  time_t now = time(nullptr);
+  if (now < 100000) return "--:--";
+  struct tm* localTime = localtime(&now);
+  if (localTime == nullptr) return "--:--";
+
+  char buffer[6];
+  snprintf(buffer, sizeof(buffer), "%02d:%02d", localTime->tm_hour, localTime->tm_min);
+  return String(buffer);
+}
+
+static int roundedJsonInt(JsonVariantConst value, int fallback)
+{
+  if (value.isNull()) return fallback;
+  float numeric = value.as<float>();
+  if (isnan(numeric) || isinf(numeric)) return fallback;
+  return static_cast<int>(round(numeric));
 }
 
 bool weatherUpdate()
@@ -52,41 +75,62 @@ bool weatherUpdate()
   }
 
   resetMarkerCheckpoint("weather_begin");
-  BearSSL::WiFiClientSecure client;
-  client.setInsecure();
-  HTTPClient https;
-  https.setTimeout(5000);
+  WiFiClient client;
+  HTTPClient http;
+  http.setTimeout(5000);
+  http.useHTTP10(true);
   resetMarkerCheckpoint("weather_http_begin");
-  if (!https.begin(client, buildWeatherUrl()))
+  if (!http.begin(client, buildWeatherUrl()))
   {
     appState.weatherStatus = "begin_failed";
     return false;
   }
+
   resetMarkerCheckpoint("weather_get");
-  int httpCode = https.GET();
+  int httpCode = http.GET();
   if (httpCode != HTTP_CODE_OK)
   {
-    https.end();
+    http.end();
     appState.weatherStatus = String("http_") + String(httpCode);
     return false;
   }
 
   resetMarkerCheckpoint("weather_parse");
-  String payload = https.getString();
-  https.end();
-
-  StaticJsonDocument<1024> doc;
-  DeserializationError error = deserializeJson(doc, payload);
+  StaticJsonDocument<1536> doc;
+  DeserializationError error = deserializeJson(doc, http.getStream());
+  http.end();
   if (error)
   {
     appState.weatherStatus = String("json_") + error.c_str();
     return false;
   }
 
+  JsonVariantConst currentTemp = doc["current"]["temperature_2m"];
+  JsonVariantConst currentCode = doc["current"]["weather_code"];
+  JsonVariantConst todayLow = doc["daily"]["temperature_2m_min"][0];
+  if (currentTemp.isNull() || currentCode.isNull() || todayLow.isNull())
+  {
+    appState.weatherStatus = "json_missing";
+    return false;
+  }
+
   resetMarkerCheckpoint("weather_apply");
-  appState.weatherTemp = doc["current"]["temperature_2m"] | 0.0f;
-  appState.weatherCode = doc["current"]["weather_code"] | -1;
+  appState.weatherTemp = currentTemp.as<float>();
+  appState.weatherTodayLow = roundedJsonInt(todayLow, -1);
+  appState.weatherHumidity = doc["current"]["relative_humidity_2m"] | -1;
+  appState.weatherCode = currentCode.as<int>();
   appState.weatherText = weatherCodeToText(appState.weatherCode);
+  appState.weatherUpdatedAt = formatWeatherUpdatedAt();
+  for (uint8_t i = 0; i < 2; i++)
+  {
+    JsonVariantConst high = doc["daily"]["temperature_2m_max"][i + 1];
+    JsonVariantConst low = doc["daily"]["temperature_2m_min"][i + 1];
+    JsonVariantConst code = doc["daily"]["weather_code"][i + 1];
+    appState.weatherForecast[i].high = roundedJsonInt(high, -1);
+    appState.weatherForecast[i].low = roundedJsonInt(low, -1);
+    appState.weatherForecast[i].code = code.isNull() ? -1 : code.as<int>();
+    appState.weatherForecast[i].valid = !high.isNull() && !low.isNull() && !code.isNull();
+  }
   appState.weatherStatus = "ok";
   appState.hasWeather = true;
   return true;

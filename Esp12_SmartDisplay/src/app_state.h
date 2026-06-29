@@ -3,6 +3,14 @@
 #include <Arduino.h>
 #include <TFT_eSPI.h>
 
+struct WeatherForecastDay
+{
+  int high;
+  int low;
+  int code;
+  bool valid;
+};
+
 struct AppState
 {
   TFT_eSPI tft;
@@ -48,10 +56,14 @@ struct AppState
   String lastWeatherDrawn;
   String lastTopLabelDrawn;
   float weatherTemp;
+  int weatherTodayLow;
+  int weatherHumidity;
   int weatherCode;
   bool hasWeather;
   String weatherText;
   String weatherStatus;
+  String weatherUpdatedAt;
+  WeatherForecastDay weatherForecast[2];
   uint8_t weatherRetryCount;
   bool lastThemeUsesWeather;
 
@@ -61,6 +73,8 @@ struct AppState
   unsigned long lastAnimationUpdate;
   unsigned long lastClockCheck;
   unsigned long lastWeatherUpdate;
+  unsigned long lastWeatherSuccess;
+  unsigned long nextWeatherUpdate;
   unsigned long lastFooterUpdate;
   unsigned long lastFooterStatusUpdate;
   unsigned long lastTopLabelUpdate;

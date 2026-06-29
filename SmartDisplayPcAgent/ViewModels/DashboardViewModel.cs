@@ -27,6 +27,7 @@ public partial class DashboardViewModel : ObservableObject, IDisposable
     private readonly HardwareInfoService _hardwareInfoService = new();
     private readonly GamerTelemetryService _gamerTelemetryService = new();
     private readonly GameAliasService _gameAliasService = new();
+    private readonly WindowsNotificationForwarderService _windowsNotificationForwarderService = new();
     private readonly CancellationTokenSource _cts = new();
 
     private DateTime _lastDeviceStatusRefresh = DateTime.MinValue;
@@ -45,6 +46,7 @@ public partial class DashboardViewModel : ObservableObject, IDisposable
         State = state;
         LoadHardwareSummary();
         UpdateThemePanel(_activeThemeKey);
+        StartWindowsNotificationForwarder();
         _ = Task.Run(() => RefreshDeviceStatusForDashboardAsync(_cts.Token));
         _ = Task.Run(() => StartMetricsLoopAsync(_cts.Token));
     }
@@ -179,6 +181,9 @@ public partial class DashboardViewModel : ObservableObject, IDisposable
 
     [ObservableProperty]
     private bool isAnimationThemeActive;
+
+    [ObservableProperty]
+    private bool isWorkDeskThemeActive;
 
     [ObservableProperty]
     private string animationSelectedFileText = S("NoImageSelected");
@@ -528,6 +533,33 @@ public partial class DashboardViewModel : ObservableObject, IDisposable
     }
 
     [RelayCommand]
+    private async Task SendWorkDeskNotificationTestAsync()
+    {
+        ThemePanelStatusText = S("WorkDeskNotifySending");
+
+        using var timeoutCts = new CancellationTokenSource(TimeSpan.FromSeconds(3));
+        using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(timeoutCts.Token, _cts.Token);
+
+        bool sent = await _deviceControlClient.SendNotificationAsync(
+            State.DisplayIp,
+            "TinyDash",
+            "PC Agent",
+            S("WorkDeskTestNotificationTitle"),
+            "#5B5FC7",
+            5000,
+            linkedCts.Token);
+
+        ThemePanelStatusText = sent
+            ? S("WorkDeskNotifySent")
+            : string.IsNullOrWhiteSpace(_deviceControlClient.LastError)
+                ? S("WorkDeskNotifyFailed")
+                : _deviceControlClient.LastError;
+
+        LastPostText = sent ? S("OkNow") : S("StatusFailed");
+        State.LastPostText = LastPostText;
+    }
+
+    [RelayCommand]
     private void CloseAnimationImage()
     {
         StopAnimationPreviewTimer();
@@ -710,6 +742,7 @@ public partial class DashboardViewModel : ObservableObject, IDisposable
         _cts.Cancel();
         _cts.Dispose();
 
+        _windowsNotificationForwarderService.Dispose();
         _metricsService.Dispose();
         _displayHttpClient.Dispose();
         _deviceControlClient.Dispose();
@@ -749,11 +782,39 @@ public partial class DashboardViewModel : ObservableObject, IDisposable
         }
     }
 
+    private void StartWindowsNotificationForwarder()
+    {
+        _windowsNotificationForwarderService.Start(
+            shouldForward: () =>
+                State.SendToDisplayEnabled &&
+                NormalizeThemeKey(State.ActiveThemeKey) == "work_desk",
+            forwardAsync: async (notification, cancellationToken) =>
+                await _deviceControlClient.SendNotificationAsync(
+                    State.DisplayIp,
+                    notification.AppName,
+                    notification.Sender,
+                    notification.Title,
+                    notification.Accent,
+                    notification.DurationMs,
+                    cancellationToken),
+            updateStatus: status =>
+            {
+                if (NormalizeThemeKey(State.ActiveThemeKey) != "work_desk")
+                    return;
+
+                Dispatcher.UIThread.Post(() =>
+                {
+                    ThemePanelStatusText = status;
+                });
+            });
+    }
+
     private void UpdateThemePanel(string themeKey)
     {
         string normalizedTheme = NormalizeThemeKey(themeKey);
         IsGamerThemeActive = normalizedTheme == "gamer";
         IsAnimationThemeActive = normalizedTheme == "animation";
+        IsWorkDeskThemeActive = normalizedTheme == "work_desk";
 
         switch (normalizedTheme)
         {
@@ -783,10 +844,10 @@ public partial class DashboardViewModel : ObservableObject, IDisposable
             case "work_desk":
                 ThemePanelTitle = "WORK DESK";
                 ThemePanelBodyText =
-                    $"Calendar      Not configured{Environment.NewLine}" +
-                    $"Email         Not configured{Environment.NewLine}" +
-                    $"WhatsApp      Not configured";
-                ThemePanelStatusText = "Fontes de notificação ainda não configuradas";
+                    $"{S("WorkDeskClock"),-14}{S("WorkDeskEspOwned")}{Environment.NewLine}" +
+                    $"{S("WorkDeskWeather"),-14}{S("WorkDeskEspOwned")}{Environment.NewLine}" +
+                    $"{S("WorkDeskNotify"),-14}{S("WorkDeskWindowsNotifications")}";
+                ThemePanelStatusText = S("WorkDeskNotifyReady");
                 break;
 
             case "animation":

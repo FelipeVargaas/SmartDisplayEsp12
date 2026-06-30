@@ -21,6 +21,10 @@ struct AppState
   bool safeMode;
   String lastRestartIntent;
   String lastResetCheckpoint;
+  bool otaMaintenanceMode;
+  unsigned long otaMaintenanceUntil;
+  unsigned long otaMaintenanceLastFrame;
+  uint8_t otaMaintenanceFrame;
 
   int cpuCurrent;
   int ramCurrent;

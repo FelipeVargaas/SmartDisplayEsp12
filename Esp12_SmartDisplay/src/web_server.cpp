@@ -8,12 +8,14 @@
 #include "animation_image.h"
 #include "app_state.h"
 #include "config.h"
+#include "display_ui.h"
 #include "metrics.h"
 #include "ota_update.h"
 #include "reset_marker.h"
 #include "theme_manager.h"
 #include "theme_render.h"
 #include "theme_work_desk.h"
+#include "weather_location.h"
 #include "web_pages.h"
 #include "wifi_manager.h"
 
@@ -38,6 +40,21 @@ static String formatUptime()
   unsigned long minutes = (totalSeconds % 3600UL) / 60UL;
   unsigned long seconds = totalSeconds % 60UL;
   return String(hours) + "h " + String(minutes) + "m " + String(seconds) + "s";
+}
+
+static bool timeReached(unsigned long now, unsigned long scheduledAt)
+{
+  return static_cast<long>(now - scheduledAt) >= 0;
+}
+
+static bool maintenanceModeActive()
+{
+  return appState.otaMaintenanceMode && !timeReached(millis(), appState.otaMaintenanceUntil);
+}
+
+static void sendMaintenanceMode()
+{
+  server.send(503, "application/json", "{\"ok\":false,\"error\":\"maintenance_mode\"}");
 }
 
 static int clampIntRange(int value, int minValue, int maxValue)
@@ -147,6 +164,7 @@ static void handleResetWifi()
 static void handleMetrics()
 {
   resetMarkerCheckpoint("route_metrics");
+  if (maintenanceModeActive()) { sendMaintenanceMode(); return; }
   if (server.method() != HTTP_POST) { server.send(405, "application/json", "{\"ok\":false,\"error\":\"method_not_allowed\"}"); return; }
   if (ESP.getFreeHeap() < METRICS_MIN_FREE_HEAP || ESP.getMaxFreeBlockSize() < METRICS_MIN_MAX_BLOCK)
   {
@@ -227,6 +245,7 @@ static void handleMetrics()
 static void handleTheme()
 {
   resetMarkerCheckpoint("route_theme");
+  if (maintenanceModeActive()) { sendMaintenanceMode(); return; }
   if (server.method() != HTTP_POST) { server.send(405, "application/json", "{\"ok\":false,\"error\":\"method_not_allowed\"}"); return; }
   String body = server.arg("plain");
   StaticJsonDocument<96> doc;
@@ -248,6 +267,7 @@ static void handleTheme()
 static void handleNotify()
 {
   resetMarkerCheckpoint("route_notify");
+  if (maintenanceModeActive()) { sendMaintenanceMode(); return; }
   if (server.method() != HTTP_POST) { server.send(405, "application/json", "{\"ok\":false,\"error\":\"method_not_allowed\"}"); return; }
   if (ESP.getFreeHeap() < NOTIFY_MIN_FREE_HEAP || ESP.getMaxFreeBlockSize() < NOTIFY_MIN_MAX_BLOCK)
   {
@@ -278,9 +298,64 @@ static void handleNotify()
   resetMarkerCheckpoint("route_notify_done");
 }
 
+static void handleWeatherLocation()
+{
+  resetMarkerCheckpoint("route_weather_location");
+  if (maintenanceModeActive()) { sendMaintenanceMode(); return; }
+  if (server.method() != HTTP_POST) { server.send(405, "application/json", "{\"ok\":false,\"error\":\"method_not_allowed\"}"); return; }
+
+  String body = server.arg("plain");
+  if (body.length() == 0) { server.send(400, "application/json", "{\"ok\":false,\"error\":\"empty_body\"}"); return; }
+  if (body.length() > 256) { server.send(413, "application/json", "{\"ok\":false,\"error\":\"payload_too_large\"}"); return; }
+
+  StaticJsonDocument<384> doc;
+  if (deserializeJson(doc, body)) { server.send(400, "application/json", "{\"ok\":false,\"error\":\"invalid_json\"}"); return; }
+
+  const char* label = doc["label"] | "";
+  const char* timezone = doc["timezone"] | "";
+  JsonVariant latitudeValue = doc["latitude"];
+  JsonVariant longitudeValue = doc["longitude"];
+
+  if (latitudeValue.isNull() || longitudeValue.isNull() || strlen(label) == 0 || strlen(timezone) == 0)
+  {
+    server.send(400, "application/json", "{\"ok\":false,\"error\":\"missing_fields\"}");
+    return;
+  }
+
+  float latitude = latitudeValue.as<float>();
+  float longitude = longitudeValue.as<float>();
+
+  if (!weatherLocationSave(String(label), latitude, longitude, String(timezone)))
+  {
+    server.send(400, "application/json", "{\"ok\":false,\"error\":\"invalid_location\"}");
+    return;
+  }
+
+  appState.hasWeather = false;
+  appState.weatherStatus = "location_updated";
+  appState.lastWeatherSuccess = 0;
+  appState.weatherRetryCount = 0;
+  appState.nextWeatherUpdate = millis() + WEATHER_THEME_START_DELAY_MS;
+  themeForceFullRedraw();
+
+  const WeatherLocation& location = weatherLocationGet();
+  String json = "{\"ok\":true,\"weatherLocation\":{\"label\":\"";
+  json += jsonEscape(location.label);
+  json += "\",\"latitude\":";
+  json += String(location.latitude, 6);
+  json += ",\"longitude\":";
+  json += String(location.longitude, 6);
+  json += ",\"timezone\":\"";
+  json += jsonEscape(location.timezone);
+  json += "\"}}";
+  server.send(200, "application/json", json);
+  resetMarkerCheckpoint("route_weather_location_done");
+}
+
 static void handleAnimationImage()
 {
   resetMarkerCheckpoint("route_animation_image_done");
+  if (maintenanceModeActive()) { sendMaintenanceMode(); return; }
   if (!animationUploadSeen)
   {
     server.send(400, "application/json", "{\"ok\":false,\"error\":\"missing_file\"}");
@@ -311,6 +386,7 @@ static void handleAnimationImage()
 
 static void handleAnimationImageUpload()
 {
+  if (maintenanceModeActive()) return;
   HTTPUpload& upload = server.upload();
   if (upload.status == UPLOAD_FILE_START)
   {
@@ -347,9 +423,32 @@ static void handleConfig()
   String json = "{\"ok\":true,\"theme\":\"";
   json += themeManagerGetKey(themeManagerGetActive());
   json += "\",\"pcOnline\":";
-  json += metricsHasRecentPcMetrics() ? "true" : "false";
+  json += (metricsHasRecentPcMetrics() ? "true" : "false");
   json += "}";
   server.send(200, "application/json", json);
+}
+
+static void handleOtaPrepare()
+{
+  resetMarkerCheckpoint("route_ota_prepare");
+  if (server.method() != HTTP_POST) { server.send(405, "application/json", "{\"ok\":false,\"error\":\"method_not_allowed\"}"); return; }
+
+  unsigned long now = millis();
+  appState.otaMaintenanceMode = true;
+  appState.otaMaintenanceUntil = now + OTA_MAINTENANCE_WINDOW_MS;
+  appState.otaMaintenanceLastFrame = 0;
+  appState.otaMaintenanceFrame = 0;
+  appState.nextWeatherUpdate = 0;
+  appState.weatherStatus = "ota_maintenance";
+  displayUiDrawOtaMaintenanceScreen(appState.isApMode ? WiFi.softAPIP().toString() : WiFi.localIP().toString());
+
+  String json = "{\"ok\":true,\"mode\":\"ota_maintenance\",\"updateUrl\":\"http://";
+  json += (appState.isApMode ? WiFi.softAPIP().toString() : WiFi.localIP().toString());
+  json += "/update\",\"durationMs\":";
+  json += String(OTA_MAINTENANCE_WINDOW_MS);
+  json += "}";
+  server.send(200, "application/json", json);
+  resetMarkerCheckpoint("route_ota_prepare_done");
 }
 
 static void handleStatus()
@@ -379,11 +478,11 @@ static void handleStatus()
   String ssid = appState.isApMode ? String(AP_SSID) : WiFi.SSID();
   String json = "{";
   json += "\"name\":\"TinyDash\",";
-  json += "\"mode\":\""; json += appState.isApMode ? "AP" : "STA"; json += "\",";
+  json += "\"mode\":\""; json += (appState.isApMode ? "AP" : "STA"); json += "\",";
   json += "\"ip\":\""; json += ip; json += "\",";
   json += "\"ssid\":\""; json += ssid; json += "\",";
   json += "\"rssi\":";
-  json += appState.isApMode ? "null" : String(WiFi.RSSI());
+  json += (appState.isApMode ? String("null") : String(WiFi.RSSI()));
   json += ",";
   json += "\"theme\":\""; json += themeManagerGetKey(themeManagerGetActive()); json += "\",";
   json += "\"uptimeMs\":"; json += String(millis()); json += ",";
@@ -396,18 +495,24 @@ static void handleStatus()
   json += "\"gpu\":"; json += String(appState.gpuCurrent); json += ",";
   json += "\"disk\":"; json += String(appState.diskCurrent); json += ",";
   json += "\"diskLabel\":\""; json += appState.diskLabel; json += "\",";
-  json += "\"pcOnline\":"; json += metricsHasRecentPcMetrics() ? "true" : "false"; json += ",";
-  json += "\"lastPcMetricsAgeMs\":"; json += appState.lastPcMetricsReceived == 0 ? "null" : String(millis() - appState.lastPcMetricsReceived); json += ",";
-  json += "\"temperature\":"; json += appState.hasWeather ? String(appState.weatherTemp, 1) : "null"; json += ",";
+  json += "\"pcOnline\":"; json += (metricsHasRecentPcMetrics() ? "true" : "false"); json += ",";
+  json += "\"lastPcMetricsAgeMs\":"; json += (appState.lastPcMetricsReceived == 0 ? String("null") : String(millis() - appState.lastPcMetricsReceived)); json += ",";
+  json += "\"temperature\":"; json += (appState.hasWeather ? String(appState.weatherTemp, 1) : String("null")); json += ",";
   json += "\"weather\":\""; json += appState.weatherText; json += "\",";
   json += "\"weatherStatus\":\""; json += jsonEscape(appState.weatherStatus); json += "\",";
+  json += "\"otaMaintenanceMode\":"; json += (maintenanceModeActive() ? String("true") : String("false")); json += ",";
+  const WeatherLocation& location = weatherLocationGet();
+  json += "\"weatherLocationLabel\":\""; json += jsonEscape(location.label); json += "\",";
+  json += "\"weatherLatitude\":"; json += String(location.latitude, 6); json += ",";
+  json += "\"weatherLongitude\":"; json += String(location.longitude, 6); json += ",";
+  json += "\"weatherTimezone\":\""; json += jsonEscape(location.timezone); json += "\",";
   json += "\"heap\":"; json += String(ESP.getFreeHeap()); json += ",";
   json += "\"heapFragmentation\":"; json += String(ESP.getHeapFragmentation()); json += ",";
   json += "\"maxFreeBlockSize\":"; json += String(ESP.getMaxFreeBlockSize()); json += ",";
   json += "\"flashSize\":"; json += String(ESP.getFlashChipRealSize()); json += "}";
   json.setCharAt(json.length() - 1, ',');
   json += "\"animationImage\":";
-  json += animationImageIsAvailable() ? "true" : "false";
+  json += (animationImageIsAvailable() ? "true" : "false");
   json += ",\"animationImageMaxBytes\":";
   json += String(animationImagePayloadBytes());
   json += ",\"animationImageStorageBytes\":";
@@ -427,6 +532,8 @@ void webServerSetup()
   server.on("/metrics", HTTP_POST, handleMetrics);
   server.on("/theme", HTTP_POST, handleTheme);
   server.on("/notify", HTTP_POST, handleNotify);
+  server.on("/weather/location", HTTP_POST, handleWeatherLocation);
+  server.on("/ota/prepare", HTTP_POST, handleOtaPrepare);
   server.on("/animation/image", HTTP_POST, handleAnimationImage, handleAnimationImageUpload);
   server.on("/config", HTTP_GET, handleConfig);
   otaUpdateSetup();

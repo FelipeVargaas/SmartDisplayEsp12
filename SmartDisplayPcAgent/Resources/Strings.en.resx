@@ -11,6 +11,12 @@
   <data name="Version" xml:space="preserve"><value>Version: 1.0.0</value></data>
   <data name="LanguageLabel" xml:space="preserve"><value>Language</value></data>
   <data name="LanguageRestartHint" xml:space="preserve"><value>Restart to apply</value></data>
+  <data name="LanguageRestartTitle" xml:space="preserve"><value>Language changed</value></data>
+  <data name="LanguageRestartDialogMessage" xml:space="preserve"><value>The new language will be applied the next time TinyDash Agent starts.</value></data>
+  <data name="RestartNow" xml:space="preserve"><value>Restart now</value></data>
+  <data name="Later" xml:space="preserve"><value>Later</value></data>
+  <data name="RestartPathUnavailable" xml:space="preserve"><value>The current executable could not be located.</value></data>
+  <data name="RestartFailedFormat" xml:space="preserve"><value>Could not restart now: {0}</value></data>
   <data name="LanguagePortugueseBrazil" xml:space="preserve"><value>Português (BR)</value></data>
   <data name="LanguageEnglish" xml:space="preserve"><value>English</value></data>
   <data name="DashboardLocalMetrics" xml:space="preserve"><value>LOCAL METRICS</value></data>
@@ -91,6 +97,31 @@
   <data name="SendTelemetryToDisplay" xml:space="preserve"><value>Send telemetry to display</value></data>
   <data name="SendTest" xml:space="preserve"><value>Send Test</value></data>
   <data name="TargetIpConfigured" xml:space="preserve"><value>Target IP is configured in Connection.</value></data>
+  <data name="TelemetryTargetFormat" xml:space="preserve"><value>Target IP: {0}</value></data>
+  <data name="DeviceLocation" xml:space="preserve"><value>LOCATION</value></data>
+  <data name="LocationCurrent" xml:space="preserve"><value>Location</value></data>
+  <data name="Coordinates" xml:space="preserve"><value>Coords</value></data>
+  <data name="LocationNotSelected" xml:space="preserve"><value>No location selected</value></data>
+  <data name="LocationSearchWatermark" xml:space="preserve"><value>Search city or ZIP code</value></data>
+  <data name="LocationSearchHint" xml:space="preserve"><value>Search a location to fill weather, latitude and longitude.</value></data>
+  <data name="LocationSearchEmpty" xml:space="preserve"><value>Enter a city or ZIP code to search.</value></data>
+  <data name="LocationSearching" xml:space="preserve"><value>Searching location...</value></data>
+  <data name="LocationNoResults" xml:space="preserve"><value>No location found.</value></data>
+  <data name="LocationResultsFormat" xml:space="preserve"><value>{0} locations found.</value></data>
+  <data name="LocationSearchFailedFormat" xml:space="preserve"><value>Search failed: {0}</value></data>
+  <data name="LocationSelectedFormat" xml:space="preserve"><value>Selected: {0}</value></data>
+  <data name="LocationSelectFirst" xml:space="preserve"><value>Select a location before applying.</value></data>
+  <data name="LocationSending" xml:space="preserve"><value>Sending location to TinyDash...</value></data>
+  <data name="LocationSendFailed" xml:space="preserve"><value>Failed to apply location on TinyDash.</value></data>
+  <data name="LocationSentRefresh" xml:space="preserve"><value>Location sent. Refreshing status...</value></data>
+  <data name="LocationStatusFromDevice" xml:space="preserve"><value>Current location on device.</value></data>
+  <data name="LocationPreviewTitle" xml:space="preserve"><value>Send preview</value></data>
+  <data name="LocationPreviewMessage" xml:space="preserve"><value>Test mode: this payload has not been sent to the ESP yet.</value></data>
+  <data name="Search" xml:space="preserve"><value>Search</value></data>
+  <data name="PreviewSend" xml:space="preserve"><value>Preview send</value></data>
+  <data name="ApplyLocation" xml:space="preserve"><value>Apply to device</value></data>
+  <data name="Details" xml:space="preserve"><value>Details</value></data>
+  <data name="HideDetails" xml:space="preserve"><value>Hide</value></data>
   <data name="Cancel" xml:space="preserve"><value>Cancel</value></data>
   <data name="StatusStartingCollection" xml:space="preserve"><value>Starting collection...</value></data>
   <data name="StatusCollectingLocalData" xml:space="preserve"><value>Collecting local data</value></data>
@@ -159,8 +190,11 @@
   <data name="ResetWifiTitle" xml:space="preserve"><value>Reset saved Wi-Fi?</value></data>
   <data name="ResetWifiMessage" xml:space="preserve"><value>This will ask the ESP to forget the saved Wi-Fi credentials. Keep this guarded so it cannot happen by accident.</value></data>
   <data name="OpenFirmwareUpdateTitle" xml:space="preserve"><value>Open firmware update?</value></data>
-  <data name="OpenFirmwareUpdateMessage" xml:space="preserve"><value>Firmware update is an administrative action. This button is prepared for a later round and will not upload anything now.</value></data>
+  <data name="OpenFirmwareUpdateMessage" xml:space="preserve"><value>TinyDash will enter OTA mode for a few minutes. Telemetry and status will pause in the Agent before opening /update.</value></data>
   <data name="Continue" xml:space="preserve"><value>Continue</value></data>
   <data name="ResetWifiConfirmed" xml:space="preserve"><value>Reset Wi-Fi confirmed. The real call will be wired in a future round.</value></data>
-  <data name="FirmwareUpdateConfirmed" xml:space="preserve"><value>Firmware Update OTA confirmed. The real function will be wired in a future round.</value></data>
+  <data name="FirmwareUpdateConfirmed" xml:space="preserve"><value>Firmware Update OTA confirmed.</value></data>
+  <data name="FirmwareUpdatePreparing" xml:space="preserve"><value>Preparing OTA mode on TinyDash...</value></data>
+  <data name="FirmwareUpdatePrepareFailed" xml:space="preserve"><value>Could not prepare OTA mode on TinyDash.</value></data>
+  <data name="FirmwareUpdateMaintenanceStartedFormat" xml:space="preserve"><value>OTA mode active. Opening {0}</value></data>
 </root>

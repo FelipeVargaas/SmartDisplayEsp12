@@ -10,6 +10,8 @@ void displayUiDrawConnectingNetwork(const String& ssid);
 void displayUiDrawApScreen();
 void displayUiDrawConnectionFailedScreen();
 void displayUiDrawSafeModeScreen(const String& ipAddress);
+void displayUiDrawOtaMaintenanceScreen(const String& ipAddress);
+void displayUiUpdateOtaMaintenanceProgress();
 void displayUiDrawDashboardBase();
 void displayUiUpdateHeaderIfNeeded();
 void displayUiUpdateTopLabelIfNeeded();

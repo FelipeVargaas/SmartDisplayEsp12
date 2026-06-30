@@ -10,6 +10,7 @@
 #include "display_assets.h"
 #include "metrics.h"
 #include "theme.h"
+#include "weather_location.h"
 
 static void displayCentered(const String& text, int y, int size, uint16_t color)
 {
@@ -126,6 +127,34 @@ void displayUiDrawSafeModeScreen(const String& ipAddress)
   displayCentered("IP: " + ipAddress, 139, 2, TFT_WHITE);
   displayCentered("OTA: /update", 178, 2, TFT_GREEN);
   displayCentered("Dashboard desativado", 214, 1, TFT_LIGHTGREY);
+}
+
+void displayUiDrawOtaMaintenanceScreen(const String& ipAddress)
+{
+  appState.tft.fillScreen(CLEAN_TFT_THEME.background);
+  displayCentered("OTA MODE", 46, 2, TFT_ORANGE);
+  displayCentered("Atualizacao segura", 86, 1, CLEAN_TFT_THEME.secondaryText);
+  displayCentered("IP: " + ipAddress, 154, 1, TFT_WHITE);
+  displayCentered("/update", 180, 2, TFT_GREEN);
+  displayUiUpdateOtaMaintenanceProgress();
+}
+
+void displayUiUpdateOtaMaintenanceProgress()
+{
+  const int x = 34;
+  const int y = 122;
+  const int w = 172;
+  const int h = 16;
+  const int segmentW = 44;
+  const int travel = w - segmentW;
+  int frame = appState.otaMaintenanceFrame % 48;
+  int offset = frame < 24
+    ? (travel * frame) / 23
+    : (travel * (47 - frame)) / 23;
+
+  appState.tft.fillRoundRect(x, y, w, h, h / 2, CLEAN_TFT_THEME.barTrack);
+  appState.tft.fillRoundRect(x + offset, y, segmentW, h, h / 2, CLEAN_TFT_THEME.cpu);
+  appState.otaMaintenanceFrame++;
 }
 
 static String getTimeText()
@@ -409,7 +438,7 @@ void displayUiUpdateTopLabelIfNeeded()
   String label;
   if (statusIndex == 0)
   {
-    label = "Rio de Janeiro";
+    label = weatherLocationCityName();
   }
   else if (statusIndex == 1)
   {

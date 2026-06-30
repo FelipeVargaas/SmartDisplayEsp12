@@ -24,6 +24,10 @@ public sealed record DeviceStatusSnapshot(
     double? Temperature,
     string Weather,
     string WeatherStatus,
+    string WeatherLocationLabel,
+    double? WeatherLatitude,
+    double? WeatherLongitude,
+    string WeatherTimezone,
     long? Heap,
     int? HeapFragmentation,
     long? MaxFreeBlockSize,
@@ -31,6 +35,7 @@ public sealed record DeviceStatusSnapshot(
     bool AnimationImage,
     long? AnimationImageMaxBytes,
     long? AnimationImageStorageBytes,
+    bool OtaMaintenanceMode,
     bool LowHeap)
 {
     public static DeviceStatusSnapshot Empty { get; } = new(
@@ -55,6 +60,10 @@ public sealed record DeviceStatusSnapshot(
         Temperature: null,
         Weather: "--",
         WeatherStatus: "--",
+        WeatherLocationLabel: string.Empty,
+        WeatherLatitude: null,
+        WeatherLongitude: null,
+        WeatherTimezone: string.Empty,
         Heap: null,
         HeapFragmentation: null,
         MaxFreeBlockSize: null,
@@ -62,5 +71,6 @@ public sealed record DeviceStatusSnapshot(
         AnimationImage: false,
         AnimationImageMaxBytes: null,
         AnimationImageStorageBytes: null,
+        OtaMaintenanceMode: false,
         LowHeap: false);
 }

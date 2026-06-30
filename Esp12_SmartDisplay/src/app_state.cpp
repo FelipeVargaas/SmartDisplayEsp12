@@ -4,6 +4,7 @@
 
 AppState::AppState() :
   tft(), metricSprite(&tft), metricSpriteReady(false), isApMode(false), safeMode(false), lastRestartIntent("unknown"), lastResetCheckpoint("unknown"),
+  otaMaintenanceMode(false), otaMaintenanceUntil(0), otaMaintenanceLastFrame(0), otaMaintenanceFrame(0),
   cpuCurrent(-1), ramCurrent(-1), gpuCurrent(-1), diskCurrent(-1), diskLabel("SSD"),
   cpuTarget(-1), ramTarget(-1), gpuTarget(-1), lastPcMetricsReceived(0),
   lastCpuDrawn(-1), lastRamDrawn(-1), lastGpuDrawn(-1), lastDiskDrawn(-1), lastDiskLabelDrawn(""),

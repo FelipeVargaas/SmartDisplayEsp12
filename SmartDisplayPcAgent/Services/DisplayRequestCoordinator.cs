@@ -7,8 +7,10 @@ namespace SmartDisplayPcAgent.Services;
 internal static class DisplayRequestCoordinator
 {
     private static readonly SemaphoreSlim RequestGate = new(1, 1);
+    private static DateTime _pausedUntilUtc = DateTime.MinValue;
 
     public static DateTime LastSuccessfulRequestUtc { get; private set; } = DateTime.MinValue;
+    public static bool IsPaused => DateTime.UtcNow < _pausedUntilUtc;
 
     public readonly record struct CoordinatedResult<T>(bool Skipped, T? Value);
 
@@ -16,6 +18,9 @@ internal static class DisplayRequestCoordinator
         Func<CancellationToken, Task<bool>> action,
         CancellationToken cancellationToken)
     {
+        if (IsPaused)
+            return null;
+
         if (!RequestGate.Wait(0))
             return null;
 
@@ -36,6 +41,9 @@ internal static class DisplayRequestCoordinator
         TimeSpan waitTimeout,
         CancellationToken cancellationToken)
     {
+        if (IsPaused)
+            return false;
+
         bool entered;
         try
         {
@@ -66,6 +74,9 @@ internal static class DisplayRequestCoordinator
         CancellationToken cancellationToken)
         where T : class
     {
+        if (IsPaused)
+            return null;
+
         if (!RequestGate.Wait(0))
             return null;
 
@@ -86,6 +97,9 @@ internal static class DisplayRequestCoordinator
         CancellationToken cancellationToken)
         where T : class
     {
+        if (IsPaused)
+            return new CoordinatedResult<T>(true, null);
+
         if (!RequestGate.Wait(0))
             return new CoordinatedResult<T>(true, null);
 
@@ -107,6 +121,9 @@ internal static class DisplayRequestCoordinator
         CancellationToken cancellationToken)
         where T : class
     {
+        if (IsPaused)
+            return null;
+
         bool entered;
         try
         {
@@ -136,5 +153,12 @@ internal static class DisplayRequestCoordinator
     {
         return LastSuccessfulRequestUtc != DateTime.MinValue &&
                DateTime.UtcNow - LastSuccessfulRequestUtc <= window;
+    }
+
+    public static void PauseFor(TimeSpan duration)
+    {
+        DateTime until = DateTime.UtcNow.Add(duration);
+        if (until > _pausedUntilUtc)
+            _pausedUntilUtc = until;
     }
 }

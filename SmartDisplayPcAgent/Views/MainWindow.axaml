@@ -134,6 +134,7 @@
         </Style>
     </Window.Styles>
 
+    <Grid>
     <Grid RowDefinitions="Auto,*,Auto"
           Margin="22"
           RowSpacing="14">
@@ -269,5 +270,38 @@
                            VerticalAlignment="Center"/>
             </StackPanel>
         </Grid>
+    </Grid>
+
+    <Border IsVisible="{Binding IsLanguageRestartDialogOpen}"
+            Background="#B0070B10">
+        <Border Classes="card"
+                Width="430"
+                Padding="20"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center">
+            <Grid RowDefinitions="Auto,Auto,Auto"
+                  RowSpacing="16">
+                <TextBlock Text="{x:Static res:Strings.LanguageRestartTitle}"
+                           Classes="section-title"/>
+
+                <TextBlock Grid.Row="1"
+                           Text="{Binding LanguageRestartDialogMessage}"
+                           Classes="muted"
+                           TextWrapping="Wrap"/>
+
+                <StackPanel Grid.Row="2"
+                            Orientation="Horizontal"
+                            HorizontalAlignment="Right"
+                            Spacing="10">
+                    <Button Content="{x:Static res:Strings.Later}"
+                            Command="{Binding RestartLaterCommand}"/>
+
+                    <Button Classes="accent-button"
+                            Content="{x:Static res:Strings.RestartNow}"
+                            Command="{Binding RestartNowCommand}"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+    </Border>
     </Grid>
 </Window>

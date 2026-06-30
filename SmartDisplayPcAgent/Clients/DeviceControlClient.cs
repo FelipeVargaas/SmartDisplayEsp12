@@ -99,6 +99,10 @@ public sealed class DeviceControlClient : IDisposable
                 Temperature: GetNullableDouble(root, "temperature"),
                 Weather: GetString(root, "weather", "--"),
                 WeatherStatus: GetString(root, "weatherStatus", "--"),
+                WeatherLocationLabel: GetString(root, "weatherLocationLabel", string.Empty),
+                WeatherLatitude: GetNullableDouble(root, "weatherLatitude"),
+                WeatherLongitude: GetNullableDouble(root, "weatherLongitude"),
+                WeatherTimezone: GetString(root, "weatherTimezone", string.Empty),
                 Heap: GetNullableLong(root, "heap"),
                 HeapFragmentation: GetNullableInt(root, "heapFragmentation"),
                 MaxFreeBlockSize: GetNullableLong(root, "maxFreeBlockSize"),
@@ -106,6 +110,7 @@ public sealed class DeviceControlClient : IDisposable
                 AnimationImage: GetBool(root, "animationImage"),
                 AnimationImageMaxBytes: GetNullableLong(root, "animationImageMaxBytes"),
                 AnimationImageStorageBytes: GetNullableLong(root, "animationImageStorageBytes"),
+                OtaMaintenanceMode: GetBool(root, "otaMaintenanceMode"),
                 LowHeap: GetBool(root, "lowHeap"));
         }
         catch (TaskCanceledException)
@@ -207,6 +212,100 @@ public sealed class DeviceControlClient : IDisposable
 
             string body = await response.Content.ReadAsStringAsync(cancellationToken);
             LastError = $"POST /theme HTTP {(int)response.StatusCode}: {body}";
+            return false;
+        }
+        catch (Exception ex)
+        {
+            LastError = $"{ex.GetType().Name}: {ex.Message}";
+            return false;
+        }
+    }
+
+    public async Task<bool> SetWeatherLocationAsync(
+        string displayAddress,
+        DeviceLocationOption location,
+        CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(displayAddress))
+            return false;
+
+        string baseUrl = NormalizeBaseUrl(displayAddress);
+
+        return await DisplayRequestCoordinator.RunBoolAsync(
+            ct => SetWeatherLocationCoreAsync(baseUrl, location, ct),
+            TimeSpan.FromSeconds(2),
+            cancellationToken);
+    }
+
+    public async Task<bool> PrepareFirmwareUpdateAsync(
+        string displayAddress,
+        CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(displayAddress))
+            return false;
+
+        string baseUrl = NormalizeBaseUrl(displayAddress);
+
+        bool prepared = await DisplayRequestCoordinator.RunBoolAsync(
+            ct => PrepareFirmwareUpdateCoreAsync(baseUrl, ct),
+            TimeSpan.FromSeconds(2),
+            cancellationToken);
+
+        if (prepared)
+            DisplayRequestCoordinator.PauseFor(TimeSpan.FromMinutes(5));
+
+        return prepared;
+    }
+
+    private async Task<bool> PrepareFirmwareUpdateCoreAsync(
+        string baseUrl,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            LastError = string.Empty;
+
+            using var content = new StringContent("{}", Encoding.UTF8, "application/json");
+            using var response = await _httpClient.PostAsync($"{baseUrl}/ota/prepare", content, cancellationToken);
+
+            if (response.IsSuccessStatusCode)
+                return true;
+
+            string body = await response.Content.ReadAsStringAsync(cancellationToken);
+            LastError = $"POST /ota/prepare HTTP {(int)response.StatusCode}: {body}";
+            return false;
+        }
+        catch (Exception ex)
+        {
+            LastError = $"{ex.GetType().Name}: {ex.Message}";
+            return false;
+        }
+    }
+
+    private async Task<bool> SetWeatherLocationCoreAsync(
+        string baseUrl,
+        DeviceLocationOption location,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            LastError = string.Empty;
+
+            string json = JsonSerializer.Serialize(new
+            {
+                label = location.Label,
+                latitude = location.Latitude,
+                longitude = location.Longitude,
+                timezone = location.Timezone,
+            });
+            using var content = new StringContent(json, Encoding.UTF8, "application/json");
+            using var response = await _httpClient.PostAsync($"{baseUrl}/weather/location", content, cancellationToken);
+
+            if (response.IsSuccessStatusCode)
+                return true;
+
+            string body = await response.Content.ReadAsStringAsync(cancellationToken);
+            LastError = $"POST /weather/location HTTP {(int)response.StatusCode}: {body}";
             return false;
         }
         catch (Exception ex)

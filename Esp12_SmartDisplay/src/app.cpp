@@ -12,6 +12,7 @@
 #include "theme_manager.h"
 #include "theme_render.h"
 #include "weather.h"
+#include "weather_location.h"
 #include "web_server.h"
 #include "wifi_manager.h"
 
@@ -47,6 +48,33 @@ unsigned long weatherRetryInterval()
 bool timeReached(unsigned long now, unsigned long scheduledAt)
 {
   return static_cast<long>(now - scheduledAt) >= 0;
+}
+
+bool otaMaintenanceActive(unsigned long now)
+{
+  return appState.otaMaintenanceMode && !timeReached(now, appState.otaMaintenanceUntil);
+}
+
+void updateOtaMaintenance(unsigned long now)
+{
+  if (!otaMaintenanceActive(now))
+  {
+    if (appState.otaMaintenanceMode)
+    {
+      appState.otaMaintenanceMode = false;
+      appState.otaMaintenanceLastFrame = 0;
+      appState.otaMaintenanceFrame = 0;
+      themeDrawBase();
+    }
+    return;
+  }
+
+  if (appState.otaMaintenanceLastFrame == 0 ||
+      now - appState.otaMaintenanceLastFrame >= OTA_MAINTENANCE_FRAME_MS)
+  {
+    appState.otaMaintenanceLastFrame = now;
+    displayUiUpdateOtaMaintenanceProgress();
+  }
 }
 
 bool hasFreshWeather(unsigned long now)
@@ -109,6 +137,7 @@ void appSetup()
   appState.lastResetCheckpoint = resetMarkerReadCheckpoint();
   weatherCrashCooldownPending = appState.lastResetCheckpoint == "weather_get";
   resetMarkerCheckpoint("boot_setup");
+  weatherLocationLoad();
   appState.safeMode = bootGuardBegin();
   displayUiInit();
   if (!appState.safeMode) displayUiInitSprites();
@@ -169,9 +198,14 @@ void appLoop()
 {
   webServerHandleClient();
   bootGuardUpdate();
+  unsigned long now = millis();
+  if (appState.otaMaintenanceMode)
+  {
+    updateOtaMaintenance(now);
+    if (appState.otaMaintenanceMode) return;
+  }
   if (appState.safeMode) return;
   if (appState.isApMode) return;
-  unsigned long now = millis();
   if (!metricsHasRecentPcMetrics() && USE_FAKE_METRICS_WHEN_PC_OFFLINE) metricsUpdateFakeTargets();
   metricsAnimateFakeValues();
   bool usesWeather = activeThemeUsesWeather();

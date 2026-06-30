@@ -1,9 +1,12 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Avalonia;
+using Avalonia.Controls.ApplicationLifetimes;
 using SmartDisplayPcAgent.Resources;
 using SmartDisplayPcAgent.Services;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Globalization;
 using System.Linq;
 
@@ -44,6 +47,12 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
     private string languageRestartText = string.Empty;
 
     [ObservableProperty]
+    private bool isLanguageRestartDialogOpen;
+
+    [ObservableProperty]
+    private string languageRestartDialogMessage = Strings.LanguageRestartDialogMessage;
+
+    [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(IsDashboardSelected))]
     [NotifyPropertyChangedFor(nameof(IsDeviceSelected))]
     private int selectedPageIndex;
@@ -75,6 +84,42 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
         LanguageRestartText = value.CultureName == currentCultureName
             ? string.Empty
             : Strings.LanguageRestartHint;
+
+        IsLanguageRestartDialogOpen = !string.IsNullOrWhiteSpace(LanguageRestartText);
+        LanguageRestartDialogMessage = Strings.LanguageRestartDialogMessage;
+    }
+
+    [RelayCommand]
+    private void RestartLater()
+    {
+        IsLanguageRestartDialogOpen = false;
+    }
+
+    [RelayCommand]
+    private void RestartNow()
+    {
+        try
+        {
+            string? executablePath = Environment.ProcessPath;
+
+            if (string.IsNullOrWhiteSpace(executablePath))
+                executablePath = Process.GetCurrentProcess().MainModule?.FileName;
+
+            if (string.IsNullOrWhiteSpace(executablePath))
+                throw new InvalidOperationException(Strings.RestartPathUnavailable);
+
+            Process.Start(new ProcessStartInfo(executablePath)
+            {
+                UseShellExecute = true,
+            });
+
+            if (Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
+                desktop.Shutdown();
+        }
+        catch (Exception ex)
+        {
+            LanguageRestartDialogMessage = string.Format(Strings.RestartFailedFormat, ex.Message);
+        }
     }
 
     public void Dispose()

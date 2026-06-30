@@ -6,9 +6,13 @@ using SmartDisplayPcAgent.Models;
 using SmartDisplayPcAgent.Resources;
 using SmartDisplayPcAgent.Services;
 using System;
+using System.Collections.ObjectModel;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Globalization;
 using System.Linq;
+using System.Net.Http;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -19,11 +23,14 @@ public partial class DeviceViewModel : ObservableObject, IDisposable
     private readonly DeviceControlClient _deviceControlClient = new();
     private readonly DisplayHttpClient _displayHttpClient = new();
     private readonly PcMetricsService _metricsService = new();
+    private readonly DeviceLocationSearchService _locationSearchService = new();
     private readonly CancellationTokenSource _cts = new();
 
     private bool _isSyncingThemeFromDevice;
     private bool _hasPendingThemeSelection;
     private string _currentThemeKey = "pc_monitor";
+    private int _telemetryMessageIndex;
+    private bool _hasPendingLocationSelection;
 
     public DeviceViewModel(AgentConnectionState state)
     {
@@ -39,11 +46,14 @@ public partial class DeviceViewModel : ObservableObject, IDisposable
 
         SelectedTheme = AvailableThemes[0];
         _ = Task.Run(() => StartStatusLoopAsync(_cts.Token));
+        _ = Task.Run(() => StartTelemetryMessageLoopAsync(_cts.Token));
     }
 
     public AgentConnectionState State { get; }
 
     public IReadOnlyList<ThemeOption> AvailableThemes { get; }
+
+    public ObservableCollection<DeviceLocationOption> LocationResults { get; } = new();
 
     [ObservableProperty]
     private ThemeOption? selectedTheme;
@@ -124,6 +134,53 @@ public partial class DeviceViewModel : ObservableObject, IDisposable
     private bool isApplyingTheme;
 
     [ObservableProperty]
+    private string telemetryDetailText = S("TargetIpConfigured");
+
+    [ObservableProperty]
+    private string locationSearchText = string.Empty;
+
+    [ObservableProperty]
+    private DeviceLocationOption? selectedLocation;
+
+    [ObservableProperty]
+    private string locationStatusText = S("LocationSearchHint");
+
+    [ObservableProperty]
+    private string locationLabelText = S("LocationNotSelected");
+
+    [ObservableProperty]
+    private string locationTimezoneText = "--";
+
+    [ObservableProperty]
+    private string locationLatitudeText = "--";
+
+    [ObservableProperty]
+    private string locationLongitudeText = "--";
+
+    [ObservableProperty]
+    private string locationCoordinatesText = "--";
+
+    [ObservableProperty]
+    private bool isSearchingLocation;
+
+    [ObservableProperty]
+    private bool isApplyingLocation;
+
+    [ObservableProperty]
+    private bool hasLocationResults;
+
+    [ObservableProperty]
+    private bool isLocationPreviewDialogOpen;
+
+    [ObservableProperty]
+    private string locationPreviewPayload = string.Empty;
+
+    [ObservableProperty]
+    private bool isSystemDetailsVisible;
+
+    public string SystemDetailsButtonText => IsSystemDetailsVisible ? S("HideDetails") : S("Details");
+
+    [ObservableProperty]
     private bool isConfirmDialogOpen;
 
     [ObservableProperty]
@@ -136,6 +193,26 @@ public partial class DeviceViewModel : ObservableObject, IDisposable
     private string confirmDialogActionText = "Confirmar";
 
     private string pendingConfirmAction = string.Empty;
+
+    partial void OnIsSystemDetailsVisibleChanged(bool value)
+    {
+        OnPropertyChanged(nameof(SystemDetailsButtonText));
+    }
+
+    partial void OnSelectedLocationChanged(DeviceLocationOption? value)
+    {
+        if (value is null)
+            return;
+
+        LocationLabelText = value.Label;
+        LocationTimezoneText = string.IsNullOrWhiteSpace(value.Timezone) ? "--" : value.Timezone;
+        LocationLatitudeText = value.Latitude.ToString("0.000000", CultureInfo.InvariantCulture);
+        LocationLongitudeText = value.Longitude.ToString("0.000000", CultureInfo.InvariantCulture);
+        LocationCoordinatesText = $"{LocationLatitudeText}, {LocationLongitudeText}";
+        LocationStatusText = string.Format(S("LocationSelectedFormat"), value.Label);
+        _hasPendingLocationSelection = true;
+        HasLocationResults = false;
+    }
 
     partial void OnSelectedThemeChanged(ThemeOption? value)
     {
@@ -157,6 +234,23 @@ public partial class DeviceViewModel : ObservableObject, IDisposable
             try
             {
                 await Task.Delay(30000, cancellationToken);
+            }
+            catch (TaskCanceledException)
+            {
+                break;
+            }
+        }
+    }
+
+    private async Task StartTelemetryMessageLoopAsync(CancellationToken cancellationToken)
+    {
+        while (!cancellationToken.IsCancellationRequested)
+        {
+            UpdateTelemetryDetailText();
+
+            try
+            {
+                await Task.Delay(4000, cancellationToken);
             }
             catch (TaskCanceledException)
             {
@@ -263,6 +357,7 @@ public partial class DeviceViewModel : ObservableObject, IDisposable
             WeatherText = string.IsNullOrWhiteSpace(status.Weather) ? "--" : status.Weather;
             TemperatureText = status.Temperature.HasValue ? $"{status.Temperature.Value:0.0} °C" : "--";
             WeatherStatusText = FormatStatusText(status.WeatherStatus);
+            ApplyWeatherLocationStatus(status);
             DisplayMetricsText =
                 $"CPU {status.Cpu:0}%  RAM {status.Ram:0}%  GPU {status.Gpu:0}%  {status.DiskLabel} {status.Disk:0}%";
             LastRefreshText = DateTime.Now.ToString("HH:mm:ss");
@@ -307,6 +402,121 @@ public partial class DeviceViewModel : ObservableObject, IDisposable
 
         State.DisplayStatusShortText = sent ? S("StatusOnline") : S("StatusOffline");
         State.LastPostText = sent ? S("OkNow") : S("StatusFailed");
+        UpdateTelemetryDetailText();
+    }
+
+    [RelayCommand]
+    private async Task SearchLocationAsync()
+    {
+        if (string.IsNullOrWhiteSpace(LocationSearchText))
+        {
+            LocationStatusText = S("LocationSearchEmpty");
+            return;
+        }
+
+        IsSearchingLocation = true;
+        LocationStatusText = S("LocationSearching");
+        _hasPendingLocationSelection = false;
+        SelectedLocation = null;
+        LocationResults.Clear();
+        HasLocationResults = false;
+
+        try
+        {
+            using var timeoutCts = new CancellationTokenSource(TimeSpan.FromSeconds(8));
+            string language = CultureInfo.CurrentUICulture.TwoLetterISOLanguageName;
+            var results = await _locationSearchService.SearchAsync(LocationSearchText, language, timeoutCts.Token);
+
+            foreach (var result in results)
+                LocationResults.Add(result);
+
+            HasLocationResults = LocationResults.Count > 0;
+            if (LocationResults.Count == 0)
+                LocationStatusText = S("LocationNoResults");
+            else
+                LocationStatusText = string.Format(S("LocationResultsFormat"), LocationResults.Count);
+        }
+        catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or JsonException)
+        {
+            LocationStatusText = string.Format(S("LocationSearchFailedFormat"), ex.Message);
+        }
+        finally
+        {
+            IsSearchingLocation = false;
+        }
+    }
+
+    [RelayCommand]
+    private async Task ApplyLocationAsync()
+    {
+        if (SelectedLocation is null)
+        {
+            LocationStatusText = S("LocationSelectFirst");
+            return;
+        }
+
+        IsApplyingLocation = true;
+        LocationStatusText = S("LocationSending");
+
+        using var timeoutCts = new CancellationTokenSource(TimeSpan.FromSeconds(4));
+
+        bool applied = await _deviceControlClient.SetWeatherLocationAsync(
+            State.DisplayIp,
+            SelectedLocation,
+            timeoutCts.Token);
+
+        if (!applied)
+        {
+            IsApplyingLocation = false;
+            LocationStatusText = string.IsNullOrWhiteSpace(_deviceControlClient.LastError)
+                ? S("LocationSendFailed")
+                : _deviceControlClient.LastError;
+            return;
+        }
+
+        _hasPendingLocationSelection = false;
+        LocationStatusText = S("LocationSentRefresh");
+
+        using var refreshCts = new CancellationTokenSource(TimeSpan.FromSeconds(3));
+        await RefreshStatusInternalAsync(refreshCts.Token, waitForSlot: true);
+
+        IsApplyingLocation = false;
+    }
+
+    [RelayCommand]
+    private void PreviewLocationPayload()
+    {
+        if (SelectedLocation is null)
+        {
+            LocationStatusText = S("LocationSelectFirst");
+            return;
+        }
+
+        var payload = new
+        {
+            label = SelectedLocation.Label,
+            latitude = SelectedLocation.Latitude,
+            longitude = SelectedLocation.Longitude,
+            timezone = SelectedLocation.Timezone,
+        };
+
+        LocationPreviewPayload = JsonSerializer.Serialize(payload, new JsonSerializerOptions
+        {
+            WriteIndented = true,
+        });
+        IsLocationPreviewDialogOpen = true;
+    }
+
+    [RelayCommand]
+    private void CloseLocationPreviewDialog()
+    {
+        IsLocationPreviewDialogOpen = false;
+    }
+
+    [RelayCommand]
+    private void ToggleSystemDetails()
+    {
+        IsSystemDetailsVisible = !IsSystemDetailsVisible;
     }
 
     [RelayCommand]
@@ -362,12 +572,12 @@ public partial class DeviceViewModel : ObservableObject, IDisposable
     }
 
     [RelayCommand]
-    private void ConfirmDialog()
+    private async Task ConfirmDialogAsync()
     {
         if (pendingConfirmAction == "reset_wifi")
             StatusMessage = S("ResetWifiConfirmed");
         else if (pendingConfirmAction == "firmware_update")
-            StatusMessage = S("FirmwareUpdateConfirmed");
+            await PrepareFirmwareUpdateAsync();
 
         pendingConfirmAction = string.Empty;
         IsConfirmDialogOpen = false;
@@ -380,6 +590,7 @@ public partial class DeviceViewModel : ObservableObject, IDisposable
         _deviceControlClient.Dispose();
         _displayHttpClient.Dispose();
         _metricsService.Dispose();
+        _locationSearchService.Dispose();
     }
 
     private static string FormatAge(long? ageMs)
@@ -411,6 +622,24 @@ public partial class DeviceViewModel : ObservableObject, IDisposable
         return string.IsNullOrWhiteSpace(value) ? "--" : value.Trim();
     }
 
+    private void ApplyWeatherLocationStatus(DeviceStatusSnapshot status)
+    {
+        if (_hasPendingLocationSelection ||
+            string.IsNullOrWhiteSpace(status.WeatherLocationLabel) ||
+            !status.WeatherLatitude.HasValue ||
+            !status.WeatherLongitude.HasValue)
+        {
+            return;
+        }
+
+        LocationLabelText = status.WeatherLocationLabel;
+        LocationTimezoneText = string.IsNullOrWhiteSpace(status.WeatherTimezone) ? "--" : status.WeatherTimezone;
+        LocationLatitudeText = status.WeatherLatitude.Value.ToString("0.000000", CultureInfo.InvariantCulture);
+        LocationLongitudeText = status.WeatherLongitude.Value.ToString("0.000000", CultureInfo.InvariantCulture);
+        LocationCoordinatesText = $"{LocationLatitudeText}, {LocationLongitudeText}";
+        LocationStatusText = S("LocationStatusFromDevice");
+    }
+
     private static string FormatBytes(long? bytes)
     {
         if (!bytes.HasValue)
@@ -438,6 +667,46 @@ public partial class DeviceViewModel : ObservableObject, IDisposable
         }
 
         return value.TrimEnd('/') + "/";
+    }
+
+    private async Task PrepareFirmwareUpdateAsync()
+    {
+        if (string.IsNullOrWhiteSpace(State.DisplayIp))
+        {
+            StatusMessage = S("ConfigureTargetIpFirst");
+            return;
+        }
+
+        StatusMessage = S("FirmwareUpdatePreparing");
+
+        using var timeoutCts = new CancellationTokenSource(TimeSpan.FromSeconds(4));
+        bool prepared = await _deviceControlClient.PrepareFirmwareUpdateAsync(
+            State.DisplayIp,
+            timeoutCts.Token);
+
+        if (!prepared)
+        {
+            StatusMessage = string.IsNullOrWhiteSpace(_deviceControlClient.LastError)
+                ? S("FirmwareUpdatePrepareFailed")
+                : _deviceControlClient.LastError;
+            return;
+        }
+
+        string updateUrl = NormalizeDeviceUrl(State.DisplayIp) + "update";
+        Process.Start(new ProcessStartInfo(updateUrl) { UseShellExecute = true });
+        StatusMessage = string.Format(S("FirmwareUpdateMaintenanceStartedFormat"), updateUrl);
+    }
+
+    private void UpdateTelemetryDetailText()
+    {
+        string text = _telemetryMessageIndex++ % 2 == 0
+            ? State.DisplayStatusText
+            : string.Format(S("TelemetryTargetFormat"), State.DisplayIp);
+
+        if (string.IsNullOrWhiteSpace(text))
+            text = S("TargetIpConfigured");
+
+        Dispatcher.UIThread.Post(() => TelemetryDetailText = text);
     }
 
     private static string S(string name) => Strings.Get(name);

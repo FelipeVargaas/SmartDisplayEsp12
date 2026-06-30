@@ -9,6 +9,7 @@
 #include "app_state.h"
 #include "config.h"
 #include "reset_marker.h"
+#include "weather_location.h"
 
 namespace
 {
@@ -29,13 +30,17 @@ static String weatherCodeToText(int code)
 
 static String buildWeatherUrl()
 {
+  const WeatherLocation& location = weatherLocationGet();
+  String timezone = location.timezone;
+  timezone.replace("/", "%2F");
+
   String url = "http://api.open-meteo.com/v1/forecast?latitude=";
-  url += String(WEATHER_LAT, 4);
-  url += "&longitude="; url += String(WEATHER_LON, 4);
+  url += String(location.latitude, 4);
+  url += "&longitude="; url += String(location.longitude, 4);
   url += "&current=temperature_2m,relative_humidity_2m,weather_code";
   url += "&daily=weather_code,temperature_2m_max,temperature_2m_min";
   url += "&forecast_days=3";
-  url += "&timezone="; url += WEATHER_TIMEZONE;
+  url += "&timezone="; url += timezone;
   return url;
 }
 

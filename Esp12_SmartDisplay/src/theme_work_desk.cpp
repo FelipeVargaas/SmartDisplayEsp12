@@ -8,11 +8,10 @@
 #include "config.h"
 #include "theme.h"
 #include "theme_work_desk.h"
+#include "weather_location.h"
 
 namespace
 {
-const char* const WORK_DESK_CITY = "Rio de Janeiro";
-
 const uint16_t COLOR_BG = TFT_BLACK;
 const uint16_t COLOR_CARD = 0x1082;
 const uint16_t COLOR_CARD_ALT = 0x18C3;
@@ -196,7 +195,7 @@ void drawWeatherIcon(int x, int y, int code, uint8_t size)
 void drawHeader()
 {
   appState.tft.fillRect(0, 0, DISPLAY_WIDTH, 56, COLOR_BG);
-  drawTextClipped(WORK_DESK_CITY, 10, 10, 150, 2, 1, COLOR_TEXT, COLOR_BG);
+  drawTextClipped(weatherLocationCityName(), 10, 10, 150, 2, 1, COLOR_TEXT, COLOR_BG);
 
   String updated = appState.hasWeather ? String("Atual ") + appState.weatherUpdatedAt : String("Syncing weather");
   drawTextClipped(updated, 10, 29, 128, 1, 1, COLOR_MUTED, COLOR_BG);
@@ -397,6 +396,7 @@ void updateNotificationOverlay(unsigned long now)
 String buildWeatherStateKey()
 {
   String key = appState.hasWeather ? "1" : "0";
+  key += weatherLocationCityName();
   key += appState.weatherStatus;
   key += appState.weatherUpdatedAt;
   key += String(appState.weatherCode);

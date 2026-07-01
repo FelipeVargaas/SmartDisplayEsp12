@@ -9,11 +9,13 @@
 #include "config.h"
 #include "display_assets.h"
 #include "metrics.h"
+#include "smooth_clock_font.h"
 #include "theme.h"
 #include "weather_location.h"
 
 static void displayCentered(const String& text, int y, int size, uint16_t color)
 {
+  smoothClockFontUnload(appState.tft);
   appState.tft.setTextSize(size);
   appState.tft.setTextColor(color, TFT_BLACK);
   int16_t textWidth = appState.tft.textWidth(text);
@@ -167,7 +169,8 @@ static String getTimeText()
   return String(buffer);
 }
 
-static void drawWeatherIcon34(TFT_eSprite& spr, int x, int y, int code)
+template <typename TCanvas>
+static void drawWeatherIcon34(TCanvas& spr, int x, int y, int code)
 {
   const uint16_t cloud = 0xBDF7;
   const uint16_t cloudShade = 0x8410;
@@ -234,39 +237,46 @@ static String formatPercent2Digits(int value)
 
 static void drawHeader()
 {
-  TFT_eSprite header(&appState.tft);
-  header.setColorDepth(8);
-  if (header.createSprite(DISPLAY_WIDTH, TOP_LABEL_Y) == nullptr)
+  smoothClockFontUnload(appState.tft);
+  appState.tft.fillRect(0, 0, DISPLAY_WIDTH, TOP_LABEL_Y, CLEAN_TFT_THEME.background);
+  String timeText = getTimeText();
+  bool useSmoothFont = smoothClockFontEnsureLoaded(appState.tft);
+
+  if (useSmoothFont)
   {
-    appState.tft.fillRect(0, 0, DISPLAY_WIDTH, TOP_LABEL_Y, CLEAN_TFT_THEME.background);
+    smoothClockDrawText(appState.tft, timeText, 6, 5, CLEAN_TFT_THEME.primaryText, CLEAN_TFT_THEME.background);
+    smoothClockFontUnload(appState.tft);
+  }
+  else
+  {
     appState.tft.setTextFont(4);
     appState.tft.setTextSize(2);
     appState.tft.setTextColor(CLEAN_TFT_THEME.primaryText, CLEAN_TFT_THEME.background);
     appState.tft.setCursor(6, 3);
-    appState.tft.print(getTimeText());
-    return;
+    appState.tft.print(timeText);
   }
-  header.fillSprite(CLEAN_TFT_THEME.background);
-  String timeText = getTimeText();
-  header.setTextFont(4);
-  header.setTextSize(2);
-  header.setTextColor(CLEAN_TFT_THEME.primaryText, CLEAN_TFT_THEME.background);
-  header.setCursor(6, 3); header.print(timeText);
+
   if (appState.hasWeather)
   {
-    header.setTextFont(4); header.setTextSize(1); header.setTextColor(CLEAN_TFT_THEME.primaryText, CLEAN_TFT_THEME.background);
+    drawWeatherIcon34(appState.tft, 155, 12, appState.weatherCode);
+    appState.tft.setTextFont(4);
+    appState.tft.setTextSize(1);
+    appState.tft.setTextColor(CLEAN_TFT_THEME.primaryText, CLEAN_TFT_THEME.background);
     String temperature = String((int)round(appState.weatherTemp));
-    drawWeatherIcon34(header, 155, 12, appState.weatherCode);
-    header.setCursor(195, 9); header.print(temperature);
-    int width = header.textWidth(temperature);
-    header.drawCircle(197 + width, 11, 2, CLEAN_TFT_THEME.primaryText);
+    appState.tft.setCursor(195, 9);
+    appState.tft.print(temperature);
+    int width = appState.tft.textWidth(temperature);
+    appState.tft.drawCircle(197 + width, 11, 2, CLEAN_TFT_THEME.primaryText);
   }
   else
   {
-    header.setTextFont(4); header.setTextSize(1); header.setTextColor(CLEAN_TFT_THEME.secondaryText, CLEAN_TFT_THEME.background);
-    header.setCursor(195, 9); header.print("--");
+    appState.tft.setTextFont(4);
+    appState.tft.setTextSize(1);
+    appState.tft.setTextColor(CLEAN_TFT_THEME.secondaryText, CLEAN_TFT_THEME.background);
+    appState.tft.setCursor(195, 9);
+    appState.tft.print("--");
   }
-  header.pushSprite(0, 0); header.deleteSprite();
+
   appState.lastTimeDrawn = timeText;
   appState.lastWeatherDrawn = appState.hasWeather ? String(appState.weatherCode) + String(appState.weatherTemp, 1) + appState.weatherText : "none";
 }

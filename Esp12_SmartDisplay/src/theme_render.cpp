@@ -1,7 +1,5 @@
 #include "theme_render.h"
 
-#include "app_state.h"
-#include "smooth_clock_font.h"
 #include "theme_manager.h"
 
 void themePcMonitorDrawBase();
@@ -17,9 +15,6 @@ void themeAnimationUpdateIfNeeded();
 
 void themeDrawBase()
 {
-  if (themeManagerGetActive() != THEME_WORK_DESK)
-    smoothClockFontUnload(appState.tft);
-
   switch (themeManagerGetActive())
   {
     case THEME_WORK_DESK: themeWorkDeskDrawBase(); break;

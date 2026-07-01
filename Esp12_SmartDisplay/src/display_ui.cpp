@@ -9,13 +9,12 @@
 #include "config.h"
 #include "display_assets.h"
 #include "metrics.h"
-#include "smooth_clock_font.h"
+#include "numeric_clock_font.h"
 #include "theme.h"
 #include "weather_location.h"
 
 static void displayCentered(const String& text, int y, int size, uint16_t color)
 {
-  smoothClockFontUnload(appState.tft);
   appState.tft.setTextSize(size);
   appState.tft.setTextColor(color, TFT_BLACK);
   int16_t textWidth = appState.tft.textWidth(text);
@@ -237,15 +236,12 @@ static String formatPercent2Digits(int value)
 
 static void drawHeader()
 {
-  smoothClockFontUnload(appState.tft);
   appState.tft.fillRect(0, 0, DISPLAY_WIDTH, TOP_LABEL_Y, CLEAN_TFT_THEME.background);
   String timeText = getTimeText();
-  bool useSmoothFont = smoothClockFontEnsureLoaded(appState.tft);
 
-  if (useSmoothFont)
+  if (numericClockCanDraw(timeText))
   {
-    smoothClockDrawText(appState.tft, timeText, 6, 5, CLEAN_TFT_THEME.primaryText, CLEAN_TFT_THEME.background);
-    smoothClockFontUnload(appState.tft);
+    numericClockDrawText(appState.tft, timeText, 4, 3, CLEAN_TFT_THEME.primaryText, CLEAN_TFT_THEME.background, 4, 3, 2);
   }
   else
   {

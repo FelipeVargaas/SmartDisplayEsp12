@@ -655,7 +655,7 @@ public partial class DashboardViewModel : ObservableObject, IDisposable
         {
             AnimationImagePayload prepared = PrepareAnimationImagePayload();
             UpdateAnimationDetailsText(prepared);
-            using var timeoutCts = new CancellationTokenSource(TimeSpan.FromSeconds(80));
+            using var timeoutCts = new CancellationTokenSource(TimeSpan.FromSeconds(100));
             using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(timeoutCts.Token, _cts.Token);
             uploaded = await _deviceControlClient.UploadAnimationImageAsync(State.DisplayIp, prepared.Payload, linkedCts.Token);
         }

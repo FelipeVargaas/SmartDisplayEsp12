@@ -6,6 +6,7 @@
 
 #include "app_state.h"
 #include "config.h"
+#include "numeric_clock_font.h"
 #include "theme.h"
 #include "theme_work_desk.h"
 #include "weather_location.h"
@@ -213,31 +214,19 @@ void drawHeader()
 void drawClock(const String& clockText, const String& secondsText, const String& dateText)
 {
   appState.tft.fillRect(0, 56, DISPLAY_WIDTH, 90, COLOR_BG);
-  appState.tft.setTextFont(4);
-  appState.tft.setTextSize(2);
-  appState.tft.setTextColor(COLOR_TEXT, COLOR_BG);
 
-  int clockWidth = appState.tft.textWidth(clockText);
-  int secondsWidth;
-  appState.tft.setTextFont(2);
-  appState.tft.setTextSize(2);
-  secondsWidth = appState.tft.textWidth(secondsText);
+  const uint8_t clockScale = 2;
+  const uint8_t secondsScale = 1;
+  int clockWidth = numericClockTextWidth(clockText, clockScale);
+  int secondsWidth = numericClockTextWidth(secondsText, secondsScale);
 
-  int groupW = clockWidth + 8 + secondsWidth;
+  int groupW = clockWidth + 10 + secondsWidth;
   int clockX = (DISPLAY_WIDTH - groupW) / 2;
   if (clockX < 0) clockX = 0;
 
-  appState.tft.setTextFont(4);
-  appState.tft.setTextSize(2);
-  appState.tft.setTextColor(COLOR_TEXT, COLOR_BG);
-  appState.tft.setCursor(clockX, 66);
-  appState.tft.print(clockText);
+  numericClockDrawText(appState.tft, clockText, clockX, 65, COLOR_TEXT, COLOR_BG, clockScale);
 
-  appState.tft.setTextFont(2);
-  appState.tft.setTextSize(2);
-  appState.tft.setTextColor(COLOR_SOFT, COLOR_BG);
-  appState.tft.setCursor(clockX + clockWidth + 8, 70);
-  appState.tft.print(secondsText);
+  numericClockDrawText(appState.tft, secondsText, clockX + clockWidth + 10, 75, COLOR_SOFT, COLOR_BG, secondsScale);
 
   appState.tft.setTextFont(2);
   appState.tft.setTextSize(1);
@@ -250,22 +239,17 @@ void drawClock(const String& clockText, const String& secondsText, const String&
 
 void drawClockSeconds(const String& clockText, const String& secondsText)
 {
-  appState.tft.setTextFont(4);
-  appState.tft.setTextSize(2);
-  int clockWidth = appState.tft.textWidth(clockText);
-
-  appState.tft.setTextFont(2);
-  appState.tft.setTextSize(2);
-  int secondsWidth = appState.tft.textWidth(secondsText);
-  int groupW = clockWidth + 8 + secondsWidth;
+  const uint8_t clockScale = 2;
+  const uint8_t secondsScale = 1;
+  int clockWidth = numericClockTextWidth(clockText, clockScale);
+  int secondsWidth = numericClockTextWidth(secondsText, secondsScale);
+  int groupW = clockWidth + 10 + secondsWidth;
   int clockX = (DISPLAY_WIDTH - groupW) / 2;
   if (clockX < 0) clockX = 0;
 
-  int secondsX = clockX + clockWidth + 8;
-  appState.tft.fillRect(secondsX - 2, 68, secondsWidth + 4, 24, COLOR_BG);
-  appState.tft.setTextColor(COLOR_SOFT, COLOR_BG);
-  appState.tft.setCursor(secondsX, 70);
-  appState.tft.print(secondsText);
+  int secondsX = clockX + clockWidth + 10;
+  appState.tft.fillRect(secondsX - 2, 73, secondsWidth + 4, numericClockTextHeight(secondsScale) + 4, COLOR_BG);
+  numericClockDrawText(appState.tft, secondsText, secondsX, 75, COLOR_SOFT, COLOR_BG, secondsScale);
 }
 
 void drawDegreeSymbol(int x, int y, uint16_t color)
